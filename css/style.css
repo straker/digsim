@@ -37,13 +37,29 @@ header, footer, aside, nav, article {
 }
 
 /**
- * PAGE ELEMENTS
+ * CONTROLS
  */
+.buttons {
+	position: relative;
+	top: 23px;
+	margin-left: 50px;
+	background-color: grey;
+	width: 600px;
+}
+
+/**
+ * CANVAS
+ */
+.canvases {
+	position: absolute;
+	top: 50px;
+	left: 50px;
+}
 canvas {
     background: transparent;
-    position: absolute;
-    top: 50px;
-    left: 50px;
+    position: relative;
+    top: 0px;
+    left: 0px;
 }
 #grid {
 	z-index: 0;
@@ -53,10 +69,4 @@ canvas {
 }
 #moving {
 	z-index: 2;
-}
- 
-button {
-    position: relative;
-    top: 10px;
-    margin-left: 4px;
 }
