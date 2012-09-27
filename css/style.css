@@ -41,10 +41,11 @@ header, footer, aside, nav, article {
  */
 .buttons {
 	position: relative;
-	top: 23px;
+	top: 14px;
 	margin-left: 50px;
 	background-color: grey;
-	width: 600px;
+	width: 590px;
+        padding: 5px;
 }
 
 /**
