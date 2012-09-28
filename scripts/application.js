@@ -1,3 +1,5 @@
+// Zack was here 27 Sep 2012 5:20 pm :)
+
 // Main application
 function Digsim() {
 	// Create constants
