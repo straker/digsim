@@ -81,3 +81,37 @@ Digsim.prototype.run = function() {
 
 // Create namespace for the application. If namespace already exisists, don't override it, otherwise create an empty object.
 var digsim = digsim || new Digsim();
+
+// Draws a generic gate... just a start.
+Digsim.drawGate = function(numInputs, posX, posY) {
+    this.staticContext.translate(
+    this.staticContext.beginPath();
+    this.staticContext.moveTo(posX, posY);
+    
+    // Draw vertial line on gate (something else for an OR gate
+    switch (numInputs)
+    {
+            // 2 or 3 inputs will require a length of 40px 
+        case 2: 
+        case 3: 
+            this.staticContext.lineTo(posX, posY + 40);
+            this.staticContext.moveTo(posX, posY);
+            
+            
+            
+            break;
+            // 4 input gates require a length of 50px
+        case 4:
+            this.staticContext.lineTo(posX, posY + 50);
+            break;
+    }
+    
+    
+    switch (numInputs)
+    {
+        case 2: 
+        case 3:
+    }
+    
+    
+}
