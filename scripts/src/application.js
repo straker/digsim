@@ -1,9 +1,21 @@
+// Zack was here 27 Sep 2012 5:20 pm :)
+
 // Main application
 function Digsim() {
 	// Create constants
 	this.GRID_SIZE = 10;
 	this.NUM_COLS = 60;
 	this.NUM_ROWS = 30;
+    // Type identifiers
+    this.AND = 0;
+    this.NAND = 1;
+    this.OR = 2;
+    this.NOR = 3;
+    this.XOR = 4;
+    this.NOT = 5;
+    this.WIRE = 6;
+    this.SWITCH = 7;
+    this.LED = 8;
 	
 	// Grid variables
 	this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
@@ -22,7 +34,7 @@ Digsim.prototype.init = function() {
 		// Canvas variables
 		var canvasWidth = this.gridWidth + 1;
 		var canvasHeight = this.gridHeight + 1;
-
+        
 		this.gridContext = this.gridCanvas.getContext('2d');
 		this.staticContext = this.staticCanvas.getContext('2d');
 		this.movingContext = this.movingCanvas.getContext('2d');
@@ -40,11 +52,11 @@ Digsim.prototype.init = function() {
 Digsim.prototype.clearCanvas = function(context, width, height) {
 	// Store the current transformation matrix
 	context.save();
-
+    
 	// Use the identity matrix while clearing the canvas
 	context.setTransform(1, 0, 0, 1, 0, 0);
 	context.clearRect(0, 0, width, height);
-
+    
 	// Restore the transform
 	context.restore();
 };
