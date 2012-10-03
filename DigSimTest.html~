@@ -34,9 +34,5 @@
 		<ol id="qunit-tests"></ol>
 	</div>
   <script type="text/javascript" src="scripts/src/application.js"></script>  
-    <script type="text/javascript" src="scripts/src/drawable.js"></script>  
-    <script type="text/javascript" src="scripts/src/and-gate.js"></script>  
-	<script type="text/javascript" src="scripts/src/wire.js"></script>  
-	<script type="text/javascript" src="scripts/src/placeholder.js"></script>  
 </body>
 </html>
