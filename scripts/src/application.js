@@ -1,4 +1,3 @@
-// Zack was here 27 Sep 2012 5:20 pm :)
 
 // Main application
 function Digsim() {
@@ -6,6 +5,7 @@ function Digsim() {
 	this.GRID_SIZE = 10;
 	this.NUM_COLS = 60;
 	this.NUM_ROWS = 30;
+    
     // Type identifiers
     this.AND = 0;
     this.NAND = 1;
@@ -20,6 +20,21 @@ function Digsim() {
 	// Grid variables
 	this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
 	this.gridHeight = this.NUM_ROWS * this.GRID_SIZE;
+    
+    // Gate identifiers
+    this.iComp = 0;
+    
+    // Data arrays
+    this.components = [];   // Holds all of the objects by their unique ID 
+    
+    this.placeholder = [];  // Holds component positions on grid
+    for (var i = 0; i < this.NUM_COLS; ++i) {
+        this.placeholder[i] = [];
+    }
+    
+    this.wires = [];        // AHH! Holds [row][col][index] (index is present 
+                            // because there can be a node of more than just 1 
+                            // wire. 
 };
 
 // Tests to see if the canvas is supported, returning true if it is
@@ -87,6 +102,17 @@ Digsim.prototype.run = function() {
 	if(this.init()) {
 		this.drawGrid(this.gridContext);
 	}
+};
+
+Digsim.prototype.setPlaceholders = function(gate) {
+    var factor = 2 * (Math.floor(gate.numInputs / 2) + 1);
+    var row, col;
+    for (row = 0; row < factor; ++row) {
+        for (col = 0; col < factor; ++col) {
+            var placeholder = new Placeholder(gate.id, col, row, factor);
+            this.placeholder[gate.row + row][gate.column + col] = placeholder;
+        }
+    }
 };
 
 // Create namespace for the application. If namespace already exisists, don't override it, otherwise create an empty object.
