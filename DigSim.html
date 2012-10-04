@@ -4,18 +4,20 @@
   <title>Digital Circuit Simulator</title>
   <meta charset="utf-8">
   <link rel="stylesheet" type="text/css" href="css/src/style.css"/>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+  
 </head>
 <body onload="digsim.run()">
 	<div class="buttons">
-		<button id="ANDb" type="button">AND</button>
-		<button id="NANDb" type="button">NAND</button>
-		<button id="ORb" type="button">OR</button>
-		<button id="NORb" type="button">NOR</button>
-		<button id="XORb" type="button">XOR</button>
-		<button id="NOTb" type="button">NOT</button>
-		<button id="LEDb" type="button">LED</button>
-		<button id="WIRE" type="button">WIRE</button>
-		<button id="SWITCHb" type="button">SWITCH</button>
+		<button id="AND" type="button">AND</button>
+		<button id="NAND" type="button">NAND</button>
+		<button id="OR" type="button">OR</button>
+		<button id="NOR" type="button">NOR</button>
+		<button id="XOR" type="button">XOR</button>
+		<button id="NOT" type="button">NOT</button>
+		<button id="LED" type="button">LED</button>
+		<button id="Wire" type="button">WIRE</button>
+		<button id="SWITCH" type="button">SWITCH</button>
 	</div>
 	<div class="canvases">
 		<canvas id="grid">Your browser does not support HTML5 canvas element.
@@ -23,11 +25,11 @@
 		<canvas id="static"></canvas>
 		<canvas id="moving"></canvas>
 	</div>
-  <script type="text/javascript" src="scripts/src/application.js"></script>  
+    <script type="text/javascript" src="scripts/src/application.js"></script>  
     <script type="text/javascript" src="scripts/src/drawable.js"></script>  
     <script type="text/javascript" src="scripts/src/and-gate.js"></script>  
 	<script type="text/javascript" src="scripts/src/wire.js"></script>  
-	<script type="text/javascript" src="scripts/src/placeholder.js"></script>  
+	<script type="text/javascript" src="scripts/src/placeholder.js"></script> 
 
 </body>
 </html>

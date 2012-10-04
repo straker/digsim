@@ -21,27 +21,26 @@ function AND(numInputs) {
 };
 
 // Draws a generic gate... just a start.
-AND.prototype.draw = function() {
+AND.prototype.draw = function(context) {
         
-    digsim.staticContext.save();
-    digsim.staticContext.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
-    digsim.staticContext.beginPath();
-    digsim.staticContext.fillStyle = '#FFFFFF';
-    digsim.staticContext.lineWidth = 2;
+    context.save();
+    context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
+    context.beginPath();
+    context.fillStyle = '#FFFFFF';
+    context.lineWidth = 2;
     
     // Draw gate
     var factor = Math.floor(this.numInputs / 2) + 1;
-    console.log(factor);
-    digsim.staticContext.moveTo(0, 0);
-    digsim.staticContext.strokeStyle = '#000000';
-    digsim.staticContext.lineTo(digsim.GRID_SIZE * 2,  0);            
-    digsim.staticContext.arc(digsim.GRID_SIZE * factor, digsim.GRID_SIZE * factor, digsim.GRID_SIZE * factor, -Math.PI/2, Math.PI/2);
-    digsim.staticContext.lineTo(0,  digsim.GRID_SIZE * factor * 2);  
+    context.moveTo(0, 0);
+    context.strokeStyle = '#000000';
+    context.lineTo(digsim.GRID_SIZE * 2,  0);            
+    context.arc(digsim.GRID_SIZE * factor, digsim.GRID_SIZE * factor, digsim.GRID_SIZE * factor, -Math.PI/2, Math.PI/2);
+    context.lineTo(0,  digsim.GRID_SIZE * factor * 2);  
 
-    digsim.staticContext.closePath();
-    digsim.staticContext.stroke();
-    digsim.staticContext.fill();
-    digsim.staticContext.restore();
+    context.closePath();
+    context.stroke();
+    context.fill();
+    context.restore();
     
     // Draw wires
     var cnt = 1;

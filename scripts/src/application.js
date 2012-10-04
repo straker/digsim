@@ -46,6 +46,10 @@ Digsim.prototype.init = function() {
 	
 	// Test to see if canvas is supported
 	if (this.gridCanvas.getContext) {
+        // onClick events
+        $("canvas").click(digsim.onGridClicked);
+        $("button").click(digsim.onButtonClicked);
+
 		// Canvas variables
 		var canvasWidth = this.gridWidth + 1;
 		var canvasHeight = this.gridHeight + 1;
@@ -115,5 +119,68 @@ Digsim.prototype.setPlaceholders = function(gate) {
     }
 };
 
+// Create a gate when button is clicked. This only works because id on html 
+// matches the name of the gate. ("AND", "OR", etc...).
+Digsim.prototype.onButtonClicked = function (event) {
+    var id = $(this).attr("id");
+    // Use reflection to dynamically create gate based on id :) 
+    var MyClass = window;
+    MyClass = MyClass[id];
+    var gate = new MyClass(2); 
+    gate.init(2, 2, 0, digsim.iComp);
+    digsim.components[digsim.iComp++] = gate;
+    digsim.setPlaceholders(gate);
+    gate.draw(digsim.staticContext);
+};
+
+// Click and drag gates
+Digsim.prototype.onGridClicked = function(event) {
+    // Useless comment
+    event.preventDefault();
+    
+    // Gets mouse position on canvas
+    var mouseX = event.offsetX || layerX;
+    var mouseY = event.offsetY || layerY;
+    
+    // Tells us where on the grid (we've created) the click is
+    var col = Math.floor(mouseX / digsim.GRID_SIZE);
+    var row = Math.floor(mouseY / digsim.GRID_SIZE);
+    
+    // Here's where the magic happens
+    if (digsim.placeholder[row][col]) {
+        var ref = digsim.placeholder[row][col].ref;
+        var cGate = digsim.components[ref];
+        
+        // Remove the component from the array
+        digsim.components.splice(ref, 1);
+        var placeholder = digsim.placeholder[row][col];
+        var posX = placeholder.posX;
+        var posY = placeholder.posY;
+        var size = placeholder.size;
+        for (var y = 0, iRow = row - posY; y < size; ++y) {
+            for (var x = 0, iCol = col - posX; x < size; ++x) {
+                digsim.placeholder[iRow + y][iCol + x] = undefined;
+            }
+        }
+
+        // Visually remove component from static canvas. 
+        digsim.drawComponents();
+        
+        cGate.draw(digsim.movingContext);
+    }
+    else {
+        console.log("empty");
+    }
+};
+
+Digsim.prototype.drawComponents = function() {
+    for (component in this.components) {
+        component.draw(this.staticContext);
+    }
+};
+
 // Create namespace for the application. If namespace already exisists, don't override it, otherwise create an empty object.
 var digsim = digsim || new Digsim();
+
+
+
