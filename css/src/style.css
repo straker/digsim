@@ -58,7 +58,7 @@ header, footer, aside, nav, article {
 }
 canvas {
     background: transparent;
-    position: relative;
+    position: absolute;
     top: 0px;
     left: 0px;
 }

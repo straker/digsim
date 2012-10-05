@@ -56,10 +56,10 @@ AND.prototype.draw = function(context) {
                 break;
             default:
                         }
-        this.prev[i].draw();
+        this.prev[i].draw(context);
     }
     this.next[0].init(this.column + (factor * 2), this.row + factor, this.rotation);
-    this.next[0].draw();
+    this.next[0].draw(context);
 };
 
 // Infallable logic function
@@ -78,5 +78,6 @@ AND.prototype.init = function (col, row, rot, id) {
     this.row = row;
     this.rotation = rot;
     this.id = id;
+    this.drawStatic = true;
 };
 

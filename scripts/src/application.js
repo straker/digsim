@@ -3,8 +3,8 @@
 function Digsim() {
 	// Create constants
 	this.GRID_SIZE = 10;
-	this.NUM_COLS = 60;
-	this.NUM_ROWS = 30;
+	this.NUM_COLS = 115;
+	this.NUM_ROWS = 45;
     
     // Type identifiers
     this.AND = 0;
@@ -20,9 +20,14 @@ function Digsim() {
 	// Grid variables
 	this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
 	this.gridHeight = this.NUM_ROWS * this.GRID_SIZE;
+    this.dragging = false;
+    this.mousePos = { x: -1, y: -1 };
+    this.offsetCol = 0;
+    this.offsetRow = 0;
     
-    // Gate identifiers
+    // Gate identifier
     this.iComp = 0;
+    this.draggingGate;
     
     // Data arrays
     this.components = [];   // Holds all of the objects by their unique ID 
@@ -41,13 +46,13 @@ function Digsim() {
 Digsim.prototype.init = function() {
 	// Get the canvas element
 	this.gridCanvas = document.getElementById('grid');
-	this.staticCanvas = document.getElementById('grid');
-	this.movingCanvas = document.getElementById('grid');
+	this.staticCanvas = document.getElementById('static');
+	this.movingCanvas = document.getElementById('moving');
 	
 	// Test to see if canvas is supported
 	if (this.gridCanvas.getContext) {
         // onClick events
-        $("canvas").click(digsim.onGridClicked);
+        $("canvas").mousedown(digsim.onGridClicked);
         $("button").click(digsim.onButtonClicked);
 
 		// Canvas variables
@@ -60,6 +65,10 @@ Digsim.prototype.init = function() {
 		
 		this.gridCanvas.width = this.gridWidth;
 		this.gridCanvas.height = this.gridHeight;
+        this.staticCanvas.width = this.gridWidth;
+		this.staticCanvas.height = this.gridHeight;
+        this.movingCanvas.width = this.gridWidth;
+		this.movingCanvas.height = this.gridHeight;
 		
 		return true;
 	} else {
@@ -138,9 +147,14 @@ Digsim.prototype.onGridClicked = function(event) {
     // Useless comment
     event.preventDefault();
     
+    if (digsim.dragging) {
+        
+    }
+    digsim.dragging = false;
+    
     // Gets mouse position on canvas
-    var mouseX = event.offsetX || layerX;
-    var mouseY = event.offsetY || layerY;
+    var mouseX = event.offsetX || event.layerX;
+    var mouseY = event.offsetY || event.layerY;
     
     // Tells us where on the grid (we've created) the click is
     var col = Math.floor(mouseX / digsim.GRID_SIZE);
@@ -148,15 +162,19 @@ Digsim.prototype.onGridClicked = function(event) {
     
     // Here's where the magic happens
     if (digsim.placeholder[row][col]) {
+        digsim.dragging = true;
+        
         var ref = digsim.placeholder[row][col].ref;
-        var cGate = digsim.components[ref];
+        digsim.draggingGate = digsim.components[ref];
+        digsim.draggingGate.drawStatic = false;
         
         // Remove the component from the array
-        digsim.components.splice(ref, 1);
         var placeholder = digsim.placeholder[row][col];
         var posX = placeholder.posX;
         var posY = placeholder.posY;
         var size = placeholder.size;
+        digsim.offsetRow = posY;
+        digsim.offsetCol = posX;
         for (var y = 0, iRow = row - posY; y < size; ++y) {
             for (var x = 0, iCol = col - posX; x < size; ++x) {
                 digsim.placeholder[iRow + y][iCol + x] = undefined;
@@ -166,7 +184,9 @@ Digsim.prototype.onGridClicked = function(event) {
         // Visually remove component from static canvas. 
         digsim.drawComponents();
         
-        cGate.draw(digsim.movingContext);
+        digsim.draggingGate.draw(digsim.movingContext);
+        animate();
+        
     }
     else {
         console.log("empty");
@@ -174,10 +194,55 @@ Digsim.prototype.onGridClicked = function(event) {
 };
 
 Digsim.prototype.drawComponents = function() {
-    for (component in this.components) {
-        component.draw(this.staticContext);
+    this.clearCanvas(this.staticContext, this.gridWidth, this.gridHeight);
+    for (index in this.components) {
+        if(this.components[index].drawStatic) {
+            this.components[index].draw(this.staticContext);
+        }
     }
 };
+
+window.requestAnimFrame = (function() {
+    return  window.requestAnimationFrame       || 
+            window.webkitRequestAnimationFrame || 
+            window.mozRequestAnimationFrame    || 
+            window.oRequestAnimationFrame      || 
+            window.msRequestAnimationFrame     || 
+            function(callback, element){
+                window.setTimeout(callback, 1000 / 60);
+            };
+})();
+
+function animate() {
+    if (digsim.dragging) {
+        digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
+        
+        requestAnimFrame(animate);
+        
+        var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
+        var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
+        digsim.draggingGate.column = col - digsim.offsetCol;
+        digsim.draggingGate.row = row - digsim.offsetRow;
+        digsim.draggingGate.draw(digsim.movingContext);
+    }
+};
+
+$("canvas").mousemove(function(event) {
+    var mouseX = event.offsetX || event.layerX;
+    var mouseY = event.offsetY || event.layerY;
+    digsim.mousePos = { x: mouseX, y: mouseY };
+});
+
+$("canvas").mouseup(function(event) {
+    if (digsim.dragging) {
+        digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
+        digsim.draggingGate.drawStatic = true;
+        digsim.setPlaceholders(digsim.draggingGate);
+        digsim.draggingGate.draw(digsim.staticContext);
+        digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
+    }
+    digsim.dragging = false;
+});
 
 // Create namespace for the application. If namespace already exisists, don't override it, otherwise create an empty object.
 var digsim = digsim || new Digsim();

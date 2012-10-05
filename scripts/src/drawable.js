@@ -8,6 +8,7 @@ function Drawable(col, row, rot) {
     this.next = [];
     this.prev = [];
     this.state = 0;
+    this.drawStatic = true;
 };
 
 Drawable.prototype.init = function (col, row, rot) {
