@@ -2,9 +2,9 @@
 // Main application
 function Digsim() {
 	// Create constants
-	this.GRID_SIZE = 10;
-	this.NUM_COLS = 115;
-	this.NUM_ROWS = 45;
+	this.GRID_SIZE = 20;
+	this.NUM_COLS = 60;
+	this.NUM_ROWS = 30;
     
     // Type identifiers
     this.AND = 0;
@@ -16,18 +16,28 @@ function Digsim() {
     this.WIRE = 6;
     this.SWITCH = 7;
     this.LED = 8;
-	
+    this.DEFAULT_MODE = 0;
+	this.WIRE_MODE = 1;
+    this.SIM_MODE = 3;
+    
+    // Animation variables
+    this.startX;
+    this.startY;
+    this.dragging = false;
+    this.draggingGate;
+    
 	// Grid variables
 	this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
 	this.gridHeight = this.NUM_ROWS * this.GRID_SIZE;
-    this.dragging = false;
+    this.oGridWidth = this.gridWidth - this.GRID_SIZE;
+    this.oGridHeight = this.gridHeight - this.GRID_SIZE;
     this.mousePos = { x: -1, y: -1 };
     this.offsetCol = 0;
     this.offsetRow = 0;
     
     // Gate identifier
     this.iComp = 0;
-    this.draggingGate;
+    this.mode = 0;
     
     // Data arrays
     this.components = [];   // Holds all of the objects by their unique ID 
@@ -37,9 +47,14 @@ function Digsim() {
         this.placeholder[i] = [];
     }
     
-    this.wires = [];        // AHH! Holds [row][col][index] (index is present 
-                            // because there can be a node of more than just 1 
-                            // wire. 
+    this.wires = [];      
+    for (var r = 0; r < this.NUM_ROWS - 1; ++r) {
+        this.wires[r] = [];
+        for (var c = 0; c < this.NUM_COLS - 1; ++c) {
+             this.wires[r][c] = [];
+        }
+    }
+             
 };
 
 // Tests to see if the canvas is supported, returning true if it is
@@ -52,8 +67,9 @@ Digsim.prototype.init = function() {
 	// Test to see if canvas is supported
 	if (this.gridCanvas.getContext) {
         // onClick events
-        $("canvas").mousedown(digsim.onGridClicked);
+        $("canvas").mousedown(digsim.onGridMouseDown);
         $("button").click(digsim.onButtonClicked);
+        $("canvas").click(digsim.onGridClicked);
 
 		// Canvas variables
 		var canvasWidth = this.gridWidth + 1;
@@ -132,18 +148,74 @@ Digsim.prototype.setPlaceholders = function(gate) {
 // matches the name of the gate. ("AND", "OR", etc...).
 Digsim.prototype.onButtonClicked = function (event) {
     var id = $(this).attr("id");
+    
     // Use reflection to dynamically create gate based on id :) 
     var MyClass = window;
     MyClass = MyClass[id];
-    var gate = new MyClass(2); 
-    gate.init(2, 2, 0, digsim.iComp);
-    digsim.components[digsim.iComp++] = gate;
-    digsim.setPlaceholders(gate);
-    gate.draw(digsim.staticContext);
+    if (id == "Wire") {
+        console.log("Wire Clicked!");
+        $("canvas").css('cursor','crosshair');
+        digsim.mode = digsim.WIRE_MODE;
+    }
+    else {
+        $("canvas").css('cursor','default');
+        digsim.mode = digsim.DEFAULT_MODE;
+        var gate = new MyClass(2); 
+        gate.init(2, 2, 0, digsim.iComp);
+        digsim.components[digsim.iComp++] = gate;
+        digsim.setPlaceholders(gate);
+        gate.draw(digsim.staticContext);
+    }
 };
 
-// Click and drag gates
+// Called when wire mode is on - for dragging wires. 
 Digsim.prototype.onGridClicked = function(event) {
+    if (digsim.mode === digsim.WIRE_MODE) {
+        var mouseX = event.offsetX || event.layerX;
+        var mouseY = event.offsetY || event.layerY;
+
+        // Tells us where on the grid (we've created) the click is
+        var horizOffset = mouseX % digsim.GRID_SIZE;
+        var vertOffset = mouseY % digsim.GRID_SIZE;
+ 
+        // Determine grid snap for wires. 
+        if (horizOffset > (digsim.GRID_SIZE / 2)) { // right
+            digsim.startX = Math.floor(mouseX / digsim.GRID_SIZE) + 1;
+        }
+        else { // left
+            digsim.startX = Math.floor(mouseX / digsim.GRID_SIZE);
+        }
+        if (vertOffset > (digsim.GRID_SIZE / 2)) { // bottom
+            digsim.startY = Math.floor(mouseY / digsim.GRID_SIZE) + 1;
+        }
+        else { // top
+            digsim.startY = Math.floor(mouseY / digsim.GRID_SIZE);
+        }
+         
+        console.log(digsim.dragging);
+        // Start/end wire
+        if (digsim.dragging) {
+            //TODO:
+            // Snap end point to grid
+            // Create wires in wire array
+            // redraw on static Canvas
+            // connect wire to compnents
+            // vertical/horizontal drawing
+            // avoiding component collisions.... in a long time
+            digsim.dragging = false;
+        }
+        else {
+            digsim.dragging = true;
+            animateWire();
+        }
+            
+        
+    }
+};
+
+// Click and drag gates only called in default mode
+Digsim.prototype.onGridMouseDown = function(event) {
+    if (digsim.mode === digsim.DEFAULT_MODE) {
     // Useless comment
     event.preventDefault();
     
@@ -191,6 +263,7 @@ Digsim.prototype.onGridClicked = function(event) {
     else {
         console.log("empty");
     }
+    }
 };
 
 Digsim.prototype.drawComponents = function() {
@@ -213,6 +286,27 @@ window.requestAnimFrame = (function() {
             };
 })();
 
+function animateWire() {
+    if (digsim.dragging) {
+        var context = digsim.movingContext;
+        digsim.clearCanvas(context, digsim.gridWidth, digsim.gridHeight);
+        
+        requestAnimFrame(animateWire);
+        
+        var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
+        var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
+        
+        // Draw Wire
+        context.beginPath();
+        context.fillStyle = '#000000';
+        context.lineWidth = 2;
+        context.moveTo(digsim.startX * digsim.GRID_SIZE, digsim.startY * digsim.GRID_SIZE);
+        context.lineTo(digsim.mousePos.x, digsim.mousePos.y); 
+        context.closePath();
+        context.stroke();
+    }
+};
+
 function animate() {
     if (digsim.dragging) {
         digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
@@ -234,6 +328,7 @@ $("canvas").mousemove(function(event) {
 });
 
 $("canvas").mouseup(function(event) {
+                    if (digsim.mode !== digsim.WIRE_MODE) {
     if (digsim.dragging) {
         digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
         digsim.draggingGate.drawStatic = true;
@@ -242,6 +337,7 @@ $("canvas").mouseup(function(event) {
         digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
     }
     digsim.dragging = false;
+                    }
 });
 
 // Create namespace for the application. If namespace already exisists, don't override it, otherwise create an empty object.
