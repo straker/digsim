@@ -1,4 +1,25 @@
 
+/*
+ WIRE PLACEMENT GRID DIMENSIONS: 2n - 3
+ 
+ WIRE CLICK-FIND ALGORITHM
+ - check if closer to vert or horiz girdline and use as reference to search for wire
+ disX = mouseX % gridsize; // pixels away from grid line
+ disY = mouseY % gridsize;
+ if (disX < disY)
+    search array for vert wire
+    if no find
+        search array for horiz wire
+ else
+    search array for horiz wire
+    if no find
+        search array for vert wire 
+ 
+ */
+
+
+
+
 // Main application
 function Digsim() {
 	// Create constants
@@ -19,10 +40,11 @@ function Digsim() {
     this.DEFAULT_MODE = 0;
 	this.WIRE_MODE = 1;
     this.SIM_MODE = 3;
+    this.LR = 0;    // Left-right orientation
+    this.UD = 1;    // Up-down orientation
     
     // Animation variables
-    this.startX;
-    this.startY;
+    this.wirePos = {startX: -1, startY: -1, endX: -1, endY: -1};
     this.dragging = false;
     this.draggingGate;
     
@@ -171,45 +193,76 @@ Digsim.prototype.onButtonClicked = function (event) {
 // Called when wire mode is on - for dragging wires. 
 Digsim.prototype.onGridClicked = function(event) {
     if (digsim.mode === digsim.WIRE_MODE) {
+                 
         var mouseX = event.offsetX || event.layerX;
         var mouseY = event.offsetY || event.layerY;
-
+        var x, y;
+        
         // Tells us where on the grid (we've created) the click is
         var horizOffset = mouseX % digsim.GRID_SIZE;
         var vertOffset = mouseY % digsim.GRID_SIZE;
- 
+        
+        // Snap starting point to grid...
         // Determine grid snap for wires. 
         if (horizOffset > (digsim.GRID_SIZE / 2)) { // right
-            digsim.startX = Math.floor(mouseX / digsim.GRID_SIZE) + 1;
+            x = Math.floor(mouseX / digsim.GRID_SIZE) + 1;
         }
         else { // left
-            digsim.startX = Math.floor(mouseX / digsim.GRID_SIZE);
+            x = Math.floor(mouseX / digsim.GRID_SIZE);
         }
         if (vertOffset > (digsim.GRID_SIZE / 2)) { // bottom
-            digsim.startY = Math.floor(mouseY / digsim.GRID_SIZE) + 1;
+            y = Math.floor(mouseY / digsim.GRID_SIZE) + 1;
         }
         else { // top
-            digsim.startY = Math.floor(mouseY / digsim.GRID_SIZE);
+            y = Math.floor(mouseY / digsim.GRID_SIZE);
         }
-         
+        
         console.log(digsim.dragging);
         // Start/end wire
         if (digsim.dragging) {
-            //TODO:
+            // TODO:
             // Snap end point to grid
             // Create wires in wire array
             // redraw on static Canvas
             // connect wire to compnents
             // vertical/horizontal drawing
             // avoiding component collisions.... in a long time
+            
+            digsim.wirePos.endX = x;
+            digsim.wirePos.endY = y;
             digsim.dragging = false;
+            
+            /* DRAWS A STRAIGHT LINE FROM BEGIN TO END - COULD BE OBLIQUE */
+            digsim.staticContext.beginPath();
+            digsim.staticContext.fillStyle = '#000000';
+            digsim.staticContext.lineWidth = 2;
+            digsim.staticContext.moveTo(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE);
+            
+            // Draw the wire /////////
+            // HORIZONTAL - VERTICAL - HORIZONTAL
+            var diffX = Math.floor((digsim.wirePos.endX + digsim.wirePos.startX) / 2);
+            digsim.staticContext.lineTo(diffX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE);
+            digsim.staticContext.lineTo(diffX * digsim.GRID_SIZE, digsim.wirePos.endY * digsim.GRID_SIZE);
+            digsim.staticContext.lineTo(digsim.wirePos.endX * digsim.GRID_SIZE, digsim.wirePos.endY * digsim.GRID_SIZE); 
+            digsim.staticContext.stroke();
+             
+            
+            // VERTICAL - HORIZONTAL - VERTICAL
+            /*
+            var diffY = Math.floor((digsim.wirePos.endY + digsim.wirePos.startY) / 2);
+            digsim.staticContext.lineTo(digsim.wirePos.startX * digsim.GRID_SIZE, diffY * digsim.GRID_SIZE);
+            digsim.staticContext.lineTo(digsim.wirePos.endX * digsim.GRID_SIZE, diffY * digsim.GRID_SIZE);
+            digsim.staticContext.lineTo(digsim.wirePos.endX * digsim.GRID_SIZE, digsim.wirePos.endY * digsim.GRID_SIZE); 
+            digsim.staticContext.stroke();
+             */
+             
         }
         else {
             digsim.dragging = true;
+            digsim.wirePos.startX = x;
+            digsim.wirePos.startY = y;
             animateWire();
         }
-            
-        
     }
 };
 
@@ -287,22 +340,22 @@ window.requestAnimFrame = (function() {
 })();
 
 function animateWire() {
+    var context = digsim.movingContext;
+    digsim.clearCanvas(context, digsim.gridWidth, digsim.gridHeight);
+    
+    var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
+    var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
+    
     if (digsim.dragging) {
-        var context = digsim.movingContext;
-        digsim.clearCanvas(context, digsim.gridWidth, digsim.gridHeight);
         
         requestAnimFrame(animateWire);
-        
-        var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
-        var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
         
         // Draw Wire
         context.beginPath();
         context.fillStyle = '#000000';
         context.lineWidth = 2;
-        context.moveTo(digsim.startX * digsim.GRID_SIZE, digsim.startY * digsim.GRID_SIZE);
+        context.moveTo(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE);
         context.lineTo(digsim.mousePos.x, digsim.mousePos.y); 
-        context.closePath();
         context.stroke();
     }
 };
