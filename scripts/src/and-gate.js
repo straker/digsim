@@ -103,16 +103,3 @@ AND.prototype.computeLogic = function() {
     }
     this.state = computedState;
 };
-
-/*******************************************************************************
- * INIT
- *  Sets default values for the gate. 
- ******************************************************************************/
-AND.prototype.init = function (col, row, rot, id) {
-    this.column = col;
-    this.row = row;
-    this.rotation = rot;
-    this.id = id;
-    this.drawStatic = true;
-};
-

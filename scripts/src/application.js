@@ -34,7 +34,9 @@ function Digsim() {
 	this.WIRE_MODE = 1;
     this.SIM_MODE = 2;
     this.LR = 0;    // Left-right orientation
-    this.UD = 1;    // Up-down orientation
+    this.UD = 90;   // Up-down orientation
+    this.RL = 180;  // right-left orientation
+    this.DU = 270;  // down-up orientation;
     this.TL = 0;    // top-left
     this.TR = 1;    // top-right
     this.BL = 2;    // bottom-left
@@ -180,6 +182,17 @@ Digsim.prototype.setPlaceholders = function(gate) {
 };
 
 /*******************************************************************************
+ * SET PLACEHOLDERS
+ *  Given a wire object, adds it to the placeholder data array with unique
+ *  identifier. 
+ ******************************************************************************/
+Digsim.prototype.setWirePlaceholder = function(wire) {
+    var placeX = Math.floor(wire.column), placeY = Math.floor(wire.row);
+    placeholder = new Placeholder(wire.id, placeX, placeY, 1);
+    this.placeholder[placeX][placeY] = placeholder;
+};
+
+/*******************************************************************************
  * ON BUTTON CLICKED
  *  When a button is clicked, do this. Creates a gate when button is clicked. 
  *  This only works because of id on the html matches the name of the gate. 
@@ -270,7 +283,8 @@ Digsim.prototype.onGridClicked = function(event) {
             // Wire Drawing Logic, block by block
             x = digsim.wirePos.startX;
             y = digsim.wirePos.startY;
-            var position = []; 
+            var position = [], placeX, placeY, placeholder; 
+
             position[0] = ((digsim.wirePos.startPos === digsim.TL || 
                            digsim.wirePos.startPos === digsim.BR) && 
                            (wirePos === digsim.TL || wirePos === digsim.BR));
@@ -288,8 +302,12 @@ Digsim.prototype.onGridClicked = function(event) {
                            (wirePos === digsim.BR || wirePos === digsim.TL));
 
             // Garbage collecting to be done later... clean up this code!
+
+            /****** PROBLEM: We draw only 1 wire (which was nice), but if you draw the wires, and then move a gate, the
+                    redrawing of the static grid only draws the 1 wire (in the 1 grid), not the entire line! I guess we'll
+                    have to go back to 1 wire per grid so that we can redraw it properly when we move a gate around ******/
             var wire = new Wire(); 
-            wire.init(x, y, 1);
+            wire.init(x, y, digsim.UD, digsim.iComp);
             digsim.components[digsim.iComp++] = wire;
 
             //while (x != digsim.wirePos.endX && y != digsim.wirePos.endY) {
@@ -297,27 +315,49 @@ Digsim.prototype.onGridClicked = function(event) {
                 //          top-left to bottom-right
                 if (position[0]) {
                     // First, go towards y
-                    var changeY = (y > digsim.wirePos.endY) ? -1 : 1; 
-                    while (y != digsim.wirePos.endY) {
+                    var changeY = (y > digsim.wirePos.endY) ? -1 : 1;
+                    var changeX = (x > digsim.wirePos.endX) ? -1 : 1;
+                    while (y + changeY != digsim.wirePos.endY) {
                         
                         // To-do: Collision detect
                         
                         // Create placeholder
-                        var placeholder = new Placeholder(wire.id, x, y, 1);
-                        digsim.placeholder[y][x] = placeholder;
-                        if (y + changeY !== digsim.wirePos.endY) {
-                            wire.draw(digsim.staticContext);
-                        }
+                        digsim.setWirePlaceholder(wire);
+
+                        // Draw and update wire
+                        wire.draw(digsim.staticContext);
                         wire.row = (y = y + changeY);
-                        
                     }
                     
-                    // Go back half a grid
-                    wire.row = (y = y + ((digsim.wirePos.startY > digsim.wirePos.endY) ? 1.5 : -1.5));
-                    wire.draw(digsim.staticContext);
-                    wire.row += changeY;
-                    wire.draw(digsim.staticContext);
-                    while (false) {
+                    // Draw twoards x if needed
+                    console.log("X: " + x + "   ENDX: " + digsim.wirePos.endX);
+                    if (x !== digsim.wirePos.endX) {
+                        // Draw the remaining half a wire for the corner (implement in Wire function named drawCorner())
+                        wire.halfDraw(digsim.staticContext);
+                        wire.row += changeY / 2;
+
+                        // Rotate wire towards x                     
+                        if (x > digsim.wirePos.endX) 
+                            wire.rotation = digsim.RL;
+                        else
+                            wire.rotation = digsim.LR;
+                        
+                        digsim.setWirePlaceholder(wire);
+                        wire.halfDraw(digsim.staticContext);
+
+                        wire.column = (x += x > digsim.wirePos.endX ? -.5 : .5);
+                        console.log("X: " + x + "   ENDX: " + digsim.wirePos.endX);
+                        while (x + (x > digsim.wirePos.endX ? -.5 : .5) !== digsim.wirePos.endX) {
+                            // To-do: Collision detect
+                            
+                            // Create placeholder
+                            digsim.setWirePlaceholder(wire);
+
+                            // Draw and update wire
+                            wire.draw(digsim.staticContext);
+                            wire.column = (x = x + changeX);
+                            console.log("X: " + x + "   ENDX: " + digsim.wirePos.endX);
+                        }
                     }
                 }
             

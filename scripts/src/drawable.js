@@ -31,10 +31,12 @@ function Drawable(col, row, rot) {
  * INIT
  *  Initiates a drawable object at a given column, row, and rotation
  *****************************************************************************/
-Drawable.prototype.init = function (col, row, rot) {
+Drawable.prototype.init = function (col, row, rot, id) {
     this.column = col;
     this.row = row;
     this.rotation = rot;
+    this.id = id;
+    this.drawStatic = true;
 };
 
 /******************************************************************************
