@@ -1,29 +1,22 @@
+/*******************************************************************************
+ * Program: 
+ *  application.js
+ *
+ * Authors:
+ *  Steven Lambert
+ *  Zack Sheffield
+ *
+ * Summary:
+ *  A (soon-to-be) fully functional circuit simulation program. 
+ ******************************************************************************/
 
-/*
- WIRE PLACEMENT GRID DIMENSIONS: 2n - 3
- 
- WIRE CLICK-FIND ALGORITHM
- - check if closer to vert or horiz girdline and use as reference to search for wire
- disX = mouseX % gridsize; // pixels away from grid line
- disY = mouseY % gridsize;
- if (disX < disY)
-    search array for vert wire
-    if no find
-        search array for horiz wire
- else
-    search array for horiz wire
-    if no find
-        search array for vert wire 
- 
- */
-
-
-
-
-// Main application
+/*******************************************************************************
+ * DIGSIM
+ *  Holds all the constants, animation, and data variables for the program
+ ******************************************************************************/
 function Digsim() {
 	// Create constants
-	this.GRID_SIZE = 20;
+	this.GRID_SIZE = 41;
 	this.NUM_COLS = 60;
 	this.NUM_ROWS = 30;
     
@@ -39,12 +32,23 @@ function Digsim() {
     this.LED = 8;
     this.DEFAULT_MODE = 0;
 	this.WIRE_MODE = 1;
-    this.SIM_MODE = 3;
+    this.SIM_MODE = 2;
     this.LR = 0;    // Left-right orientation
     this.UD = 1;    // Up-down orientation
+    this.TL = 0;    // top-left
+    this.TR = 1;    // top-right
+    this.BL = 2;    // bottom-left
+    this.BR = 3;    // bottom-right
     
     // Animation variables
-    this.wirePos = {startX: -1, startY: -1, endX: -1, endY: -1};
+    this.wirePos = {
+        startX: -1, 
+        startY: -1, 
+        endX: -1, 
+        endY: -1, 
+        startPos: -1, 
+        endPos: -1
+    };
     this.dragging = false;
     this.draggingGate;
     
@@ -68,18 +72,12 @@ function Digsim() {
     for (var i = 0; i < this.NUM_COLS; ++i) {
         this.placeholder[i] = [];
     }
-    
-    this.wires = [];      
-    for (var r = 0; r < this.NUM_ROWS - 1; ++r) {
-        this.wires[r] = [];
-        for (var c = 0; c < this.NUM_COLS - 1; ++c) {
-             this.wires[r][c] = [];
-        }
-    }
-             
 };
 
-// Tests to see if the canvas is supported, returning true if it is
+/*******************************************************************************
+ * INIT
+ *  Tests to see if the canvas is supported, returning true if it is
+ ******************************************************************************/
 Digsim.prototype.init = function() {
 	// Get the canvas element
 	this.gridCanvas = document.getElementById('grid');
@@ -114,7 +112,10 @@ Digsim.prototype.init = function() {
 	}
 };
 
-// Clear a canvas element
+/*******************************************************************************
+ * CLEAR CANVAS
+ *  Clears the given canvas. 
+ ******************************************************************************/
 Digsim.prototype.clearCanvas = function(context, width, height) {
 	// Store the current transformation matrix
 	context.save();
@@ -127,7 +128,10 @@ Digsim.prototype.clearCanvas = function(context, width, height) {
 	context.restore();
 };
 
-// Draw the grid
+/*******************************************************************************
+ * DRAW GRID
+ *  Draws the underlying blue grid on the screen
+ ******************************************************************************/
 Digsim.prototype.drawGrid = function(context) {
 	// Outline the canvas	
 	context.strokeRect(0, 0, this.gridWidth, this.gridHeight);
@@ -149,14 +153,23 @@ Digsim.prototype.drawGrid = function(context) {
 	context.stroke();
 };
 
+/*******************************************************************************
+ * RUN
+ *  Starts doing stuff (window.onload)
+ ******************************************************************************/
 Digsim.prototype.run = function() {
 	if(this.init()) {
 		this.drawGrid(this.gridContext);
 	}
 };
 
+/*******************************************************************************
+ * SET PLACEHOLDERS
+ *  Given a gate object, adds it to the placeholder data array with unique
+ *  identifier. 
+ ******************************************************************************/
 Digsim.prototype.setPlaceholders = function(gate) {
-    var factor = 2 * (Math.floor(gate.numInputs / 2) + 1);
+    var factor = (2 * (Math.floor(gate.numInputs / 2))) + 1;
     var row, col;
     for (row = 0; row < factor; ++row) {
         for (col = 0; col < factor; ++col) {
@@ -166,8 +179,12 @@ Digsim.prototype.setPlaceholders = function(gate) {
     }
 };
 
-// Create a gate when button is clicked. This only works because id on html 
-// matches the name of the gate. ("AND", "OR", etc...).
+/*******************************************************************************
+ * ON BUTTON CLICKED
+ *  When a button is clicked, do this. Creates a gate when button is clicked. 
+ *  This only works because of id on the html matches the name of the gate. 
+ *  "AND", "OR", etc...
+ ******************************************************************************/
 Digsim.prototype.onButtonClicked = function (event) {
     var id = $(this).attr("id");
     
@@ -175,14 +192,14 @@ Digsim.prototype.onButtonClicked = function (event) {
     var MyClass = window;
     MyClass = MyClass[id];
     if (id == "Wire") {
-        console.log("Wire Clicked!");
         $("canvas").css('cursor','crosshair');
+
         digsim.mode = digsim.WIRE_MODE;
     }
     else {
         $("canvas").css('cursor','default');
         digsim.mode = digsim.DEFAULT_MODE;
-        var gate = new MyClass(2); 
+        var gate = new MyClass(3); 
         gate.init(2, 2, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = gate;
         digsim.setPlaceholders(gate);
@@ -190,83 +207,137 @@ Digsim.prototype.onButtonClicked = function (event) {
     }
 };
 
-// Called when wire mode is on - for dragging wires. 
+/*******************************************************************************
+ * ON GRID CLICKED
+ *  Called when wire mode is on - for dragging wires. 
+ ******************************************************************************/
 Digsim.prototype.onGridClicked = function(event) {
     if (digsim.mode === digsim.WIRE_MODE) {
                  
         var mouseX = event.offsetX || event.layerX;
         var mouseY = event.offsetY || event.layerY;
         var x, y;
-        
+                
         // Tells us where on the grid (we've created) the click is
-        var horizOffset = mouseX % digsim.GRID_SIZE;
-        var vertOffset = mouseY % digsim.GRID_SIZE;
+        var relX = mouseX % digsim.GRID_SIZE;
+        var relY = mouseY % digsim.GRID_SIZE;
+        var diagSep = digsim.GRID_SIZE - relX;
+        var wirePos = 0;
         
         // Snap starting point to grid...
         // Determine grid snap for wires. 
-        if (horizOffset > (digsim.GRID_SIZE / 2)) { // right
-            x = Math.floor(mouseX / digsim.GRID_SIZE) + 1;
+        if (relY < relX) {  // top
+            if (relY < diagSep) {  // top-left
+                x = Math.floor(mouseX / digsim.GRID_SIZE) + 0.5;
+                y = Math.floor(mouseY / digsim.GRID_SIZE);
+                wirePos = digsim.TL;
+            }
+            else { // top-right
+                x = Math.floor(mouseX / digsim.GRID_SIZE) + 1;
+                y = Math.floor(mouseY / digsim.GRID_SIZE) + 0.5;
+                wirePos = digsim.TR;
+            }
         }
-        else { // left
-            x = Math.floor(mouseX / digsim.GRID_SIZE);
-        }
-        if (vertOffset > (digsim.GRID_SIZE / 2)) { // bottom
-            y = Math.floor(mouseY / digsim.GRID_SIZE) + 1;
-        }
-        else { // top
-            y = Math.floor(mouseY / digsim.GRID_SIZE);
+        else { // bottom
+            if (relY < diagSep) { // bottom-left
+                x = Math.floor(mouseX / digsim.GRID_SIZE);
+                y = Math.floor(mouseY / digsim.GRID_SIZE) + 0.5;
+                wirePos = digsim.BL;
+            }
+            else { // bottom-right
+                x = Math.floor(mouseX / digsim.GRID_SIZE) + 0.5;
+                y = Math.floor(mouseY / digsim.GRID_SIZE) + 1;
+                wirePos = digsim.BR;
+            }
         }
         
-        console.log(digsim.dragging);
         // Start/end wire
         if (digsim.dragging) {
-            // TODO:
+            // TO DO:
+            // wire logic
             // Snap end point to grid
-            // Create wires in wire array
+            // Create wires in component array
+            // Create placeholders for wires in placeholder array
             // redraw on static Canvas
-            // connect wire to compnents
-            // vertical/horizontal drawing
+            // connect wire to components
             // avoiding component collisions.... in a long time
             
             digsim.wirePos.endX = x;
             digsim.wirePos.endY = y;
             digsim.dragging = false;
+            // digsim.wirePos.endPos = wirePos; may or may not need this.
             
-            /* DRAWS A STRAIGHT LINE FROM BEGIN TO END - COULD BE OBLIQUE */
-            digsim.staticContext.beginPath();
-            digsim.staticContext.fillStyle = '#000000';
-            digsim.staticContext.lineWidth = 2;
-            digsim.staticContext.moveTo(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE);
+            // Wire Drawing Logic, block by block
+            x = digsim.wirePos.startX;
+            y = digsim.wirePos.startY;
+            var position = []; 
+            position[0] = ((digsim.wirePos.startPos === digsim.TL || 
+                           digsim.wirePos.startPos === digsim.BR) && 
+                           (wirePos === digsim.TL || wirePos === digsim.BR));
             
-            // Draw the wire /////////
-            // HORIZONTAL - VERTICAL - HORIZONTAL
-            var diffX = Math.floor((digsim.wirePos.endX + digsim.wirePos.startX) / 2);
-            digsim.staticContext.lineTo(diffX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE);
-            digsim.staticContext.lineTo(diffX * digsim.GRID_SIZE, digsim.wirePos.endY * digsim.GRID_SIZE);
-            digsim.staticContext.lineTo(digsim.wirePos.endX * digsim.GRID_SIZE, digsim.wirePos.endY * digsim.GRID_SIZE); 
-            digsim.staticContext.stroke();
-             
+            position[1] = ((digsim.wirePos.startPos === digsim.TL || 
+                           digsim.wirePos.startPos === digsim.BR) && 
+                           (wirePos === digsim.BL || wirePos === digsim.TR));
+
+            position[2] = ((digsim.wirePos.startPos === digsim.TR || 
+                            digsim.wirePos.startPos === digsim.BL) && 
+                           (wirePos === digsim.BL || wirePos === digsim.TR));
+
+            position[3] = ((digsim.wirePos.startPos === digsim.TR || 
+                            digsim.wirePos.startPos === digsim.BL) && 
+                           (wirePos === digsim.BR || wirePos === digsim.TL));
+
+            // Garbage collecting to be done later... clean up this code!
+            var wire = new Wire(); 
+            wire.init(x, y, 1);
+            digsim.components[digsim.iComp++] = wire;
+
+            //while (x != digsim.wirePos.endX && y != digsim.wirePos.endY) {
+                // Case 1:  top-left to top-left &
+                //          top-left to bottom-right
+                if (position[0]) {
+                    // First, go towards y
+                    var changeY = (y > digsim.wirePos.endY) ? -1 : 1; 
+                    while (y != digsim.wirePos.endY) {
+                        
+                        // To-do: Collision detect
+                        
+                        // Create placeholder
+                        var placeholder = new Placeholder(wire.id, x, y, 1);
+                        digsim.placeholder[y][x] = placeholder;
+                        if (y + changeY !== digsim.wirePos.endY) {
+                            wire.draw(digsim.staticContext);
+                        }
+                        wire.row = (y = y + changeY);
+                        
+                    }
+                    
+                    // Go back half a grid
+                    wire.row = (y = y + ((digsim.wirePos.startY > digsim.wirePos.endY) ? 1.5 : -1.5));
+                    wire.draw(digsim.staticContext);
+                    wire.row += changeY;
+                    wire.draw(digsim.staticContext);
+                    while (false) {
+                    }
+                }
             
-            // VERTICAL - HORIZONTAL - VERTICAL
-            /*
-            var diffY = Math.floor((digsim.wirePos.endY + digsim.wirePos.startY) / 2);
-            digsim.staticContext.lineTo(digsim.wirePos.startX * digsim.GRID_SIZE, diffY * digsim.GRID_SIZE);
-            digsim.staticContext.lineTo(digsim.wirePos.endX * digsim.GRID_SIZE, diffY * digsim.GRID_SIZE);
-            digsim.staticContext.lineTo(digsim.wirePos.endX * digsim.GRID_SIZE, digsim.wirePos.endY * digsim.GRID_SIZE); 
-            digsim.staticContext.stroke();
-             */
-             
+                
+            //}
         }
         else {
             digsim.dragging = true;
             digsim.wirePos.startX = x;
             digsim.wirePos.startY = y;
+            digsim.wirePos.startPos = wirePos;
             animateWire();
         }
     }
 };
 
-// Click and drag gates only called in default mode
+/*******************************************************************************
+ * ON GRID MOUSE DOWN
+ *  Click and drag gates. Only called in default mode. 
+ ******************************************************************************/
 Digsim.prototype.onGridMouseDown = function(event) {
     if (digsim.mode === digsim.DEFAULT_MODE) {
     // Useless comment
@@ -314,11 +385,17 @@ Digsim.prototype.onGridMouseDown = function(event) {
         
     }
     else {
+        // There's nothing where you clicked, dude. 
         console.log("empty");
     }
     }
 };
 
+/*******************************************************************************
+ * DRAW COMPONENTS
+ *  Redraws all the components on the static canvas, after everything has been
+ *  dragged and dropped
+ ******************************************************************************/
 Digsim.prototype.drawComponents = function() {
     this.clearCanvas(this.staticContext, this.gridWidth, this.gridHeight);
     for (index in this.components) {
@@ -328,6 +405,11 @@ Digsim.prototype.drawComponents = function() {
     }
 };
 
+/*******************************************************************************
+ * REQUEST ANIMATION FRAME
+ *  Optimizes the 60 frames/sec animation frame rate relative to the browser
+ ******************************************************************************/
+{
 window.requestAnimFrame = (function() {
     return  window.requestAnimationFrame       || 
             window.webkitRequestAnimationFrame || 
@@ -338,7 +420,13 @@ window.requestAnimFrame = (function() {
                 window.setTimeout(callback, 1000 / 60);
             };
 })();
+}
 
+/*******************************************************************************
+ * ANIMATE WIRE
+ *  While a wire is being placed, keep a line drawn from starting point to 
+ *  mouse position
+ ******************************************************************************/
 function animateWire() {
     var context = digsim.movingContext;
     digsim.clearCanvas(context, digsim.gridWidth, digsim.gridHeight);
@@ -360,6 +448,11 @@ function animateWire() {
     }
 };
 
+/*******************************************************************************
+ * ANIMATE
+ *  Anything that is being moved will be drawn with this function on the 
+ *  movingContext canvas. 
+ ******************************************************************************/
 function animate() {
     if (digsim.dragging) {
         digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
@@ -374,12 +467,24 @@ function animate() {
     }
 };
 
+/*******************************************************************************
+ * MOUSE MOVE
+ *  Gets the position of the mouse on the canvas. 
+ ******************************************************************************/
+{
 $("canvas").mousemove(function(event) {
     var mouseX = event.offsetX || event.layerX;
     var mouseY = event.offsetY || event.layerY;
     digsim.mousePos = { x: mouseX, y: mouseY };
 });
+}
 
+/*******************************************************************************
+ * MOUSE UP
+ *  When the mouse is realeased while on the canvas, this will take care of all
+ *  the things that change after stuff being dragged around. 
+ ******************************************************************************/
+{
 $("canvas").mouseup(function(event) {
                     if (digsim.mode !== digsim.WIRE_MODE) {
     if (digsim.dragging) {
@@ -392,8 +497,13 @@ $("canvas").mouseup(function(event) {
     digsim.dragging = false;
                     }
 });
+}
 
-// Create namespace for the application. If namespace already exisists, don't override it, otherwise create an empty object.
+/*******************************************************************************
+ * NAMESPACE THINGY
+ *  Create namespace for the application. If namespace already exisists, don't
+ *  override it, otherwise create an empty object.
+ ******************************************************************************/
 var digsim = digsim || new Digsim();
 
 

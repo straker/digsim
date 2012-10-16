@@ -1,3 +1,19 @@
+/******************************************************************************
+ * Program: 
+ *  drawable.js
+ *
+ * Authors:
+ *  Steven Lambert
+ *  Zack Sheffield
+ *
+ * Summary:
+ *  Mother class for all objects drawable. 
+ *****************************************************************************/
+
+/******************************************************************************
+ * DRAWABLE
+ *  Sets default values for the object
+ *****************************************************************************/
 function Drawable(col, row, rot) {
     this.id = 0;
     this.column = 0;
@@ -11,12 +27,21 @@ function Drawable(col, row, rot) {
     this.drawStatic = true;
 };
 
+/******************************************************************************
+ * INIT
+ *  Initiates a drawable object at a given column, row, and rotation
+ *****************************************************************************/
 Drawable.prototype.init = function (col, row, rot) {
     this.column = col;
     this.row = row;
     this.rotation = rot;
 };
 
+/******************************************************************************
+ * PASS STATE
+ *  Passes the state of the current object to the next object (be it a wire, 
+ *  gate, LED, etc). 
+ *****************************************************************************/
 Drawable.prototype.passState = function(pState) {
     if (this.type === digsim.WIRE || 
         this.type === digsim.SWITCH || 
@@ -33,15 +58,23 @@ Drawable.prototype.passState = function(pState) {
     }
 };
 
-// Called when an object is dragged into place and connected with another
-// object. 
+/******************************************************************************
+ * SET NEXT
+ *  Objects are doubly linked. Called when an object is dragged into place 
+ *  and connected with another object.
+ *****************************************************************************/
 Drawable.prototype.setNext = function(obj) {
     this.next.push(obj);
     obj.prev.push(this);
 };
 
-// Same here. Doubly linked list
+/******************************************************************************
+ * SET PREVIOUS
+ *  Objects are doubly linked. Called when an object is dragged into place 
+ *  and connected with another object.
+ *****************************************************************************/
 Drawable.prototype.setPrev = function(obj) {
     this.prev.push(obj);
     obj.next.push(this);
 };
+

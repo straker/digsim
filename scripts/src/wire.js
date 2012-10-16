@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * Program: 
+ *  wire.js
+ *
+ * Authors:
+ *  Steven Lambert
+ *  Zack Sheffield
+ ******************************************************************************/
+
 function Wire() {
     this.type = digsim.WIRE;
     this.next = [];
@@ -7,7 +16,10 @@ function Wire() {
 
 Wire.prototype = new Drawable();
 
-// Draw a wire, 1 grid at a time
+/******************************************************************************
+ * DRAW
+ *  Draws a wire on a grid space
+ *****************************************************************************/
 Wire.prototype.draw = function(context) {
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
