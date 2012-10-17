@@ -33,6 +33,8 @@ function Digsim() {
     this.DEFAULT_MODE = 0;
 	this.WIRE_MODE = 1;
     this.SIM_MODE = 2;
+    
+    // Wire identifiers
     this.LR = 0;    // Left-right orientation
     this.UD = 90;   // Up-down orientation
     this.RL = 180;  // right-left orientation
@@ -186,10 +188,10 @@ Digsim.prototype.setPlaceholders = function(gate) {
  *  Given a wire object, adds it to the placeholder data array with unique
  *  identifier. 
  ******************************************************************************/
-Digsim.prototype.setWirePlaceholder = function(wire) {
-    var placeX = Math.floor(wire.column), placeY = Math.floor(wire.row);
-    placeholder = new Placeholder(wire.id, placeX, placeY, 1);
-    this.placeholder[placeX][placeY] = placeholder;
+Digsim.prototype.setWirePlaceholder = function(id, col, row) {
+    placeholder = new Placeholder(id, col, row, 1);
+    console.log(placeholder);
+    this.placeholder[row][col] = placeholder;
 };
 
 /*******************************************************************************
@@ -281,8 +283,8 @@ Digsim.prototype.onGridClicked = function(event) {
             // digsim.wirePos.endPos = wirePos; may or may not need this.
             
             // Wire Drawing Logic, block by block
-            x = digsim.wirePos.startX;
-            y = digsim.wirePos.startY;
+            // x = digsim.wirePos.startX;
+            // y = digsim.wirePos.startY;
             var position = [], placeX, placeY, placeholder; 
 
             position[0] = ((digsim.wirePos.startPos === digsim.TL || 
@@ -302,65 +304,67 @@ Digsim.prototype.onGridClicked = function(event) {
                            (wirePos === digsim.BR || wirePos === digsim.TL));
 
             // Garbage collecting to be done later... clean up this code!
-
-            /****** PROBLEM: We draw only 1 wire (which was nice), but if you draw the wires, and then move a gate, the
-                    redrawing of the static grid only draws the 1 wire (in the 1 grid), not the entire line! I guess we'll
-                    have to go back to 1 wire per grid so that we can redraw it properly when we move a gate around ******/
             var wire = new Wire(); 
-            wire.init(x, y, digsim.UD, digsim.iComp);
             digsim.components[digsim.iComp++] = wire;
+
+            // Going up/down and left/right?
+            var changeY = (y < digsim.wirePos.startY) ? -1 : 1;
+            var changeX = (x < digsim.wirePos.startX) ? -1 : 1;
+            
+            var startCol, startRow, endCol, endRow;
 
             //while (x != digsim.wirePos.endX && y != digsim.wirePos.endY) {
                 // Case 1:  top-left to top-left &
                 //          top-left to bottom-right
+            
                 if (position[0]) {
-                    // First, go towards y
-                    var changeY = (y > digsim.wirePos.endY) ? -1 : 1;
-                    var changeX = (x > digsim.wirePos.endX) ? -1 : 1;
-                    while (y + changeY != digsim.wirePos.endY) {
-                        
-                        // To-do: Collision detect
-                        
-                        // Create placeholder
-                        digsim.setWirePlaceholder(wire);
-
-                        // Draw and update wire
-                        wire.draw(digsim.staticContext);
-                        wire.row = (y = y + changeY);
+                    if (changeY === 1) { // Down
+                        startCol = Math.floor(digsim.wirePos.startX);
+                        startRow = digsim.wirePos.startY;
+                        endCol = Math.floor(x);
+                        endRow = y - 1;
                     }
-                    
-                    // Draw twoards x if needed
-                    console.log("X: " + x + "   ENDX: " + digsim.wirePos.endX);
-                    if (x !== digsim.wirePos.endX) {
-                        // Draw the remaining half a wire for the corner (implement in Wire function named drawCorner())
-                        wire.halfDraw(digsim.staticContext);
-                        wire.row += changeY / 2;
-
-                        // Rotate wire towards x                     
-                        if (x > digsim.wirePos.endX) 
-                            wire.rotation = digsim.RL;
-                        else
-                            wire.rotation = digsim.LR;
-                        
-                        digsim.setWirePlaceholder(wire);
-                        wire.halfDraw(digsim.staticContext);
-
-                        wire.column = (x += x > digsim.wirePos.endX ? -.5 : .5);
-                        console.log("X: " + x + "   ENDX: " + digsim.wirePos.endX);
-                        while (x + (x > digsim.wirePos.endX ? -.5 : .5) !== digsim.wirePos.endX) {
-                            // To-do: Collision detect
-                            
-                            // Create placeholder
-                            digsim.setWirePlaceholder(wire);
-
-                            // Draw and update wire
-                            wire.draw(digsim.staticContext);
-                            wire.column = (x = x + changeX);
-                            console.log("X: " + x + "   ENDX: " + digsim.wirePos.endX);
-                        }
+                    else { // Up
+                        startCol = Math.floor(digsim.wirePos.startX);
+                        startRow = digsim.wirePos.startY - 1;
+                        endCol = Math.floor(x);
+                        endRow = y;
                     }
                 }
+            console.log("x: " + x);
+            console.log("y: " + y);
+            console.log("startCol: " + startCol);
+            console.log("startRow: " + startRow);
+            console.log("endCol: " + endCol);
+            console.log("endRow: " + endRow);
+            wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
             
+            
+            var relY = 0, relX = 0;
+            for(var i = startRow; i != endRow; i += changeY) {
+                digsim.setWirePlaceholder(wire.id, startCol, i);
+                ++relY;
+            }   
+            
+            wire.path.push( {'x': startCol + 0.5, 'y': relY + 0.5 + changeY} );
+            
+            for(var i = startCol; i != endCol; i += changeX) {
+                digsim.setWirePlaceholder(wire.id, i, startRow + relY * changeY);
+                ++relX;
+            }
+            
+            wire.path.push( {'x': relX + 0.5, 'y': relY + 0.5} );
+            digsim.setWirePlaceholder(wire.id, startCol + relX * changeX, startRow + relY * changeY);
+            
+            if (changeY === 1) {
+                wire.path.push( {'x': relX + 0.5, 'y': relY + changeY} );
+            }
+            else {
+                wire.path.push( {'x': relX + 0.5, 'y': relY} );
+            }
+            
+            wire.draw(digsim.staticContext);
+            console.log("after draw");
                 
             //}
         }
