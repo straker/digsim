@@ -15,7 +15,7 @@
  *  Holds all the constants, animation, and data variables for the program
  ******************************************************************************/
 function Digsim() {
-	// Create constants
+	// Constants
 	this.GRID_SIZE = 41;
 	this.NUM_COLS = 60;
 	this.NUM_ROWS = 30;
@@ -35,10 +35,6 @@ function Digsim() {
     this.SIM_MODE = 2;
     
     // Wire identifiers
-    this.LR = 0;    // Left-right orientation
-    this.UD = 90;   // Up-down orientation
-    this.RL = 180;  // right-left orientation
-    this.DU = 270;  // down-up orientation;
     this.TL = 0;    // top-left
     this.TR = 1;    // top-right
     this.BL = 2;    // bottom-left
@@ -48,10 +44,7 @@ function Digsim() {
     this.wirePos = {
         startX: -1, 
         startY: -1, 
-        endX: -1, 
-        endY: -1, 
         startPos: -1, 
-        endPos: -1
     };
     this.dragging = false;
     this.draggingGate;
@@ -59,8 +52,6 @@ function Digsim() {
 	// Grid variables
 	this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
 	this.gridHeight = this.NUM_ROWS * this.GRID_SIZE;
-    this.oGridWidth = this.gridWidth - this.GRID_SIZE;
-    this.oGridHeight = this.gridHeight - this.GRID_SIZE;
     this.mousePos = { x: -1, y: -1 };
     this.offsetCol = 0;
     this.offsetRow = 0;
@@ -172,7 +163,7 @@ Digsim.prototype.run = function() {
  *  Given a gate object, adds it to the placeholder data array with unique
  *  identifier. 
  ******************************************************************************/
-Digsim.prototype.setPlaceholders = function(gate) {
+Digsim.prototype.setGatePlaceholders = function(gate) {
     var factor = (2 * (Math.floor(gate.numInputs / 2))) + 1;
     var row, col;
     for (row = 0; row < factor; ++row) {
@@ -190,7 +181,6 @@ Digsim.prototype.setPlaceholders = function(gate) {
  ******************************************************************************/
 Digsim.prototype.setWirePlaceholder = function(id, col, row) {
     placeholder = new Placeholder(id, col, row, 1);
-    console.log(placeholder);
     this.placeholder[row][col] = placeholder;
 };
 
@@ -217,7 +207,7 @@ Digsim.prototype.onButtonClicked = function (event) {
         var gate = new MyClass(3); 
         gate.init(2, 2, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = gate;
-        digsim.setPlaceholders(gate);
+        digsim.setGatePlaceholders(gate);
         gate.draw(digsim.staticContext);
     }
 };
@@ -276,15 +266,10 @@ Digsim.prototype.onGridClicked = function(event) {
             // redraw on static Canvas
             // connect wire to components
             // avoiding component collisions.... in a long time
-            
-            digsim.wirePos.endX = x;
-            digsim.wirePos.endY = y;
+
             digsim.dragging = false;
-            // digsim.wirePos.endPos = wirePos; may or may not need this.
             
             // Wire Drawing Logic, block by block
-            // x = digsim.wirePos.startX;
-            // y = digsim.wirePos.startY;
             var position = [], placeX, placeY, placeholder; 
 
             position[0] = ((digsim.wirePos.startPos === digsim.TL || 
@@ -331,41 +316,28 @@ Digsim.prototype.onGridClicked = function(event) {
                         endRow = y;
                     }
                 }
-            console.log("x: " + x);
-            console.log("y: " + y);
-            console.log("startCol: " + startCol);
-            console.log("startRow: " + startRow);
-            console.log("endCol: " + endCol);
-            console.log("endRow: " + endRow);
-            wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
-            
-            
-            var relY = 0, relX = 0;
-            for(var i = startRow; i != endRow; i += changeY) {
-                digsim.setWirePlaceholder(wire.id, startCol, i);
-                ++relY;
-            }   
-            
-            wire.path.push( {'x': startCol + 0.5, 'y': relY + 0.5 + changeY} );
-            
-            for(var i = startCol; i != endCol; i += changeX) {
-                digsim.setWirePlaceholder(wire.id, i, startRow + relY * changeY);
-                ++relX;
-            }
-            
-            wire.path.push( {'x': relX + 0.5, 'y': relY + 0.5} );
-            digsim.setWirePlaceholder(wire.id, startCol + relX * changeX, startRow + relY * changeY);
-            
-            if (changeY === 1) {
-                wire.path.push( {'x': relX + 0.5, 'y': relY + changeY} );
-            }
-            else {
-                wire.path.push( {'x': relX + 0.5, 'y': relY} );
-            }
-            
-            wire.draw(digsim.staticContext);
-            console.log("after draw");
+
+                wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
                 
+                
+                var relY = 0, relX = 0;
+                for(var i = startRow; i != endRow; i += changeY) {
+                    digsim.setWirePlaceholder(wire.id, startCol, i);
+                    relY += changeY;
+                }   
+                
+                wire.path.push( {'x': 0, 'y': relY + 0.5 * changeY} );
+                
+                for(var i = startCol; i != endCol; i += changeX) {
+                    digsim.setWirePlaceholder(wire.id, i, startRow + relY);
+                    relX += changeX;
+                }
+                
+                wire.path.push( {'x': relX, 'y': relY + 0.5 * changeY} );
+                digsim.setWirePlaceholder(wire.id, startCol + relX, startRow + relY);
+                wire.path.push( {'x': relX, 'y': relY + changeY} );
+                
+                wire.draw(digsim.staticContext);
             //}
         }
         else {
@@ -534,7 +506,7 @@ $("canvas").mouseup(function(event) {
     if (digsim.dragging) {
         digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
         digsim.draggingGate.drawStatic = true;
-        digsim.setPlaceholders(digsim.draggingGate);
+        digsim.setGatePlaceholders(digsim.draggingGate);
         digsim.draggingGate.draw(digsim.staticContext);
         digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
     }

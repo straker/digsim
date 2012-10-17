@@ -79,14 +79,16 @@ AND.prototype.draw = function(context) {
     var cnt = 0;
     for (var i = 0; i < this.numInputs; ++i) {
         if (i % 2) { 
-            this.prev[i].init(this.column - 1, this.row + (factor * 2) + .5 - cnt++, this.rotation);
+            this.prev[i].init(this.column, this.row + (factor * 2) + .5 - cnt++, this.rotation);
         }
         else {
-            this.prev[i].init(this.column - 1, this.row + cnt + .5, this.rotation);
+            this.prev[i].init(this.column, this.row + cnt + .5, this.rotation);
         }
+        this.prev[i].path.push({'x': -1, 'y': 0})
         this.prev[i].draw(context);
     }
     this.next[0].init(this.column + (factor * 2) + 1, this.row + factor + .5, this.rotation);
+    this.next[0].path.push({'x': 1, 'y': 0});
     this.next[0].draw(context);
 };
 

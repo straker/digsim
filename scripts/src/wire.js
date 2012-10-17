@@ -22,7 +22,6 @@ Wire.prototype = new Drawable();
  *  Draws a wire on a grid space
  *****************************************************************************/
 Wire.prototype.draw = function(context) {
-    console.log("enter draw");
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
 
