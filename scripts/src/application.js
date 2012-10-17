@@ -83,6 +83,7 @@ Digsim.prototype.init = function() {
 	if (this.gridCanvas.getContext) {
         // onClick events
         $("canvas").mousedown(digsim.onGridMouseDown);
+        $("canvas").mouseup(digsim.onGridMouseUp);
         $("button").click(digsim.onButtonClicked);
         $("canvas").click(digsim.onGridClicked);
 
@@ -149,13 +150,17 @@ Digsim.prototype.drawGrid = function(context) {
 };
 
 /*******************************************************************************
- * RUN
- *  Starts doing stuff (window.onload)
+ * DRAW COMPONENTS
+ *  Redraws all the components on the static canvas, after everything has been
+ *  dragged and dropped
  ******************************************************************************/
-Digsim.prototype.run = function() {
-	if(this.init()) {
-		this.drawGrid(this.gridContext);
-	}
+Digsim.prototype.drawComponents = function() {
+    this.clearCanvas(this.staticContext, this.gridWidth, this.gridHeight);
+    for (index in this.components) {
+        if(this.components[index].drawStatic) {
+            this.components[index].draw(this.staticContext);
+        }
+    }
 };
 
 /*******************************************************************************
@@ -182,6 +187,17 @@ Digsim.prototype.setGatePlaceholders = function(gate) {
 Digsim.prototype.setWirePlaceholder = function(id, col, row) {
     placeholder = new Placeholder(id, col, row, 1);
     this.placeholder[row][col] = placeholder;
+};
+
+
+/*******************************************************************************
+ * RUN
+ *  Starts doing stuff (window.onload)
+ ******************************************************************************/
+Digsim.prototype.run = function() {
+    if(this.init()) {
+        this.drawGrid(this.gridContext);
+    }
 };
 
 /*******************************************************************************
@@ -356,76 +372,89 @@ Digsim.prototype.onGridClicked = function(event) {
  ******************************************************************************/
 Digsim.prototype.onGridMouseDown = function(event) {
     if (digsim.mode === digsim.DEFAULT_MODE) {
-    // Useless comment
-    event.preventDefault();
-    
-    if (digsim.dragging) {
+        event.preventDefault();
         
-    }
-    digsim.dragging = false;
-    
-    // Gets mouse position on canvas
-    var mouseX = event.offsetX || event.layerX;
-    var mouseY = event.offsetY || event.layerY;
-    
-    // Tells us where on the grid (we've created) the click is
-    var col = Math.floor(mouseX / digsim.GRID_SIZE);
-    var row = Math.floor(mouseY / digsim.GRID_SIZE);
-    
-    // Here's where the magic happens
-    if (digsim.placeholder[row][col]) {
-        digsim.dragging = true;
-        
-        var ref = digsim.placeholder[row][col].ref;
-        digsim.draggingGate = digsim.components[ref];
-        digsim.draggingGate.drawStatic = false;
-        
-        // Remove the component from the array
-        var placeholder = digsim.placeholder[row][col];
-        var posX = placeholder.posX;
-        var posY = placeholder.posY;
-        var size = placeholder.size;
-        digsim.offsetRow = posY;
-        digsim.offsetCol = posX;
-        for (var y = 0, iRow = row - posY; y < size; ++y) {
-            for (var x = 0, iCol = col - posX; x < size; ++x) {
-                digsim.placeholder[iRow + y][iCol + x] = undefined;
-            }
+        // If the onMosueUp event didn't get triggered, trigger it here
+        if (digsim.dragging) {
+            $("canvas").mouseup();
         }
+        digsim.dragging = false;
+        
+        // Gets mouse position on canvas
+        var mouseX = event.offsetX || event.layerX;
+        var mouseY = event.offsetY || event.layerY;
+        
+        // Tells us where on the grid (we've created) the click is
+        var col = Math.floor(mouseX / digsim.GRID_SIZE);
+        var row = Math.floor(mouseY / digsim.GRID_SIZE);
+        
+        // Here's where the magic happens
+        if (digsim.placeholder[row][col]) {
+            digsim.dragging = true;
+            
+            var ref = digsim.placeholder[row][col].ref;
+            digsim.draggingGate = digsim.components[ref];
+            digsim.draggingGate.drawStatic = false;
+            
+            // Remove the component from the array
+            var placeholder = digsim.placeholder[row][col];
+            var posX = placeholder.posX;
+            var posY = placeholder.posY;
+            var size = placeholder.size;
+            digsim.offsetRow = posY;
+            digsim.offsetCol = posX;
+            for (var y = 0, iRow = row - posY; y < size; ++y) {
+                for (var x = 0, iCol = col - posX; x < size; ++x) {
+                    digsim.placeholder[iRow + y][iCol + x] = undefined;
+                }
+            }
 
-        // Visually remove component from static canvas. 
-        digsim.drawComponents();
-        
-        digsim.draggingGate.draw(digsim.movingContext);
-        animate();
-        
-    }
-    else {
-        // There's nothing where you clicked, dude. 
-        console.log("empty");
-    }
+            // Visually remove component from static canvas. 
+            digsim.drawComponents();
+            
+            digsim.draggingGate.draw(digsim.movingContext);
+            animate();
+            
+        }
+        else {
+            // There's nothing where you clicked, dude. 
+            console.log("empty");
+        }
     }
 };
 
 /*******************************************************************************
- * DRAW COMPONENTS
- *  Redraws all the components on the static canvas, after everything has been
- *  dragged and dropped
+ * MOUSE UP
+ *  When the mouse is realeased while on the canvas, this will take care of all
+ *  the things that change after stuff being dragged around. 
  ******************************************************************************/
-Digsim.prototype.drawComponents = function() {
-    this.clearCanvas(this.staticContext, this.gridWidth, this.gridHeight);
-    for (index in this.components) {
-        if(this.components[index].drawStatic) {
-            this.components[index].draw(this.staticContext);
+Digsim.prototype.onGridMouseUp = function(event) {
+    if (digsim.mode !== digsim.WIRE_MODE) {
+        if (digsim.dragging) {
+            digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
+            digsim.draggingGate.drawStatic = true;
+            digsim.setGatePlaceholders(digsim.draggingGate);
+            digsim.draggingGate.draw(digsim.staticContext);
+            digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
         }
+        digsim.dragging = false;
     }
 };
+
+/*******************************************************************************
+ * MOUSE MOVE
+ *  Gets the position of the mouse on the canvas. 
+ ******************************************************************************/
+$("canvas").mousemove(function(event) {
+    var mouseX = event.offsetX || event.layerX;
+    var mouseY = event.offsetY || event.layerY;
+    digsim.mousePos = { x: mouseX, y: mouseY };
+});
 
 /*******************************************************************************
  * REQUEST ANIMATION FRAME
  *  Optimizes the 60 frames/sec animation frame rate relative to the browser
  ******************************************************************************/
-{
 window.requestAnimFrame = (function() {
     return  window.requestAnimationFrame       || 
             window.webkitRequestAnimationFrame || 
@@ -436,7 +465,6 @@ window.requestAnimFrame = (function() {
                 window.setTimeout(callback, 1000 / 60);
             };
 })();
-}
 
 /*******************************************************************************
  * ANIMATE WIRE
@@ -484,43 +512,8 @@ function animate() {
 };
 
 /*******************************************************************************
- * MOUSE MOVE
- *  Gets the position of the mouse on the canvas. 
- ******************************************************************************/
-{
-$("canvas").mousemove(function(event) {
-    var mouseX = event.offsetX || event.layerX;
-    var mouseY = event.offsetY || event.layerY;
-    digsim.mousePos = { x: mouseX, y: mouseY };
-});
-}
-
-/*******************************************************************************
- * MOUSE UP
- *  When the mouse is realeased while on the canvas, this will take care of all
- *  the things that change after stuff being dragged around. 
- ******************************************************************************/
-{
-$("canvas").mouseup(function(event) {
-                    if (digsim.mode !== digsim.WIRE_MODE) {
-    if (digsim.dragging) {
-        digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
-        digsim.draggingGate.drawStatic = true;
-        digsim.setGatePlaceholders(digsim.draggingGate);
-        digsim.draggingGate.draw(digsim.staticContext);
-        digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
-    }
-    digsim.dragging = false;
-                    }
-});
-}
-
-/*******************************************************************************
  * NAMESPACE THINGY
  *  Create namespace for the application. If namespace already exisists, don't
  *  override it, otherwise create an empty object.
  ******************************************************************************/
 var digsim = digsim || new Digsim();
-
-
-
