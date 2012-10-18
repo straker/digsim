@@ -23,7 +23,7 @@ Switch.prototype.draw = function(context) {
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     
-    context.strokeStyle = '#000000';
+    context.fillStyle = '#FFFFFF';
     context.lineWidth = 2;
     
     context.moveTo(0, 0);
@@ -50,22 +50,15 @@ Switch.prototype.draw = function(context) {
     else {
         context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * 2);
     }
-    
-    context.lineTo(digsim.GRID_SIZE, digsim.GRID_SIZE * 2);
+
+    context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 2);
+    context.stroke();
+
+    context.beginPath();
     
     context.arc(digsim.GRID_SIZE / 4, digsim.GRID_SIZE * 2, digsim.GRID_SIZE / 4, 0, 2 * Math.PI);
     
-    /*context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE / 8);
-    context.lineTo(digsim.GRID_SIZE / 4 * 3, digsim.GRID_SIZE / 2);
-    context.lineTo(digsim.GRID_SIZE, digsim.GRID_SIZE / 2);
     context.stroke();
-    
-    
-    context.moveTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 7 / 8);
-    context.lineTo(digsim.GRID_SIZE / 8, digsim.GRID_SIZE / 8 * 7);
-    
-    context.stroke();
-    */
-    context.stroke();
+    context.fill();
     context.restore();
 };

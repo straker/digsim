@@ -7,12 +7,6 @@
  *  Zack Sheffield
  ******************************************************************************/
 
-AND.prototype = new Drawable();
-
-/*******************************************************************************
- * AND
- *  Links the gate to the attached wires and actually creates an AND gate. 
- ******************************************************************************/
 function AND(numInputs) {
     this.type = digsim.AND;
     this.next = [];
@@ -27,6 +21,8 @@ function AND(numInputs) {
     var wire = new Wire();
     this.setNext(wire);
 };
+
+AND.prototype = new Drawable();
 
 // Draws a generic gate... just a start.
 /*******************************************************************************
@@ -62,14 +58,6 @@ AND.prototype.draw = function(context) {
     context.bezierCurveTo(Cx, 0, Cx, P1y, gsf, P1y);
     context.lineTo(0, P1y);
 
-    /*  DRAWING GATE WITH WIRES ON GRIDLINES
-    var factor = Math.floor(this.numInputs / 2) + 1; 
-    context.moveTo(0, 0);
-    context.strokeStyle = '#000000';
-    context.lineTo(digsim.GRID_SIZE * factor,  0);            
-    context.arc(digsim.GRID_SIZE * factor, digsim.GRID_SIZE * factor, digsim.GRID_SIZE * factor, -Math.PI/2, Math.PI/2);
-    context.lineTo(0,  digsim.GRID_SIZE * factor * 2);  
-    */
     context.closePath();
     context.stroke();
     context.fill();
@@ -84,11 +72,18 @@ AND.prototype.draw = function(context) {
         else {
             this.prev[i].init(this.column, this.row + cnt + .5, this.rotation);
         }
+        // Reset wire path
+        this.prev[i].path = [];
         this.prev[i].path.push({'x': -1, 'y': 0})
+
         this.prev[i].draw(context);
     }
     this.next[0].init(this.column + (factor * 2) + 1, this.row + factor + .5, this.rotation);
+
+    // Reset wire path
+    this.next[0].path = [];
     this.next[0].path.push({'x': 1, 'y': 0});
+
     this.next[0].draw(context);
 };
 

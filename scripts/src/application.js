@@ -168,7 +168,7 @@ Digsim.prototype.drawComponents = function() {
  *  Given a gate object, adds it to the placeholder data array with unique
  *  identifier. 
  ******************************************************************************/
-Digsim.prototype.setGatePlaceholders = function(gate) {
+Digsim.prototype.setPlaceholders = function(gate) {
     var factor = (2 * (Math.floor(gate.numInputs / 2))) + 1;
     var row, col;
     for (row = 0; row < factor; ++row) {
@@ -220,10 +220,10 @@ Digsim.prototype.onButtonClicked = function (event) {
     else {
         $("canvas").css('cursor','default');
         digsim.mode = digsim.DEFAULT_MODE;
-        var gate = new MyClass(3); 
+        var gate = new MyClass(2); 
         gate.init(2, 2, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = gate;
-        digsim.setGatePlaceholders(gate);
+        digsim.setPlaceholders(gate);
         gate.draw(digsim.staticContext);
     }
 };
@@ -234,7 +234,6 @@ Digsim.prototype.onButtonClicked = function (event) {
  ******************************************************************************/
 Digsim.prototype.onGridClicked = function(event) {
     if (digsim.mode === digsim.WIRE_MODE) {
-                 
         event.preventDefault();
         
         var mouseX = event.offsetX || event.layerX;
@@ -247,7 +246,6 @@ Digsim.prototype.onGridClicked = function(event) {
         var diagSep = digsim.GRID_SIZE - relX;
         var wirePos = 0;
         
-        // Snap starting point to grid...
         // Determine grid snap for wires. 
         if (relY < relX) {  // top
             if (relY < diagSep) {  // top-left
@@ -274,22 +272,16 @@ Digsim.prototype.onGridClicked = function(event) {
             }
         }
         
-        // Start/end wire
+        // Smart wire logic
         if (digsim.dragging) {
             // TO DO:
-            // wire logic
-            // Snap end point to grid
-            // Create wires in component array
-            // Create placeholders for wires in placeholder array
-            // redraw on static Canvas
             // connect wire to components
             // avoiding component collisions.... in a long time
 
             digsim.dragging = false;
             
-            // Wire Drawing Logic, block by block
-            var position = [], placeX, placeY, placeholder; 
-
+            // Determine which logic set to use based on where the user started and ended their click
+            var position = [];  
             position[0] = ((digsim.wirePos.startPos === digsim.TL || 
                            digsim.wirePos.startPos === digsim.BR) && 
                            (wirePos === digsim.TL || wirePos === digsim.BR));
@@ -306,10 +298,6 @@ Digsim.prototype.onGridClicked = function(event) {
                             digsim.wirePos.startPos === digsim.BL) && 
                            (wirePos === digsim.BR || wirePos === digsim.TL));
 
-            // Garbage collecting to be done later... clean up this code!
-            var wire = new Wire(); 
-            digsim.components[digsim.iComp] = wire;
-
             // Going up/down and left/right?
             var changeY = (y < digsim.wirePos.startY) ? -1 : ((y === digsim.wirePos.startY) ? 0 : 1);
             var changeX = (x < digsim.wirePos.startX) ? -1 : ((x === digsim.wirePos.startX) ? 0 : 1);
@@ -318,65 +306,45 @@ Digsim.prototype.onGridClicked = function(event) {
             if (!changeY && !changeX)
                 return;
             
+            var wire = new Wire(); 
+            wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
+            digsim.components[digsim.iComp++] = wire;
+
             var startCol, startRow, endCol, endRow;
+            relY = 0, relX = 0;
 
+            // Wire started on TL or BR
             if (position[0] || position[1]) {
+                
+                // Determine starting and ending grids
+                startCol = Math.floor(digsim.wirePos.startX);
+                startRow = digsim.wirePos.startY + (changeY === -1 ? changeY : 0);
                 if (position[0]) {
-                    if (changeY === 1) { // Down
-                        startCol = Math.floor(digsim.wirePos.startX);
-                        startRow = digsim.wirePos.startY;
-                        endCol = Math.floor(x);
-                        endRow = y - 1;
-                    }
-                    else { // Up
-                        startCol = Math.floor(digsim.wirePos.startX);
-                        startRow = digsim.wirePos.startY - 1;
-                        endCol = Math.floor(x);
-                        endRow = y;
-                    }
-                    
-                    if (changeY === 0) {
-                        startRow = digsim.wirePos.startY;
-                    }
+                    endCol = Math.floor(x);
+                    endRow = y + (changeY === 1 ? -1 : 0);
                 }
-                else if (position[1]) {                                            
-                    startCol = Math.floor(digsim.wirePos.startX);
-                    if (changeY === 1) { // Down
-                        startRow = digsim.wirePos.startY;
-                    }
-                    else { // Up
-                        startRow = digsim.wirePos.startY - 1;
-                    }
-                    if (changeX === 1) {
-                        endCol = x - 1;
-                    }
-                    else {
-                        endCol = x;
-                    }
-                    endRow = Math.floor(y);
+                else {                                            
+                    endCol = x + (changeX === 1 ? -1 : 0);
+                    endRow = Math.floor(y);                    
                 }
 
-                wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp++);
-                
-                var relY = 0, relX = 0;
+                // Go towards y
                 for(var i = startRow; i != endRow; i += changeY) {
                     digsim.setWirePlaceholder(wire.id, startCol, i);
                     relY += changeY;
                 }
                 
-                if (changeY === 0) {
-                    wire.path.push( {'x': 0, 'y': 0.5} );
-                }
-                else {
-                    wire.path.push( {'x': 0, 'y': relY + 0.5 * changeY} );
-                }
-
+                wire.path.push( {'x': 0, 'y': (!changeY ? 0.5 : relY + 0.5 * changeY)} );
+   
+                // Go towards X
                 for(var i = startCol; i != endCol; i += changeX) {
                     digsim.setWirePlaceholder(wire.id, i, startRow + relY);
                     relX += changeX;
                 }
                 
                 digsim.setWirePlaceholder(wire.id, startCol + relX, startRow + relY);
+
+                // Finish the line
                 if (position[0]) {
                     wire.path.push( {'x': relX, 'y': relY + 0.5 * ((changeY) ? changeY : 1)} );
                     wire.path.push( {'x': relX, 'y': relY + changeY} );
@@ -385,65 +353,38 @@ Digsim.prototype.onGridClicked = function(event) {
                     wire.path.push( {'x': relX + 0.5 * changeX, 'y': relY + 0.5 * changeY} );
                 }
             }
-           
+            // Wire started on TR or BL
             else {
-                if (position[2]) {
-                    if (changeX === 1) { // Right
-                        startCol = digsim.wirePos.startX;
-                        startRow = Math.floor(digsim.wirePos.startY);
-                        endCol = x - 1;
-                        endRow = Math.floor(y);
-                    }
-                    else { // Left
-                        startCol = digsim.wirePos.startX - 1;
-                        startRow = Math.floor(digsim.wirePos.startY);
-                        endCol = x;
-                        endRow = Math.floor(y);
-                    }
-                    if (changeX === 0) {
-                        startCol = digsim.wirePos.startX;
-                    }
-                }
-                else if (position[3]) {                                            
 
-                    startRow = Math.floor(digsim.wirePos.startY);
-                    if (changeX === 1) { // Right
-                        startCol = digsim.wirePos.startX;
-                    }
-                    else { // Left
-                        startCol = digsim.wirePos.startX - 1;                  
-                    }
-                    if (changeY === 1) {
-                        endRow = y - 1;
-                    }
-                    else {
-                        endRow = y;
-                    }
+                // Determine starting and endoing grids
+                startCol = digsim.wirePos.startX + (changeX === -1 ? changeX : 0);
+                startRow = Math.floor(digsim.wirePos.startY);
+                if (position[2]) {
+                    endCol = x + (changeX === 1 ? -1 : 0);
+                    endRow = Math.floor(y);
+                }
+                else {
                     endCol = Math.floor(x);
+                    endRow = y + (changeY === 1 ? -1 : 0);
                 }
                 
-                wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp++);
-                
-                var relY = 0, relX = 0;
-                
+                // Go towards x
                 for(var i = startCol; i != endCol; i += changeX) {
                     digsim.setWirePlaceholder(wire.id, i, startRow + relY);
                     relX += changeX;
                 }
                 
-                if (changeX === 0) {
-                    wire.path.push( {'x': 0.5, 'y': 0} );
-                }
-                else {
-                    wire.path.push( {'x': relX + 0.5 * changeX, 'y': 0} );
-                }
+                wire.path.push( {'x':  (!changeX ? 0.5 : relX + 0.5 * changeX), 'y': 0} );
                 
+                // Go towards y
                 for(var i = startRow; i != endRow; i += changeY) {
                     digsim.setWirePlaceholder(wire.id, startCol, i);
                     relY += changeY;
                 }   
                 
                 digsim.setWirePlaceholder(wire.id, startCol + relX, startRow + relY);
+
+                // Finish the line
                 if (position[2]) {
                     wire.path.push( {'x': relX + 0.5 * ((changeX) ? changeX : 1), 'y': relY} );
                     wire.path.push( {'x': relX + changeX, 'y': relY} );
@@ -451,7 +392,6 @@ Digsim.prototype.onGridClicked = function(event) {
                 else {
                     wire.path.push( {'x': relX + 0.5 * changeX, 'y': relY + 0.5 * changeY} );
                 }
-
             }
             
             wire.draw(digsim.staticContext);
@@ -533,7 +473,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
         if (digsim.dragging) {
             digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
             digsim.draggingGate.drawStatic = true;
-            digsim.setGatePlaceholders(digsim.draggingGate);
+            digsim.setPlaceholders(digsim.draggingGate);
             digsim.draggingGate.draw(digsim.staticContext);
             digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
         }
@@ -582,7 +522,7 @@ function animateWire() {
         
         requestAnimFrame(animateWire);
         
-        // Draw Wire
+        // Draw wire
         context.beginPath();
         context.fillStyle = '#000000';
         context.lineWidth = 2;
@@ -603,6 +543,7 @@ function animate() {
         
         requestAnimFrame(animate);
         
+        // Draw gate
         var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
         var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
         digsim.draggingGate.column = col - digsim.offsetCol;
