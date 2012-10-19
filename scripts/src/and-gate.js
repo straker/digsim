@@ -73,13 +73,14 @@ AND.prototype.draw = function(context) {
             this.prev[i].init(this.column, this.row + cnt + .5, this.rotation);
         }
         // Reset wire path
+        digsim.setWirePlaceholder(this.id, 0, 0);
         this.prev[i].path = [];
         this.prev[i].path.push({'x': -1, 'y': 0})
 
         this.prev[i].draw(context);
     }
     this.next[0].init(this.column + (factor * 2) + 1, this.row + factor + .5, this.rotation);
-
+    digsim.setWirePlaceholder(this.id, 0, 0);
     // Reset wire path
     this.next[0].path = [];
     this.next[0].path.push({'x': 1, 'y': 0});

@@ -16,7 +16,7 @@
  ******************************************************************************/
 function Digsim() {
 	// Constants
-	this.GRID_SIZE = 20;
+	this.GRID_SIZE = 42;
 	this.NUM_COLS = 60;
 	this.NUM_ROWS = 30;
     
@@ -168,15 +168,27 @@ Digsim.prototype.drawComponents = function() {
  *  Given a gate object, adds it to the placeholder data array with unique
  *  identifier. 
  ******************************************************************************/
-Digsim.prototype.setPlaceholders = function(gate) {
-    var factor = (2 * (Math.floor(gate.numInputs / 2))) + 1;
-    var row, col;
-    for (row = 0; row < factor; ++row) {
-        for (col = 0; col < factor; ++col) {
-            var placeholder = new Placeholder(gate.id, col, row, factor);
-            this.placeholder[gate.row + row][gate.column + col] = placeholder;
+Digsim.prototype.setPlaceholders = function(obj) {
+    var row, col, endRow, endCol;
+    // Set size for each object in placeholder array
+    if (obj.type === digsim.LED) {
+        endRow = 2;
+        endCol = 1;
+    }
+    else if (obj.type === digsim.SWITCH) {
+        endRow = 3;
+        endCol = 2;
+    }
+    else {
+        endRow = endCol = (2 * (Math.floor(obj.numInputs / 2))) + 1;
+    }
+    for (row = 0; row < endRow; ++row) {
+        for (col = 0; col < endCol; ++col) {
+            var placeholder = new Placeholder(obj.id, col, row, endCol, endRow);
+            this.placeholder[obj.row + row][obj.column + col] = placeholder;
         }
     }
+
 };
 
 /*******************************************************************************
@@ -213,7 +225,7 @@ Digsim.prototype.onButtonClicked = function (event) {
     var MyClass = window;
     MyClass = MyClass[id];
     if (id == "Wire") {
-        $("canvas").css('cursor','crosshair');
+        $("canvas").css('cursor','no-drop');
 
         digsim.mode = digsim.WIRE_MODE;
     }
@@ -440,11 +452,12 @@ Digsim.prototype.onGridMouseDown = function(event) {
             var placeholder = digsim.placeholder[row][col];
             var posX = placeholder.posX;
             var posY = placeholder.posY;
-            var size = placeholder.size;
+            var height = placeholder.height;
+            var width = placeholder.width;
             digsim.offsetRow = posY;
             digsim.offsetCol = posX;
-            for (var y = 0, iRow = row - posY; y < size; ++y) {
-                for (var x = 0, iCol = col - posX; x < size; ++x) {
+            for (var y = 0, iRow = row - posY; y < height; ++y) {
+                for (var x = 0, iCol = col - posX; x < width; ++x) {
                     digsim.placeholder[iRow + y][iCol + x] = undefined;
                 }
             }
