@@ -10,8 +10,8 @@
 function LED() {
     this.type = digsim.LED;
     this.prev = [];
-    this.conOffsetX = 0;
-    this.conOffsetY = 2;
+    this.connectOffset.x = 0.5;
+    this.connectOffset.y = 2;
     this.state = 1;
 };
 
@@ -72,25 +72,4 @@ LED.prototype.draw = function(context) {
     context.stroke();
     
     context.restore();
-};
-
-/*****************************************************************************
- * CHECK CONNECTION
- *  Checks adjacent spaces for other objects to connect to
- ****************************************************************************/
-LED.prototype.checkConnect = function() {
-    
-    if (obj = digsim.placeholder[this.connectPtY][this.connectPtX]) {
-        console.log("STEP 1");
-        var conObj = digsim.components[obj.ref];
-        if (conObj.type === digsim.WIRE) {
-            console.log("STEP 2");
-            
-            // LED
-            if (conObj.column === this.connectPtX + 0.5 ||
-                     conObj.path[conObj.path.length - 1] === this.connectPtX + 0.5) {
-                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-            }
-        }
-    }
 };

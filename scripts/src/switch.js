@@ -11,8 +11,8 @@ function Switch() {
     this.type = digsim.SWITCH;
     this.next = [];
     this.state = 0;
-    this.conOffsetX = 2;
-    this.conOffsetY = 1;
+    this.connectOffset.x = 2;
+    this.connectOffset.y = 1.5;
 };
 
 Switch.prototype = new Drawable();
@@ -63,25 +63,4 @@ Switch.prototype.draw = function(context) {
     context.stroke();
     context.fill();
     context.restore();
-};
-
-/*****************************************************************************
- * CHECK CONNECTION
- *  Checks adjacent spaces for other objects to connect to
- ****************************************************************************/
-Switch.prototype.checkConnect = function() {
-    
-    if (obj = digsim.placeholder[this.connectPtY][this.connectPtX]) {
-        console.log("STEP 1");
-        var conObj = digsim.components[obj.ref];
-        if (conObj.type === digsim.WIRE) {
-            console.log("STEP 2");
-            
-            if (conObj.row === this.connectPtY + 0.5 ||
-                conObj.path[conObj.path.length - 1] === this.connectPtY + 0.5) {
-                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                
-            }
-        }
-    }
 };

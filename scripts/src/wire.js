@@ -14,10 +14,8 @@ function Wire() {
     this.path = [];
     this.state = 0;
     
-    this.endConOffsetX = -1;
-    this.endConOffsetY = -1;
-    this.endConPtX = -1;
-    this.endConPtY = -1;
+    this.connectOffset = {'x': -1, 'y': -1, 'endX': -1, 'endY': -1};
+    this.connectPoint = {'x': -1, 'y': -1, 'endX': -1, 'endY': -1};
     
     // Represents orientation of the wire at start and end.
     this.startPos = -1; 
@@ -36,20 +34,60 @@ Wire.prototype = new Drawable();
  *****************************************************************************/
 Wire.prototype.updatePos = function() {
     
-    // FIX THIS!
+    console.log("======WIRE======");
     console.log(this);
-    this.conOffsetX = (!(this.startPos % 2) ? -this.dx : 0);
-    this.conOffsetY = (this.startPos % 2 ? -this.dy : 0);
+    this.connectOffset.x = (this.startPos % 2 && this.dx == 1 ? -1 : 0);
+    this.connectOffset.y = (!(this.startPos % 2) && this.dy == 1 ? -1 : 0);
     if (this.path.length) {
-        this.endConOffsetX = this.path[this.path.length - 1].x + (!(this.endPos % 2) ? this.dx : 0);
-        this.endConOffsetY = this.path[this.path.length - 1].y + (this.endPos % 2 ? this.dy : 0);
+        this.connectOffset.endX = this.path[this.path.length - 1].x + (this.endPos % 2 && this.dx == -1 ? -1 : 0);
+        this.connectOffset.endY = this.path[this.path.length - 1].y + (!(this.endPos % 2) && this.dy == -1 ? -1 : 0);
     }
-    this.connectPtX = Math.floor(this.column + this.conOffsetX);
-    this.connectPtY = Math.floor(this.row + this.conOffsetY);
-    console.log("UPDATE: (" + this.connectPtX + ", " + this.connectPtY + ")");
-    this.endConPtX = this.column + this.endConOffsetX;
-    this.endConPtY = this.row + this.endConOffsetY;
-    console.log("WIRE UPDATE END: (" + this.endConPtX + ", " + this.endConPtY + ")");
+    this.connectPoint.x = this.column + this.connectOffset.x;
+    this.connectPoint.y = this.row + this.connectOffset.y;
+    console.log("UPDATE: (" + this.connectPoint.x + ", " + this.connectPoint.y + ")");
+    this.connectPoint.endX = this.column + this.connectOffset.endX;
+    this.connectPoint.endY = this.row + this.connectOffset.endY;
+    console.log("WIRE UPDATE END: (" + this.connectPoint.endX + ", " + this.connectPoint.endY + ")\n\n");
+};
+
+/*****************************************************************************
+ * CHECK CONNECTION
+ *  Checks adjacent spaces for other objects to connect to
+ ****************************************************************************/
+Wire.prototype.checkConnect = function() {
+    
+    console.log("SETP 0");
+    console.log(this);
+    if (obj = digsim.placeholder[Math.floor(this.connectPoint.y)][Math.floor(this.connectPoint.x)]) {
+        console.log("STEP 1");
+        var conObj = digsim.components[obj.ref];
+        console.log(conObj);
+        if (conObj.type === digsim.LED || conObj.type === digsim.SWITCH) {
+            console.log("STEP 2");
+            
+            console.log(conObj.connectPoint.x == this.column);
+            console.log(conObj.connectPoint.y == this.row);
+            if (conObj.connectPoint.x == this.column && conObj.connectPoint.y == this.row) {
+                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                
+            }
+        }
+    }
+    if (obj = digsim.placeholder[Math.floor(this.connectPoint.endY)][Math.floor(this.connectPoint.endX)]) {
+        console.log("STEP 1");
+        var conObj = digsim.components[obj.ref];
+        console.log(conObj);
+        if (conObj.type === digsim.LED || conObj.type === digsim.SWITCH) {
+            console.log("STEP 2");
+            
+            console.log(conObj.connectPoint.x == this.column);
+            console.log(conObj.connectPoint.y == this.row);
+            if (conObj.connectPoint.x == this.path[this.path.length - 1].x + this.column && 
+                    conObj.connectPoint.y == this.path[this.path.length - 1].y + this.row) {
+                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+            }
+        }
+    }
 };
 
 /****************************************************************************

@@ -134,6 +134,8 @@ Digsim.prototype.drawGrid = function(context) {
 	context.strokeRect(0, 0, this.gridWidth, this.gridHeight);
 	
 	context.strokeStyle = '#8DCFF4';
+    context.lineWidth = 1;
+    context.save();
 	context.translate(0.5, 0.5);
 	context.beginPath();
 	
@@ -148,6 +150,7 @@ Digsim.prototype.drawGrid = function(context) {
 		context.lineTo(this.gridWidth-1, row * this.GRID_SIZE);
 	}
 	context.stroke();
+    context.restore();
 };
 
 /*****************************************************************************
@@ -396,7 +399,7 @@ Digsim.prototype.onGridClicked = function(event) {
                 
                 // Go towards y
                 for(var i = startRow; i != endRow; i += changeY) {
-                    digsim.setWirePlaceholder(wire.id, startCol, i);
+                    digsim.setWirePlaceholder(wire.id, startCol + relX, i);
                     relY += changeY;
                 }   
                 
@@ -412,9 +415,9 @@ Digsim.prototype.onGridClicked = function(event) {
                 }
             }
             
-            console.log(wire);
             wire.draw(digsim.staticContext);
             wire.updatePos();
+            wire.checkConnect();
         }
         else {
             digsim.dragging = true;
@@ -581,3 +584,22 @@ function animate() {
  *  override it, otherwise create an empty object.
  ****************************************************************************/
 var digsim = digsim || new Digsim();
+
+
+Digsim.prototype.showPlacehoders = function() {
+    this.clearCanvas(this.gridContext, this.gridWidth, this.gridHeight);
+    this.drawGrid(this.gridContext);
+
+    var row = 0; col = 0;
+    for (row = 0; row < this.gridWidth; row++) {
+        for (col = 0; col < this.gridHeight; col++) {
+            if (this.placeholder[row][col]) {
+                this.gridContext.fillStyle = 'orange';
+                this.gridContext.fillRect(col * this.GRID_SIZE + 1, row * this.GRID_SIZE + 1, this.GRID_SIZE -2, this.GRID_SIZE - 2);
+                this.gridContext.fillStyle = 'white';
+                this.gridContext.font = "20pt Calibri";
+                this.gridContext.fillText(this.placeholder[row][col].ref, col * this.GRID_SIZE + this.GRID_SIZE / 2 - 10, row * this.GRID_SIZE + this.GRID_SIZE / 2 + 10)
+            }
+        }
+    }
+};

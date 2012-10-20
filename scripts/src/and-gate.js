@@ -16,8 +16,8 @@ function AND(numInputs) {
     
     var factor = Math.floor(this.numInputs / 2); 
 
-    this.conOffsetX = (factor * 2) + 2;
-    this.conOffsetY = factor;
+    this.connectOffset.x = (factor * 2) + 2;
+    this.connectOffset.y = factor;
     
 
     for (var i = 0; i < this.numInputs; ++i) {
