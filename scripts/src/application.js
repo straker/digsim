@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*****************************************************************************
  * Program: 
  *  application.js
  *
@@ -8,12 +8,12 @@
  *
  * Summary:
  *  A (soon-to-be) fully functional circuit simulation program. 
- ******************************************************************************/
+ ****************************************************************************/
 
-/*******************************************************************************
+/*****************************************************************************
  * DIGSIM
  *  Holds all the constants, animation, and data variables for the program
- ******************************************************************************/
+ ****************************************************************************/
 function Digsim() {
 	// Constants
 	this.GRID_SIZE = 42;
@@ -37,8 +37,9 @@ function Digsim() {
     // Wire identifiers
     this.TL = 0;    // top-left
     this.TR = 1;    // top-right
-    this.BL = 2;    // bottom-left
-    this.BR = 3;    // bottom-right
+    this.BR = 2;    // bottom-right
+    this.BL = 3;    // bottom-left
+
     
     // Animation variables
     this.wirePos = {
@@ -69,10 +70,10 @@ function Digsim() {
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * INIT
  *  Tests to see if the canvas is supported, returning true if it is
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.init = function() {
 	// Get the canvas element
 	this.gridCanvas = document.getElementById('grid');
@@ -108,10 +109,10 @@ Digsim.prototype.init = function() {
 	}
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * CLEAR CANVAS
  *  Clears the given canvas. 
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.clearCanvas = function(context, width, height) {
 	// Store the current transformation matrix
 	context.save();
@@ -124,10 +125,10 @@ Digsim.prototype.clearCanvas = function(context, width, height) {
 	context.restore();
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * DRAW GRID
  *  Draws the underlying blue grid on the screen
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.drawGrid = function(context) {
 	// Outline the canvas	
 	context.strokeRect(0, 0, this.gridWidth, this.gridHeight);
@@ -149,11 +150,11 @@ Digsim.prototype.drawGrid = function(context) {
 	context.stroke();
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * DRAW COMPONENTS
  *  Redraws all the components on the static canvas, after everything has been
  *  dragged and dropped
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.drawComponents = function() {
     this.clearCanvas(this.staticContext, this.gridWidth, this.gridHeight);
     for (index in this.components) {
@@ -163,11 +164,11 @@ Digsim.prototype.drawComponents = function() {
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * SET PLACEHOLDERS
  *  Given a gate object, adds it to the placeholder data array with unique
  *  identifier. 
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.setPlaceholders = function(obj) {
     var row, col, endRow, endCol;
     // Set size for each object in placeholder array
@@ -191,33 +192,33 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
 };
 
-/*******************************************************************************
- * SET PLACEHOLDERS
+/*****************************************************************************
+ * SET WIRE PLACEHOLDER
  *  Given a wire object, adds it to the placeholder data array with unique
  *  identifier. 
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.setWirePlaceholder = function(id, col, row) {
-    placeholder = new Placeholder(id, col, row, 1);
+    placeholder = new Placeholder(id, 0, 0, 1);
     this.placeholder[row][col] = placeholder;
 };
 
 
-/*******************************************************************************
+/*****************************************************************************
  * RUN
  *  Starts doing stuff (window.onload)
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.run = function() {
     if(this.init()) {
         this.drawGrid(this.gridContext);
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * ON BUTTON CLICKED
  *  When a button is clicked, do this. Creates a gate when button is clicked. 
  *  This only works because of id on the html matches the name of the gate. 
  *  "AND", "OR", etc...
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.onButtonClicked = function (event) {
     var id = $(this).attr("id");
     
@@ -225,7 +226,7 @@ Digsim.prototype.onButtonClicked = function (event) {
     var MyClass = window;
     MyClass = MyClass[id];
     if (id == "Wire") {
-        $("canvas").css('cursor','no-drop');
+        $("canvas").css('cursor','crosshair');
 
         digsim.mode = digsim.WIRE_MODE;
     }
@@ -240,10 +241,10 @@ Digsim.prototype.onButtonClicked = function (event) {
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * ON GRID CLICKED
  *  Called when wire mode is on - for dragging wires. 
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.onGridClicked = function(event) {
     if (digsim.mode === digsim.WIRE_MODE) {
         event.preventDefault();
@@ -321,6 +322,11 @@ Digsim.prototype.onGridClicked = function(event) {
             var wire = new Wire(); 
             wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
             digsim.components[digsim.iComp++] = wire;
+            
+            wire.dx = changeX;
+            wire.dy = changeY;
+            wire.startPos = digsim.wirePos.startPos;
+            wire.endPos = wirePos;
 
             var startCol, startRow, endCol, endRow;
             relY = 0, relX = 0;
@@ -406,7 +412,9 @@ Digsim.prototype.onGridClicked = function(event) {
                 }
             }
             
+            console.log(wire);
             wire.draw(digsim.staticContext);
+            wire.updatePos();
         }
         else {
             digsim.dragging = true;
@@ -418,10 +426,10 @@ Digsim.prototype.onGridClicked = function(event) {
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * ON GRID MOUSE DOWN
  *  Click and drag gates. Only called in default mode. 
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.onGridMouseDown = function(event) {
     if (digsim.mode === digsim.DEFAULT_MODE) {
         event.preventDefault();
@@ -476,11 +484,11 @@ Digsim.prototype.onGridMouseDown = function(event) {
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * MOUSE UP
  *  When the mouse is realeased while on the canvas, this will take care of all
  *  the things that change after stuff being dragged around. 
- ******************************************************************************/
+ ****************************************************************************/
 Digsim.prototype.onGridMouseUp = function(event) {
     if (digsim.mode !== digsim.WIRE_MODE) {
         if (digsim.dragging) {
@@ -489,25 +497,27 @@ Digsim.prototype.onGridMouseUp = function(event) {
             digsim.setPlaceholders(digsim.draggingGate);
             digsim.draggingGate.draw(digsim.staticContext);
             digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
+            digsim.draggingGate.updatePos();
+            digsim.draggingGate.checkConnect();
         }
         digsim.dragging = false;
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * MOUSE MOVE
  *  Gets the position of the mouse on the canvas. 
- ******************************************************************************/
+ ****************************************************************************/
 $("canvas").mousemove(function(event) {
     var mouseX = event.offsetX || event.layerX;
     var mouseY = event.offsetY || event.layerY;
     digsim.mousePos = { x: mouseX, y: mouseY };
 });
 
-/*******************************************************************************
+/*****************************************************************************
  * REQUEST ANIMATION FRAME
  *  Optimizes the 60 frames/sec animation frame rate relative to the browser
- ******************************************************************************/
+ ****************************************************************************/
 window.requestAnimFrame = (function() {
     return  window.requestAnimationFrame       || 
             window.webkitRequestAnimationFrame || 
@@ -519,11 +529,11 @@ window.requestAnimFrame = (function() {
             };
 })();
 
-/*******************************************************************************
+/*****************************************************************************
  * ANIMATE WIRE
  *  While a wire is being placed, keep a line drawn from starting point to 
  *  mouse position
- ******************************************************************************/
+ ****************************************************************************/
 function animateWire() {
     var context = digsim.movingContext;
     digsim.clearCanvas(context, digsim.gridWidth, digsim.gridHeight);
@@ -545,11 +555,11 @@ function animateWire() {
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * ANIMATE
  *  Anything that is being moved will be drawn with this function on the 
  *  movingContext canvas. 
- ******************************************************************************/
+ ****************************************************************************/
 function animate() {
     if (digsim.dragging) {
         digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
@@ -565,9 +575,9 @@ function animate() {
     }
 };
 
-/*******************************************************************************
+/*****************************************************************************
  * NAMESPACE THINGY
  *  Create namespace for the application. If namespace already exisists, don't
  *  override it, otherwise create an empty object.
- ******************************************************************************/
+ ****************************************************************************/
 var digsim = digsim || new Digsim();

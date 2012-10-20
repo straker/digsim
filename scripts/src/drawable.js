@@ -12,6 +12,10 @@
 
 function Drawable(col, row, rot) {
     this.id = 0;
+    this.conOffsetX = 0; // Offset positions to search for connection
+    this.conOffsetY = 0;
+    this.connectPtX = 0; // Absolute positions to search for connection
+    this.connectPtY = 0;
     this.column = 0;
     this.row = 0;
     this.type = -1;
@@ -33,6 +37,18 @@ Drawable.prototype.init = function (col, row, rot, id) {
     this.rotation = rot;
     this.id = id;
     this.drawStatic = true;
+    this.updatePos();
+};
+
+/******************************************************************************
+ * UPDATE POSITION
+ *  Update the position of the gate when dragged and dropped.
+ *****************************************************************************/
+Drawable.prototype.updatePos = function() {
+    
+    this.connectPtX = this.column + this.conOffsetX;
+    this.connectPtY = this.row + this.conOffsetY;
+    console.log("UPDATE: (" + this.connectPtX + ", " + this.connectPtY + ")");
 };
 
 /******************************************************************************
@@ -55,6 +71,7 @@ Drawable.prototype.passState = function(pState) {
         this.next[0].passState(this.state);
     }
 };
+
 
 /******************************************************************************
  * SET NEXT

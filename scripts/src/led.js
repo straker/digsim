@@ -1,24 +1,26 @@
-/*****************************************************************************
+/***************************************************************************
  * Program: 
  *  led.js
  *
  * Authors:
  *  Steven Lambert
  *  Zack Sheffield
- ****************************************************************************/
+ **************************************************************************/
 
 function LED() {
     this.type = digsim.LED;
     this.prev = [];
+    this.conOffsetX = 0;
+    this.conOffsetY = 2;
     this.state = 1;
 };
 
 LED.prototype = new Drawable();
 
-/******************************************************************************
+/****************************************************************************
  * DRAW
  *  Draws a wire on a grid space
- *****************************************************************************/
+ ***************************************************************************/
 LED.prototype.draw = function(context) {
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
@@ -70,4 +72,25 @@ LED.prototype.draw = function(context) {
     context.stroke();
     
     context.restore();
+};
+
+/*****************************************************************************
+ * CHECK CONNECTION
+ *  Checks adjacent spaces for other objects to connect to
+ ****************************************************************************/
+LED.prototype.checkConnect = function() {
+    
+    if (obj = digsim.placeholder[this.connectPtY][this.connectPtX]) {
+        console.log("STEP 1");
+        var conObj = digsim.components[obj.ref];
+        if (conObj.type === digsim.WIRE) {
+            console.log("STEP 2");
+            
+            // LED
+            if (conObj.column === this.connectPtX + 0.5 ||
+                     conObj.path[conObj.path.length - 1] === this.connectPtX + 0.5) {
+                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+            }
+        }
+    }
 };

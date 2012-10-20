@@ -1,11 +1,11 @@
-/*******************************************************************************
+/*****************************************************************************
  * Program: 
  *  and-gate.js
  *
  * Authors:
  *  Steven Lambert
  *  Zack Sheffield
- ******************************************************************************/
+ ****************************************************************************/
 
 function AND(numInputs) {
     this.type = digsim.AND;
@@ -13,6 +13,12 @@ function AND(numInputs) {
     this.prev = [];
     this.state = 0;
     this.numInputs = numInputs || 2;
+    
+    var factor = Math.floor(this.numInputs / 2); 
+
+    this.conOffsetX = (factor * 2) + 2;
+    this.conOffsetY = factor;
+    
 
     for (var i = 0; i < this.numInputs; ++i) {
         var wire = new Wire();
@@ -25,12 +31,12 @@ function AND(numInputs) {
 AND.prototype = new Drawable();
 
 // Draws a generic gate... just a start.
-/*******************************************************************************
+/*****************************************************************************
  * DRAW
  *  This will draw the and gate on the screen. Totally scalable, and able to 
  *  handle any number of inputs. Props to Steven Lambert for figuring out how
  *  to draw a half circle with the bezierCurveTo method. 
- ******************************************************************************/
+ ****************************************************************************/
 AND.prototype.draw = function(context) {
         
     context.save();
@@ -75,7 +81,7 @@ AND.prototype.draw = function(context) {
         // Reset wire path
         digsim.setWirePlaceholder(this.id, 0, 0);
         this.prev[i].path = [];
-        this.prev[i].path.push({'x': -1, 'y': 0})
+        this.prev[i].path.push({'x': -1, 'y': 0});
 
         this.prev[i].draw(context);
     }
@@ -89,10 +95,10 @@ AND.prototype.draw = function(context) {
 };
 
 // Infallable logic function
-/*******************************************************************************
+/*****************************************************************************
  * COMPUTE LOGIC
  *  ANDs all the input wires together to set the current state of the gate. 
- ******************************************************************************/
+ ****************************************************************************/
 AND.prototype.computeLogic = function() {
     var computedState = this.prev[0].state; 
     
