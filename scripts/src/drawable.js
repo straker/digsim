@@ -23,6 +23,7 @@ function Drawable(col, row, rot) {
     this.numInputs = 2;
     this.next = [];
     this.prev = [];
+    this.connections = [];
     this.state = 0;
     this.drawStatic = true;
 };
@@ -73,10 +74,14 @@ Drawable.prototype.checkConnect = function() {
             if ((conObj.column == this.connectPoint.x && conObj.row === this.connectPoint.y) ||
                 (conObj.path[conObj.path.length - 1].x + conObj.column === this.connectPoint.x && 
                     conObj.path[conObj.path.length - 1].y + conObj.row === this.connectPoint.y)) {
+                    
                 console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                this.connections.push(conObj);
+                    conObj.connections.push(this);
                 
             }
         }
+        /*
         else if (conObj.type === digsim.LED || conObj.type === digsim.SWITCH) {
             console.log("STEP 2");
             console.log(conObj);
@@ -89,6 +94,7 @@ Drawable.prototype.checkConnect = function() {
                 console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
             }
         }
+         */
     }
 };
 
@@ -134,3 +140,81 @@ Drawable.prototype.setPrev = function(obj) {
     obj.next.push(this);
 };
 
+/******************************************************************************
+ * TRAVERSE
+ *  Iterate through each connection and set it's nexts and prevs to what they
+ *  need to be. Called before sim-mode. 
+ *****************************************************************************/
+Drawable.prototype.traverse = function() {
+    
+    console.log("\n======START=====");
+    console.log(this);
+
+    for (var i = 0; i < this.connections.length; ++i) {
+        var con = this.connections[i];
+        
+        console.log("THIS.CONNECTIONS[" + i + "]: ");
+        console.log(this.connections[i]);
+        
+        console.log("THIS.PREV:");
+        console.log(this.prev);
+        
+        if (con !== this.prev[0]) { // The problem is here... somewhere
+            
+            console.log("CON.TYPE: " + con.type);
+            console.log(con);
+            
+            if (con.type === digsim.SWITCH) {
+                console.log("ERROR! Multiple switches driving one wire");
+                return;
+            }
+            else if (con.type === digsim.LED) {
+                this.setNext(con);
+                return;
+            }
+            else if (con.type < 0) {// Gates have a negative index
+
+                this.setNext(con);
+                
+                if (this.next[0].next[0]) {
+                    return;
+                }
+                else {
+                    this.traverse();
+                }
+                
+            }
+            else {
+                
+                this.setNext(con);
+                con.traverse();
+            }
+            
+        }
+    }
+    
+    return;
+    
+    console.log("\n======START=====");
+    console.log(this);
+    for (var i = 0; i < this.connections.length; ++i) {
+        var con = this.connections[i];
+        console.log("has connection");
+        console.log(con);
+        if (con !== this.prev) {
+            if (con.type === digsim.SWITCH) {
+                console.log("ERROR! Multiple switches driving one wire");
+                return;
+            }
+            console.log("set next");
+            this.setNext(con);
+            console.log("CON.next.length = " + con.next.length);
+            console.log("next set");
+            // FIX ME!!!
+            if (/*con.next.length && !con.next[0].length && */con.type !== digsim.LED) {
+                console.log("traverse");
+                con.traverse();
+            }
+        }
+    }
+};

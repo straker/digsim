@@ -11,6 +11,7 @@ function AND(numInputs) {
     this.type = digsim.AND;
     this.next = [];
     this.prev = [];
+    this.connections = [];
     this.state = 0;
     this.numInputs = numInputs || 2;
     
@@ -26,6 +27,7 @@ function AND(numInputs) {
     }
     var wire = new Wire();
     this.setNext(wire);
+    connections[0] = wire;
 };
 
 AND.prototype = new Drawable();

@@ -10,6 +10,7 @@
 function LED() {
     this.type = digsim.LED;
     this.prev = [];
+    this.connections = [];
     this.connectOffset.x = 0.5;
     this.connectOffset.y = 2;
     this.state = 1;

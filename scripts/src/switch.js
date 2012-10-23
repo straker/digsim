@@ -10,6 +10,7 @@
 function Switch() {
     this.type = digsim.SWITCH;
     this.next = [];
+    this.connections = [];
     this.state = 0;
     this.connectOffset.x = 2;
     this.connectOffset.y = 1.5;

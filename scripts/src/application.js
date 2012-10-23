@@ -21,12 +21,13 @@ function Digsim() {
 	this.NUM_ROWS = 30;
     
     // Type identifiers
-    this.AND = 0;
-    this.NAND = 1;
-    this.OR = 2;
-    this.NOR = 3;
-    this.XOR = 4;
-    this.NOT = 5;
+    this.AND = -1;  // Gates are negative because they have a special
+    this.NAND = -2; // quality for simulation mode. Making them all
+    this.OR = -3;   // negative will catch all gates
+    this.NOR = -4;
+    this.XOR = -5;
+    this.NOT = -6;
+    
     this.WIRE = 6;
     this.SWITCH = 7;
     this.LED = 8;
