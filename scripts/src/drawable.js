@@ -38,7 +38,32 @@ Drawable.prototype.init = function (col, row, rot, id) {
     this.rotation = rot;
     this.id = id;
     this.drawStatic = true;
-    this.updatePos();
+    this.updatePos(); 
+    
+    if (this.type < 0) { // Houston, we have a gate...
+        
+        var cnt = 0;
+        var factor = Math.floor(this.numInputs / 2); 
+        
+        for (var i = 0; i < this.numInputs; ++i) {
+            if (i % 2) { 
+                this.prev[i].init(this.column, this.row + (factor * 2) + .5 - cnt, row, this.prev[i].id);
+            }
+            else {
+                this.prev[i].init(this.column, this.row + cnt + .5, rot, this.prev[i].id);
+            }
+            this.prev[i].drawStatic = false;
+            // Reset wire path
+            this.prev[i].path = [];
+            this.prev[i].path.push({'x': -1, 'y': 0});
+        }
+        this.next[0].init(this.column + (factor * 2) + 1, this.row + factor + .5, rot, this.next[0].id);
+        this.next[0].drawStatic = false;
+
+        // Reset wire path
+        this.next[0].path = [];
+        this.next[0].path.push({'x': 1, 'y': 0});
+    }
 };
 
 /******************************************************************************

@@ -14,6 +14,7 @@ function AND(numInputs) {
     this.connections = [];
     this.state = 0;
     this.numInputs = numInputs || 2;
+    this.connectPoint = {'x': -1, 'y': -1};
     
     var factor = Math.floor(this.numInputs / 2); 
 
@@ -24,10 +25,15 @@ function AND(numInputs) {
     for (var i = 0; i < this.numInputs; ++i) {
         var wire = new Wire();
         this.setPrev(wire);
+        wire.init(0, 0, 0, digsim.iComp);
+        digsim.components[digsim.iComp++] = wire;
+        wire.connections.push(this);
     }
     var wire = new Wire();
     this.setNext(wire);
-    connections[0] = wire;
+    this.connections[0] = wire;
+    wire.init(0, 0, 0, digsim.iComp);
+    digsim.components[digsim.iComp++] = wire;
 };
 
 AND.prototype = new Drawable();
@@ -75,20 +81,21 @@ AND.prototype.draw = function(context) {
     var cnt = 0;
     for (var i = 0; i < this.numInputs; ++i) {
         if (i % 2) { 
-            this.prev[i].init(this.column, this.row + (factor * 2) + .5 - cnt++, this.rotation);
+            this.prev[i].column = this.column;
+            this.prev[i].row = this.row + (factor * 2) + .5 - cnt;
         }
         else {
-            this.prev[i].init(this.column, this.row + cnt + .5, this.rotation);
+            this.prev[i].column = this.column;
+            this.prev[i].row = this.row + cnt + .5;
         }
         // Reset wire path
-        digsim.setWirePlaceholder(this.id, 0, 0);
         this.prev[i].path = [];
         this.prev[i].path.push({'x': -1, 'y': 0});
 
         this.prev[i].draw(context);
     }
-    this.next[0].init(this.column + (factor * 2) + 1, this.row + factor + .5, this.rotation);
-    digsim.setWirePlaceholder(this.id, 0, 0);
+    this.next[0].column = this.column + (factor * 2) + 1;
+    this.next[0].row = this.row + factor + .5;
     // Reset wire path
     this.next[0].path = [];
     this.next[0].path.push({'x': 1, 'y': 0});
@@ -96,7 +103,6 @@ AND.prototype.draw = function(context) {
     this.next[0].draw(context);
 };
 
-// Infallable logic function
 /*****************************************************************************
  * COMPUTE LOGIC
  *  ANDs all the input wires together to set the current state of the gate. 
@@ -109,3 +115,7 @@ AND.prototype.computeLogic = function() {
     }
     this.state = computedState;
 };
+
+
+
+

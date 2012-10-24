@@ -14,6 +14,7 @@ function Switch() {
     this.state = 0;
     this.connectOffset.x = 2;
     this.connectOffset.y = 1.5;
+    this.connectPoint = {'x': -1, 'y': -1};
 };
 
 Switch.prototype = new Drawable();

@@ -63,6 +63,8 @@ Wire.prototype.checkConnect = function() {
         console.log("STEP 1");
         var conObj = digsim.components[obj.ref];
         console.log(conObj);
+        
+        // If wire is connected to a switch or LED
         if (conObj.type === digsim.LED || conObj.type === digsim.SWITCH) {
             console.log("STEP 2");
             
@@ -74,6 +76,18 @@ Wire.prototype.checkConnect = function() {
                 conObj.connections.push(this);
 
                 
+            }
+        }
+        // If wire connects to other wire. 
+        else if (conObj.type === digsim.WIRE) {
+            console.log("STEP 3");
+                        
+            if ((conObj.column == this.column && conObj.row == this.row) || 
+                (conObj.path[conObj.path.length - 1].x + conObj.column === this.column && 
+                 conObj.path[conObj.path.length - 1].y + conObj.row === this.row)) {
+                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                this.connections.push(conObj);
+                conObj.connections.push(this);
             }
         }
     }
@@ -95,6 +109,18 @@ Wire.prototype.checkConnect = function() {
 
             }
         }
+        else if (conObj.type === digsim.WIRE) {
+            console.log("STEP 3");
+            
+            if ((conObj.column == this.path[this.path.length - 1].x + this.column && conObj.row == this.path[this.path.length - 1].y + this.row) || 
+                (conObj.path[conObj.path.length - 1].x + conObj.column === this.path[this.path.length - 1].x + this.column && 
+                 conObj.path[conObj.path.length - 1].y + conObj.row === this.path[this.path.length - 1].y + this.row)) {
+                    console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                    this.connections.push(conObj);
+                    conObj.connections.push(this);
+                }
+        }
+
     }
 };
 

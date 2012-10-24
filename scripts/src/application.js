@@ -186,6 +186,17 @@ Digsim.prototype.setPlaceholders = function(obj) {
     }
     else {
         endRow = endCol = (2 * (Math.floor(obj.numInputs / 2))) + 1;
+        
+        console.log(obj.numInputs);
+        
+        for (var i = 0; i < obj.numInputs; ++i) {
+            var wire = obj.prev[i];
+            this.setWirePlaceholder(wire.id, Math.floor(wire.column) - 1, Math.floor(wire.row));
+            console.log(wire);
+        }
+        var wire = obj.next[0];
+        this.setWirePlaceholder(wire.id, Math.floor(wire.column), Math.floor(wire.row));
+
     }
     for (row = 0; row < endRow; ++row) {
         for (col = 0; col < endCol; ++col) {
@@ -202,6 +213,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
  *  identifier. 
  ****************************************************************************/
 Digsim.prototype.setWirePlaceholder = function(id, col, row) {
+    console.log("row: " + row + "\ncol: " + col);
     placeholder = new Placeholder(id, 0, 0, 1);
     this.placeholder[row][col] = placeholder;
 };
@@ -489,7 +501,7 @@ Digsim.prototype.onGridMouseDown = function(event) {
 };
 
 /*****************************************************************************
- * MOUSE UP
+ * ON GRID MOUSE UP
  *  When the mouse is realeased while on the canvas, this will take care of all
  *  the things that change after stuff being dragged around. 
  ****************************************************************************/
