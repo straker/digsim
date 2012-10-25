@@ -13,7 +13,7 @@ function LED() {
     this.connections = [];
     this.connectOffset.x = 0.5;
     this.connectOffset.y = 2;
-    this.state = 1;
+    this.state = 0;
     this.connectPoint = {'x': -1, 'y': -1};
 };
 

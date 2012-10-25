@@ -16,7 +16,7 @@
  ****************************************************************************/
 function Digsim() {
 	// Constants
-	this.GRID_SIZE = 42;
+	this.GRID_SIZE = 20;
 	this.NUM_COLS = 60;
 	this.NUM_ROWS = 30;
     
@@ -64,11 +64,13 @@ function Digsim() {
     
     // Data arrays
     this.components = [];   // Holds all of the objects by their unique ID 
-    
+    this.switches = [];     // Holds the place of the logic drivers in components[].
     this.placeholder = [];  // Holds component positions on grid
     for (var i = 0; i < this.NUM_COLS; ++i) {
         this.placeholder[i] = [];
     }
+    
+    
 };
 
 /*****************************************************************************
@@ -246,8 +248,19 @@ Digsim.prototype.onButtonClicked = function (event) {
 
         digsim.mode = digsim.WIRE_MODE;
     }
+    else if (id == "Simulate") {
+        $("canvas").css('cursor','pointer');
+        for (var i = 0; i < digsim.switches.length; ++i) {
+            digsim.components[ digsim.switches[i] ].traverse();
+        }
+        digsim.mode = digsim.SIM_MODE;
+        digsim.drawComponents();
+    }
     else {
         $("canvas").css('cursor','default');
+        if (id == "Switch") {
+            digsim.switches.push(digsim.iComp);
+        }
         digsim.mode = digsim.DEFAULT_MODE;
         var gate = new MyClass(2); 
         gate.init(2, 2, 0, digsim.iComp);
@@ -496,6 +509,23 @@ Digsim.prototype.onGridMouseDown = function(event) {
         else {
             // There's nothing where you clicked, dude. 
             console.log("empty");
+        }
+    }
+    else if (digsim.mode === digsim.SIM_MODE) {
+        // Gets mouse position on canvas
+        var mouseX = event.offsetX || event.layerX;
+        var mouseY = event.offsetY || event.layerY;
+        
+        // Tells us where on the grid (we've created) the click is
+        var col = Math.floor(mouseX / digsim.GRID_SIZE);
+        var row = Math.floor(mouseY / digsim.GRID_SIZE);
+        
+        if (digsim.placeholder[row][col]) {
+            var obj = digsim.components[ digsim.placeholder[row][col].ref ];
+            if (obj.type === digsim.SWITCH) {
+                obj.passState(!obj.state);
+                digsim.drawComponents();
+            }
         }
     }
 };

@@ -184,8 +184,10 @@ Drawable.prototype.traverse = function() {
         console.log("THIS.PREV:");
         console.log(this.prev);
         
-        if (con !== this.prev[0]) { // The problem is here... somewhere
-            
+        console.log("$.inArray(con, this.prev) = " + ($.inArray(con, this.prev)));
+        //  $ <- jquery stuff
+        if ($.inArray(con, this.prev) === -1) { // connection is not part of the previous
+                                                // don't set its next to its previous
             console.log("CON.TYPE: " + con.type);
             console.log(con);
             
@@ -195,31 +197,29 @@ Drawable.prototype.traverse = function() {
             }
             else if (con.type === digsim.LED) {
                 this.setNext(con);
-                return;
             }
-            else if (con.type < 0) {// Gates have a negative index
-
-                this.setNext(con);
-                
-                if (this.next[0].next[0]) {
-                    return;
+            else if (con.type === digsim.WIRE) {
+                if (this.type > 0) {
+                    this.setNext(con);
+                    console.log("NOT A GATE");
                 }
-                else {
-                    this.traverse();
-                }
-                
-            }
-            else {
-                
-                this.setNext(con);
                 con.traverse();
             }
-            
+            else if (con.type < 0) {// Gates have a negative index
+                
+                console.log(con.next[0].next[0]);
+                if (typeof con.next[0].next[0] === "undefined") {
+                    con.traverse();
+                }
+            }           
+            else {
+                console.log("UNKNOWN CASE IN TRAVERSE() FUNCTION");
+            }
         }
     }
     
     return;
-    
+/*    
     console.log("\n======START=====");
     console.log(this);
     for (var i = 0; i < this.connections.length; ++i) {
@@ -236,10 +236,11 @@ Drawable.prototype.traverse = function() {
             console.log("CON.next.length = " + con.next.length);
             console.log("next set");
             // FIX ME!!!
-            if (/*con.next.length && !con.next[0].length && */con.type !== digsim.LED) {
+            if (con.type !== digsim.LED) {
                 console.log("traverse");
                 con.traverse();
             }
         }
     }
+*/
 };

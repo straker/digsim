@@ -135,6 +135,16 @@ Wire.prototype.draw = function(context) {
     context.beginPath();
     context.strokeStyle = '#000000';
     context.lineWidth = 2;
+    if (digsim.mode === digsim.SIM_MODE) {
+        if (this.state) {
+            context.strokeStyle = '#FF0000';
+        }
+        else {
+            context.strokeStyle = '#0000FF';
+        }
+    }
+    console.log("DIGSIM>MODE;lkajfsd;lifjas;lj: " + digsim.mode);
+        
     
     context.moveTo(0, 0);
     for (var i = 0; i < this.path.length; ++i) {
