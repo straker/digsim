@@ -39,6 +39,7 @@ Wire.prototype.updatePos = function() {
     console.log(this);
     this.connectOffset.x = (this.startPos % 2 && this.dx == 1 ? -1 : 0);
     this.connectOffset.y = (!(this.startPos % 2) && this.dy == 1 ? -1 : 0);
+    console.log("THIS>PATH>LENGTH: " + this.path.length);
     if (this.path.length) {
         this.connectOffset.endX = this.path[this.path.length - 1].x + (this.endPos % 2 && this.dx == -1 ? -1 : 0);
         this.connectOffset.endY = this.path[this.path.length - 1].y + (!(this.endPos % 2) && this.dy == -1 ? -1 : 0);
@@ -93,11 +94,11 @@ Wire.prototype.checkConnect = function() {
     }
     
     if (obj = digsim.placeholder[Math.floor(this.connectPoint.endY)][Math.floor(this.connectPoint.endX)]) {
-        console.log("STEP 1");
+        console.log("STEP 4");
         var conObj = digsim.components[obj.ref];
         console.log(conObj);
         if (conObj.type === digsim.LED || conObj.type === digsim.SWITCH) {
-            console.log("STEP 2");
+            console.log("STEP 5");
             
             console.log(conObj.connectPoint.x == this.column);
             console.log(conObj.connectPoint.y == this.row);
@@ -110,7 +111,7 @@ Wire.prototype.checkConnect = function() {
             }
         }
         else if (conObj.type === digsim.WIRE) {
-            console.log("STEP 3");
+            console.log("STEP 6");
             
             if ((conObj.column == this.path[this.path.length - 1].x + this.column && conObj.row == this.path[this.path.length - 1].y + this.row) || 
                 (conObj.path[conObj.path.length - 1].x + conObj.column === this.path[this.path.length - 1].x + this.column && 
@@ -142,9 +143,7 @@ Wire.prototype.draw = function(context) {
         else {
             context.strokeStyle = '#0000FF';
         }
-    }
-    console.log("DIGSIM>MODE;lkajfsd;lifjas;lj: " + digsim.mode);
-        
+    }        
     
     context.moveTo(0, 0);
     for (var i = 0; i < this.path.length; ++i) {

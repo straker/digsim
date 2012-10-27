@@ -24,7 +24,6 @@ function NAND(numInputs) {
 
 NAND.prototype = new Drawable();
 
-// Draws a generic gate... just a start.
 /*****************************************************************************
  * DRAW
  *  This will draw the and gate on the screen. Totally scalable, and able to 
@@ -61,31 +60,34 @@ NAND.prototype.draw = function(context) {
     context.closePath();
     context.stroke();
     context.fill();
+    
+    context.moveTo(digsim.GRID_SIZE * 10 / 3, digsim.GRID_SIZE * 1.5);
+    context.beginPath();
+    context.arc(digsim.GRID_SIZE * 19 / 6, digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE / 6, 0, 2 * Math.PI);
+    context.fill();
+    context.stroke();
+
     context.restore();
     
     // Draw wires
     var cnt = 0;
     for (var i = 0; i < this.numInputs; ++i) {
         if (i % 2) { 
-            this.prev[i].init(this.column, this.row + (factor * 2) + .5 - cnt++, this.rotation);
+            this.prev[i].column = this.column;
+            this.prev[i].row = this.row + (factor * 2) + .5 - cnt++;
         }
         else {
-            this.prev[i].init(this.column, this.row + cnt + .5, this.rotation);
-        }
-        // Reset wire path
-        digsim.setWirePlaceholder(this.id, 0, 0);
-        this.prev[i].path = [];
-        this.prev[i].path.push({'x': -1, 'y': 0})
-        
+            this.prev[i].column = this.column;
+            this.prev[i].row = this.row + cnt + .5;
+        }        
         this.prev[i].draw(context);
+        this.prev[i].updatePos();
     }
-    this.next[0].init(this.column + (factor * 2) + 1, this.row + factor + .5, this.rotation);
-    digsim.setWirePlaceholder(this.id, 0, 0);
-    // Reset wire path
-    this.next[0].path = [];
-    this.next[0].path.push({'x': 1, 'y': 0});
     
+    this.next[0].column = this.column + (factor * 2) + 1;
+    this.next[0].row = this.row + factor + .5;    
     this.next[0].draw(context);
+    this.next[0].updatePos();
 };
 
 // Infallable logic function

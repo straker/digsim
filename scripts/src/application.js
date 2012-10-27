@@ -16,7 +16,7 @@
  ****************************************************************************/
 function Digsim() {
 	// Constants
-	this.GRID_SIZE = 20;
+	this.GRID_SIZE = 40;
 	this.NUM_COLS = 60;
 	this.NUM_ROWS = 30;
     
@@ -187,10 +187,14 @@ Digsim.prototype.setPlaceholders = function(obj) {
         endCol = 2;
     }
     else {
-        endRow = endCol = (2 * (Math.floor(obj.numInputs / 2))) + 1;
-        
-        console.log(obj.numInputs);
-        
+        if (obj.type === digsim.NOT) {
+            endRow = 3;
+            endCol = 2;
+        }
+        else {
+            endRow = endCol = (2 * (Math.floor(obj.numInputs / 2))) + 1;
+        }   
+                
         for (var i = 0; i < obj.numInputs; ++i) {
             var wire = obj.prev[i];
             this.setWirePlaceholder(wire.id, Math.floor(wire.column) - 1, Math.floor(wire.row));
@@ -251,7 +255,10 @@ Digsim.prototype.onButtonClicked = function (event) {
     else if (id == "Simulate") {
         $("canvas").css('cursor','pointer');
         for (var i = 0; i < digsim.switches.length; ++i) {
-            digsim.components[ digsim.switches[i] ].traverse();
+            var obj = digsim.components[ digsim.switches[i] ];
+            obj.traverse();
+            obj.state = 0;
+            obj.passState(obj.state);
         }
         digsim.mode = digsim.SIM_MODE;
         digsim.drawComponents();
@@ -278,8 +285,8 @@ Digsim.prototype.onGridClicked = function(event) {
     if (digsim.mode === digsim.WIRE_MODE) {
         event.preventDefault();
         
-        var mouseX = event.offsetX || event.layerX;
-        var mouseY = event.offsetY || event.layerY;
+        var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
+        var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
         var x, y;
                 
         // Tells us where on the grid (we've created) the click is
@@ -470,8 +477,8 @@ Digsim.prototype.onGridMouseDown = function(event) {
         digsim.dragging = false;
         
         // Gets mouse position on canvas
-        var mouseX = event.offsetX || event.layerX;
-        var mouseY = event.offsetY || event.layerY;
+        var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
+        var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
         
         // Tells us where on the grid (we've created) the click is
         var col = Math.floor(mouseX / digsim.GRID_SIZE);
@@ -498,6 +505,28 @@ Digsim.prototype.onGridMouseDown = function(event) {
                     digsim.placeholder[iRow + y][iCol + x] = undefined;
                 }
             }
+            
+            // Clean up wire placehoders on gates
+            if (digsim.draggingGate.type < 0) { 
+                if (digsim.draggingGate.type === digsim.NOT) {
+                    digsim.placeholder[digsim.draggingGate.row + 1][digsim.draggingGate.column - 1] = undefined;
+                    digsim.placeholder[digsim.draggingGate.row + 1][digsim.draggingGate.column + 2] = undefined;
+                }
+                else {
+                    var factor = Math.floor(digsim.draggingGate.numInputs / 2); 
+                    var cnt = 0;
+                    for (var i = 0; i < digsim.draggingGate.numInputs; ++i) {
+                        if (i % 2) {
+                            digsim.placeholder[digsim.draggingGate.row + (factor * 2) - cnt++][digsim.draggingGate.column - 1] = undefined;
+                        }
+                        else {
+                            console.log("(" + digsim.draggingGate.row + ", " + (digsim.draggingGate.column - 1) + ")");
+                            digsim.placeholder[digsim.draggingGate.row + cnt][digsim.draggingGate.column - 1] = undefined;
+                        }
+                    }
+                    digsim.placeholder[digsim.draggingGate.row + factor][digsim.draggingGate.column + (factor * 2) + 1] = undefined;
+                }
+            }
 
             // Visually remove component from static canvas. 
             digsim.drawComponents();
@@ -513,8 +542,8 @@ Digsim.prototype.onGridMouseDown = function(event) {
     }
     else if (digsim.mode === digsim.SIM_MODE) {
         // Gets mouse position on canvas
-        var mouseX = event.offsetX || event.layerX;
-        var mouseY = event.offsetY || event.layerY;
+        var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
+        var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
         
         // Tells us where on the grid (we've created) the click is
         var col = Math.floor(mouseX / digsim.GRID_SIZE);
@@ -555,8 +584,8 @@ Digsim.prototype.onGridMouseUp = function(event) {
  *  Gets the position of the mouse on the canvas. 
  ****************************************************************************/
 $("canvas").mousemove(function(event) {
-    var mouseX = event.offsetX || event.layerX;
-    var mouseY = event.offsetY || event.layerY;
+    var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
+    var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
     digsim.mousePos = { x: mouseX, y: mouseY };
 });
 
@@ -600,6 +629,7 @@ function animateWire() {
         context.stroke();
     }
 };
+
 
 /*****************************************************************************
  * ANIMATE

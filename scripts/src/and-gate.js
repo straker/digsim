@@ -28,17 +28,31 @@ function AND(numInputs) {
         wire.init(0, 0, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = wire;
         wire.connections.push(this);
+        // Reset wire path
+        wire.path = [];
+        wire.path.push({'x': -1, 'y': 0});
+        wire.startPos = 1;
+        wire.endPos = 1;
+        wire.dx = -1;
+
     }
     var wire = new Wire();
     this.setNext(wire);
     this.connections[0] = wire;
     wire.init(0, 0, 0, digsim.iComp);
     digsim.components[digsim.iComp++] = wire;
+    
+    // Reset wire path
+    wire.path = [];
+    wire.path.push({'x': 1, 'y': 0});
+    wire.startPos = 1;
+    wire.endPos = 1;
+    wire.dx = 1;
+
 };
 
 AND.prototype = new Drawable();
 
-// Draws a generic gate... just a start.
 /*****************************************************************************
  * DRAW
  *  This will draw the and gate on the screen. Totally scalable, and able to 
@@ -82,25 +96,28 @@ AND.prototype.draw = function(context) {
     for (var i = 0; i < this.numInputs; ++i) {
         if (i % 2) { 
             this.prev[i].column = this.column;
-            this.prev[i].row = this.row + (factor * 2) + .5 - cnt;
+            this.prev[i].row = this.row + (factor * 2) + .5 - cnt++;
         }
         else {
             this.prev[i].column = this.column;
             this.prev[i].row = this.row + cnt + .5;
         }
         // Reset wire path
-        this.prev[i].path = [];
-        this.prev[i].path.push({'x': -1, 'y': 0});
+        //this.prev[i].path = [];
+        //this.prev[i].path.push({'x': -1, 'y': 0});
 
         this.prev[i].draw(context);
+        this.prev[i].updatePos();
     }
+    
     this.next[0].column = this.column + (factor * 2) + 1;
     this.next[0].row = this.row + factor + .5;
     // Reset wire path
-    this.next[0].path = [];
-    this.next[0].path.push({'x': 1, 'y': 0});
+    //this.next[0].path = [];
+    //this.next[0].path.push({'x': 1, 'y': 0});
 
     this.next[0].draw(context);
+    this.next[0].updatePos();
 };
 
 /*****************************************************************************

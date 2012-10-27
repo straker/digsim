@@ -53,16 +53,9 @@ Drawable.prototype.init = function (col, row, rot, id) {
                 this.prev[i].init(this.column, this.row + cnt + .5, rot, this.prev[i].id);
             }
             this.prev[i].drawStatic = false;
-            // Reset wire path
-            this.prev[i].path = [];
-            this.prev[i].path.push({'x': -1, 'y': 0});
         }
         this.next[0].init(this.column + (factor * 2) + 1, this.row + factor + .5, rot, this.next[0].id);
         this.next[0].drawStatic = false;
-
-        // Reset wire path
-        this.next[0].path = [];
-        this.next[0].path.push({'x': 1, 'y': 0});
     }
 };
 
@@ -106,20 +99,13 @@ Drawable.prototype.checkConnect = function() {
                 
             }
         }
-        /*
-        else if (conObj.type === digsim.LED || conObj.type === digsim.SWITCH) {
-            console.log("STEP 2");
-            console.log(conObj);
-            
-            console.log(conObj.connectPoint.x == this.column);
-            console.log(conObj.connectPoint.y == this.row);
-            if ((conObj.connectPoint.x == this.column && conObj.connectPoint.y == this.row) || 
-                (conObj.connectPoint.x == this.path[this.path.length - 1].x + this.column && 
-                    conObj.connectPoint.y == this.path[this.path.length - 1].y + this.row)) {
-                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-            }
+    }
+    
+    if (this.type < 0) { // gate
+        for (var i = 0; i < this.numInputs; ++i) {
+            this.prev[i].checkConnect();
         }
-         */
+        this.next[0].checkConnect();
     }
 };
 
@@ -129,18 +115,15 @@ Drawable.prototype.checkConnect = function() {
  *  gate, LED, etc). 
  *****************************************************************************/
 Drawable.prototype.passState = function(pState) {
-    if (this.type === digsim.WIRE || 
-        this.type === digsim.SWITCH || 
-        this.type === digsim.LED) {
+    if (this.type < 0) {
+        this.computeLogic();
+        this.next[0].passState(this.state);
+    }
+    else {
         this.state = pState;
-        // To do: change color 
         for (iWire in this.next) {
             this.next[iWire].passState(pState);
         }
-    }
-    else { // always a gate
-        this.computeLogic();
-        this.next[0].passState(this.state);
     }
 };
 
