@@ -15,6 +15,7 @@ function LED() {
     this.connectOffset.y = 2;
     this.state = 0;
     this.connectPoint = {'x': -1, 'y': -1};
+    this.dimension = {'row': 2, 'col': 1};
 };
 
 LED.prototype = new Drawable();

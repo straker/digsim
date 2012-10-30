@@ -15,6 +15,8 @@ function OR(numInputs) {
     this.state = 0;
     this.numInputs = numInputs || 2;
     this.connectPoint = {'x': -1, 'y': -1};
+    var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
+    this.dimension = {'row': size, 'col': (size + 1)}; // maybe?
     
     var factor = Math.floor(this.numInputs / 2); 
     
@@ -30,6 +32,7 @@ function OR(numInputs) {
         wire.connections.push(this);
         // Reset wire path
         wire.path = [];
+        wire.path.push({'x': 1, 'y': 0});
         wire.path.push({'x': -1, 'y': 0});
         wire.startPos = 1;
         wire.endPos = 1;
@@ -60,6 +63,29 @@ OR.prototype = new Drawable();
  *  to draw a half circle with the bezierCurveTo method. 
  ****************************************************************************/
 OR.prototype.draw = function(context) {
+    var factor = Math.floor(this.numInputs / 2);
+    
+    // Draw wires
+    var cnt = 0;
+    for (var i = 0; i < this.numInputs; ++i) {
+        if (i % 2) { 
+            this.prev[i].column = this.column;
+            this.prev[i].row = this.row + (factor * 2) + .5 - cnt++;
+        }
+        else {
+            this.prev[i].column = this.column;
+            this.prev[i].row = this.row + cnt + .5;
+        }
+        
+        this.prev[i].draw(context);
+        this.prev[i].updatePos();
+    }
+    
+    this.next[0].column = this.column + (factor * 2) + 2;
+    this.next[0].row = this.row + factor + .5;
+    
+    this.next[0].draw(context);
+    this.next[0].updatePos();
     
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
@@ -74,69 +100,43 @@ OR.prototype.draw = function(context) {
     context.moveTo(0, 0);
     context.lineTo(gsf,  0);            
     
-    /******************************
-     need to figure out scaling stuff - 
-     just replacing digsim.GRID_SIZE * 4 with factor stuff. 
-     ******************************/
+    // VECTOR CALCULUS... good luck. :)
     
-    // var P0x = gsf;
-    // var P0y = 0;
-    // var P1x = gsf;
-    var P1y = gsf * 2 + digsim.GRID_SIZE;
-    // var Mx  = P1y;
-    // var My  = P1y / 2;
-    // var C0y = gsf;
-    var Cx = (4 * P1y - gsf) / 3;
-    // var C1y = gsf;
-    var x = -P1y / 2;
-    var y = 4 * digsim.GRID_SIZE - gsf;
-    var x0 = y/2 + gsf;
-    var y0 = P1y / 4;
-    t = -0.28;
-    context.quadraticCurveTo(x * t + x0, y * t + y0, 
-                             digsim.GRID_SIZE * 4, P1y / 2);
-    x = P1y / 2;
-    y = 4 * digsim.GRID_SIZE - gsf;
-    x0 = digsim.GRID_SIZE * 2 + gsf / 2;
-    y0 = 0.75 * P1y
-    t = 0.28;
-    context.quadraticCurveTo(x * t + x0, y * t + y0, 
-                             gsf, P1y);
-    context.lineTo(0, P1y);
+    var t = 0.28;               // SET THIS TO CHANGE CURVATURE
+    var baseCurveature = 1.15;  // SET THIS TO CHANGE BASE CURVATURE
+    var height = 2 * factor + 1;    // Height (in grids) of gate
+    var x0 = gsf;                   // (x0, y0) = starting point
+    var y0 = 0;
+    var y1 = height * digsim.GRID_SIZE / 2; // (x1, y1) = ending point
+    var x1 = y1 * 2 + digsim.GRID_SIZE;
+    var xc = (x0 + x1) / 2;   // (xc, yc) = midpoint between start and end point
+    var yc = (y0 + y1) / 2;
+    var x = (y1 - y0) * t + xc; // The x coordinate of the parameterization
+    var y = (x0 - x1) * t + yc; // The y coordinate of the parameterization
     
-    context.quadraticCurveTo(digsim.GRID_SIZE * 1.15, P1y / 2, 
+    context.quadraticCurveTo(x, y, x1, y1);
+    
+    x0 = x1;
+    y0 = y1;
+    x1 = gsf;
+    y1 = height * digsim.GRID_SIZE;
+    xc = (x0 + x1) / 2;
+    yc = (y0 + y1) / 2;
+    x = (y1 - y0) * t + xc;
+    y = (x0 - x1) * t + yc;
+    
+    context.quadraticCurveTo(x, y, x1, y1);
+
+    context.lineTo(0, y1);
+    
+    // Base curve
+    context.quadraticCurveTo(digsim.GRID_SIZE * baseCurveature, y1 / 2, 
                              0, 0);
     context.stroke();
     context.fill();
     context.restore();
     
-    // Draw wires
-    var cnt = 0;
-    for (var i = 0; i < this.numInputs; ++i) {
-        if (i % 2) { 
-            this.prev[i].column = this.column;
-            this.prev[i].row = this.row + (factor * 2) + .5 - cnt++;
-        }
-        else {
-            this.prev[i].column = this.column;
-            this.prev[i].row = this.row + cnt + .5;
-        }
-        // Reset wire path
-        //this.prev[i].path = [];
-        //this.prev[i].path.push({'x': -1, 'y': 0});
-        
-        this.prev[i].draw(context);
-        this.prev[i].updatePos();
-    }
     
-    this.next[0].column = this.column + (factor * 2) + 2;
-    this.next[0].row = this.row + factor + .5;
-    // Reset wire path
-    //this.next[0].path = [];
-    //this.next[0].path.push({'x': 1, 'y': 0});
-    
-    this.next[0].draw(context);
-    this.next[0].updatePos();
 };
 
 /*****************************************************************************

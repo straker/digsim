@@ -35,21 +35,21 @@ Wire.prototype = new Drawable();
  *****************************************************************************/
 Wire.prototype.updatePos = function() {
     
-    console.log("======WIRE======");
-    console.log(this);
+    //console.log("======WIRE======");
+    //console.log(this);
     this.connectOffset.x = (this.startPos % 2 && this.dx == 1 ? -1 : 0);
     this.connectOffset.y = (!(this.startPos % 2) && this.dy == 1 ? -1 : 0);
-    console.log("THIS>PATH>LENGTH: " + this.path.length);
+    //console.log("THIS>PATH>LENGTH: " + this.path.length);
     if (this.path.length) {
         this.connectOffset.endX = this.path[this.path.length - 1].x + (this.endPos % 2 && this.dx == -1 ? -1 : 0);
         this.connectOffset.endY = this.path[this.path.length - 1].y + (!(this.endPos % 2) && this.dy == -1 ? -1 : 0);
     }
     this.connectPoint.x = this.column + this.connectOffset.x;
     this.connectPoint.y = this.row + this.connectOffset.y;
-    console.log("UPDATE: (" + this.connectPoint.x + ", " + this.connectPoint.y + ")");
+    //console.log("UPDATE: (" + this.connectPoint.x + ", " + this.connectPoint.y + ")");
     this.connectPoint.endX = this.column + this.connectOffset.endX;
     this.connectPoint.endY = this.row + this.connectOffset.endY;
-    console.log("WIRE UPDATE END: (" + this.connectPoint.endX + ", " + this.connectPoint.endY + ")\n\n");
+    //console.log("WIRE UPDATE END: (" + this.connectPoint.endX + ", " + this.connectPoint.endY + ")\n\n");
 };
 
 /*****************************************************************************

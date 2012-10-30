@@ -47,14 +47,14 @@ Drawable.prototype.init = function (col, row, rot, id) {
         
         for (var i = 0; i < this.numInputs; ++i) {
             if (i % 2) { 
-                this.prev[i].init(this.column, this.row + (factor * 2) + .5 - cnt, row, this.prev[i].id);
+                this.prev[i].init(this.column, this.row + (factor * 2) + .5 - cnt++, row, this.prev[i].id);
             }
             else {
                 this.prev[i].init(this.column, this.row + cnt + .5, rot, this.prev[i].id);
             }
             this.prev[i].drawStatic = false;
         }
-        this.next[0].init(this.column + (factor * 2) + 1, this.row + factor + .5, rot, this.next[0].id);
+        this.next[0].init(this.column + this.dimension.col, this.row + factor + .5, rot, this.next[0].id);
         this.next[0].drawStatic = false;
     }
 };
@@ -155,6 +155,68 @@ Drawable.prototype.setPrev = function(obj) {
  *****************************************************************************/
 Drawable.prototype.traverse = function() {
     
+    var conQueue = [];
+    // Always done on switches, so guaranteed to have only 1 next. 
+    conQueue.push(this.connections[0]);
+    this.setNext(this.connections[0]);
+    
+    while (conQueue.length) {
+        console.log("\n======START=====");
+        console.log(conQueue[0]);
+        
+        for (var i = 0; i < conQueue[0].connections.length; ++i) {
+            
+            var currObject = conQueue[0];
+            var con = currObject.connections[i];
+            
+            console.log("THIS.CONNECTIONS[" + i + "]: ");
+            console.log(currObject.connections[i]);
+            
+            console.log("THIS.PREV:");
+            console.log(currObject.prev);
+            
+            console.log("$.inArray(con, conQueue[0].prev) = " + ($.inArray(con, currObject.prev)));
+            
+            //  $ <- jquery stuff
+            if ($.inArray(con, currObject.prev) === -1) { // connection is not part of the previous
+                                                    // don't set its next to its previous
+                console.log("CON.TYPE: " + con.type);
+                console.log(con);
+                
+                if (con.type === digsim.SWITCH) {
+                    alert("ERROR! Multiple switches driving one wire");
+                    console.log("ERROR! Multiple switches driving one wire");
+                    return;
+                }
+                else if (con.type === digsim.LED) {
+                    currObject.setNext(con);
+                }
+                else if (con.type === digsim.WIRE) {
+                    if (currObject.type > 0) {
+                        currObject.setNext(con);
+                        console.log("NOT A GATE");
+                    }
+                    conQueue.push(con);
+                }
+                else if (con.type < 0) {// Gates have a negative index
+                    
+                    console.log(con.next[0].next[0]);
+                    if (typeof con.next[0].next[0] === "undefined") {
+                        conQueue.push(con);
+                    }
+                }           
+                else {
+                    console.log("UNKNOWN CASE IN TRAVERSE() FUNCTION");
+                }
+            }
+        }
+        conQueue.shift();
+    }
+
+    // RECURSIVE VERSION OF traverse(), WHICH IS TOO ROBUST FOR JAVASCRIPT
+    // BTW, this works perfectly
+    
+    /*
     console.log("\n======START=====");
     console.log(this);
 
@@ -175,6 +237,7 @@ Drawable.prototype.traverse = function() {
             console.log(con);
             
             if (con.type === digsim.SWITCH) {
+                alert("ERROR! Multiple switches driving one wire");
                 console.log("ERROR! Multiple switches driving one wire");
                 return;
             }
@@ -202,28 +265,7 @@ Drawable.prototype.traverse = function() {
     }
     
     return;
-/*    
-    console.log("\n======START=====");
-    console.log(this);
-    for (var i = 0; i < this.connections.length; ++i) {
-        var con = this.connections[i];
-        console.log("has connection");
-        console.log(con);
-        if (con !== this.prev) {
-            if (con.type === digsim.SWITCH) {
-                console.log("ERROR! Multiple switches driving one wire");
-                return;
-            }
-            console.log("set next");
-            this.setNext(con);
-            console.log("CON.next.length = " + con.next.length);
-            console.log("next set");
-            // FIX ME!!!
-            if (con.type !== digsim.LED) {
-                console.log("traverse");
-                con.traverse();
-            }
-        }
-    }
-*/
+     */
+    
+    
 };

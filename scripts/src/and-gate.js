@@ -15,6 +15,8 @@ function AND(numInputs) {
     this.state = 0;
     this.numInputs = numInputs || 2;
     this.connectPoint = {'x': -1, 'y': -1};
+    var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
+    this.dimension = {'row': size, 'col': size};
     
     var factor = Math.floor(this.numInputs / 2); 
 

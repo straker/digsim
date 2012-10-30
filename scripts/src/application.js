@@ -16,9 +16,9 @@
  ****************************************************************************/
 function Digsim() {
 	// Constants
-	this.GRID_SIZE = 40;
-	this.NUM_COLS = 60;
-	this.NUM_ROWS = 30;
+	this.GRID_SIZE = 15;
+	this.NUM_COLS = 100;
+	this.NUM_ROWS = 100;
     
     // Type identifiers
     this.AND = -1;  // Gates are negative because they have a special
@@ -176,25 +176,10 @@ Digsim.prototype.drawComponents = function() {
  *  identifier. 
  ****************************************************************************/
 Digsim.prototype.setPlaceholders = function(obj) {
-    var row, col, endRow, endCol;
-    // Set size for each object in placeholder array
-    if (obj.type === digsim.LED) {
-        endRow = 2;
-        endCol = 1;
-    }
-    else if (obj.type === digsim.SWITCH) {
-        endRow = 3;
-        endCol = 2;
-    }
-    else {
-        if (obj.type === digsim.NOT) {
-            endRow = 3;
-            endCol = 2;
-        }
-        else {
-            endRow = endCol = (2 * (Math.floor(obj.numInputs / 2))) + 1;
-        }   
-                
+    var row, col;
+    
+    // Place wire placehodlers
+    if (obj.type < 0) { //gate
         for (var i = 0; i < obj.numInputs; ++i) {
             var wire = obj.prev[i];
             this.setWirePlaceholder(wire.id, Math.floor(wire.column) - 1, Math.floor(wire.row));
@@ -204,9 +189,11 @@ Digsim.prototype.setPlaceholders = function(obj) {
         this.setWirePlaceholder(wire.id, Math.floor(wire.column), Math.floor(wire.row));
 
     }
-    for (row = 0; row < endRow; ++row) {
-        for (col = 0; col < endCol; ++col) {
-            var placeholder = new Placeholder(obj.id, col, row, endCol, endRow);
+    
+    // Places the placeholder for the object
+    for (row = 0; row < obj.dimension.row; ++row) {
+        for (col = 0; col < obj.dimension.col; ++col) {
+            var placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row);
             this.placeholder[obj.row + row][obj.column + col] = placeholder;
         }
     }
@@ -269,7 +256,14 @@ Digsim.prototype.onButtonClicked = function (event) {
             digsim.switches.push(digsim.iComp);
         }
         digsim.mode = digsim.DEFAULT_MODE;
-        var gate = new MyClass(2); 
+        
+        
+        if (id === "AND" || id === "NAND" || id === "OR" || id === "NOR" || id === "XOR")
+            var numInputs =  prompt("Enter numInputs", "");
+        else
+            numInputs = 0;
+        
+        var gate = new MyClass(numInputs); 
         gate.init(2, 2, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = gate;
         digsim.setPlaceholders(gate);
@@ -524,7 +518,7 @@ Digsim.prototype.onGridMouseDown = function(event) {
                             digsim.placeholder[digsim.draggingGate.row + cnt][digsim.draggingGate.column - 1] = undefined;
                         }
                     }
-                    digsim.placeholder[digsim.draggingGate.row + factor][digsim.draggingGate.column + (factor * 2) + 1] = undefined;
+                    digsim.placeholder[digsim.draggingGate.row + factor][digsim.draggingGate.column + digsim.draggingGate.dimension.col] = undefined;
                 }
             }
 
