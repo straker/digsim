@@ -16,6 +16,9 @@ function NOT() {
     this.numInputs = 1;
     this.connectPoint = {'x': -1, 'y': -1};
     this.dimension = {'row': 3, 'col': 2};
+    
+    this.visitLimit = 2 * this.numInputs;
+    this.visited = 0;
         
     var wire = new Wire();
     this.setPrev(wire);

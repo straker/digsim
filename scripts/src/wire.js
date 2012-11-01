@@ -18,6 +18,9 @@ function Wire() {
     this.connectOffset = {'x': -1, 'y': -1, 'endX': -1, 'endY': -1};
     this.connectPoint = {'x': -1, 'y': -1, 'endX': -1, 'endY': -1};
     
+    this.visitLimit = 2;
+    this.visited = 0;
+    
     // Represents orientation of the wire at start and end.
     this.startPos = -1; 
     this.endPos = -1;
@@ -123,6 +126,9 @@ Wire.prototype.checkConnect = function() {
         }
 
     }
+    
+    this.visitLimit = 2 * (this.connections.length || 2);
+    console.log(this.visitLimit);
 };
 
 /****************************************************************************

@@ -22,6 +22,8 @@ function AND(numInputs) {
 
     this.connectOffset.x = (factor * 2) + 2;
     this.connectOffset.y = factor;
+    this.visitLimit = 2 * this.numInputs;
+    this.visited = 0;
     
 
     for (var i = 0; i < this.numInputs; ++i) {

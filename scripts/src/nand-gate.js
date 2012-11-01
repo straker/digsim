@@ -17,6 +17,9 @@ function NAND(numInputs) {
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': size};
     
+    this.visitLimit = 2 * this.numInputs;
+    this.visited = 0;
+    
     var factor = Math.floor(this.numInputs / 2); 
     
     for (var i = 0; i < this.numInputs; ++i) {

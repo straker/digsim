@@ -115,14 +115,21 @@ Drawable.prototype.checkConnect = function() {
  *  gate, LED, etc). 
  *****************************************************************************/
 Drawable.prototype.passState = function(pState) {
-    if (this.type < 0) {
-        this.computeLogic();
-        this.next[0].passState(this.state);
-    }
-    else {
-        this.state = pState;
-        for (iWire in this.next) {
-            this.next[iWire].passState(pState);
+    if (this.visited++ < this.visitLimit) {
+        if (this.type < 0) {
+            this.computeLogic();
+            this.next[0].passState(this.state);
+        }
+        else {
+            if (typeof this.next !== "undefined") {
+                this.state = pState;
+                for (iWire in this.next) {                
+                    this.next[iWire].passState(pState);
+                }
+            }
+            else {
+                console.log("Error! Multiple drivers on 1 wire");
+            }
         }
     }
 };
@@ -184,18 +191,18 @@ Drawable.prototype.traverse = function() {
                 console.log(con);
                 
                 if (con.type === digsim.SWITCH) {
-                    alert("ERROR! Multiple switches driving one wire");
                     console.log("ERROR! Multiple switches driving one wire");
-                    return;
+                    return false;
                 }
                 else if (con.type === digsim.LED) {
                     currObject.setNext(con);
                 }
                 else if (con.type === digsim.WIRE) {
-                    if (currObject.type > 0) {
+                    if (currObject.type >= 0) {
                         currObject.setNext(con);
                         console.log("NOT A GATE");
                     }
+                    con.visitLimit = currObject.visitLimit;
                     conQueue.push(con);
                 }
                 else if (con.type < 0) {// Gates have a negative index
@@ -203,6 +210,9 @@ Drawable.prototype.traverse = function() {
                     console.log(con.next[0].next[0]);
                     if (typeof con.next[0].next[0] === "undefined") {
                         conQueue.push(con);
+                    }
+                    if (con.type === digsim.NOT) {
+                        con.visitLimit = currObject.visitLimit;
                     }
                 }           
                 else {
@@ -212,6 +222,7 @@ Drawable.prototype.traverse = function() {
         }
         conQueue.shift();
     }
+    return true;
 
     // RECURSIVE VERSION OF traverse(), WHICH IS TOO ROBUST FOR JAVASCRIPT
     // BTW, this works perfectly

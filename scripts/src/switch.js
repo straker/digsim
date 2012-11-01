@@ -16,7 +16,8 @@ function Switch() {
     this.connectOffset.y = 1.5;
     this.connectPoint = {'x': -1, 'y': -1};
     this.dimension = {'row': 3, 'col': 2};
-
+    this.visited = 0;
+    this.visitLimit = 1;
 };
 
 Switch.prototype = new Drawable();

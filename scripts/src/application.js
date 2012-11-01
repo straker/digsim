@@ -16,7 +16,7 @@
  ****************************************************************************/
 function Digsim() {
 	// Constants
-	this.GRID_SIZE = 15;
+	this.GRID_SIZE = 40;
 	this.NUM_COLS = 100;
 	this.NUM_ROWS = 100;
     
@@ -40,6 +40,7 @@ function Digsim() {
     this.TR = 1;    // top-right
     this.BR = 2;    // bottom-right
     this.BL = 3;    // bottom-left
+    this.MID = 4;   // connect wire to wire
 
     
     // Animation variables
@@ -243,12 +244,20 @@ Digsim.prototype.onButtonClicked = function (event) {
         $("canvas").css('cursor','pointer');
         for (var i = 0; i < digsim.switches.length; ++i) {
             var obj = digsim.components[ digsim.switches[i] ];
-            obj.traverse();
-            obj.state = 0;
-            obj.passState(obj.state);
+            for (var j = 0; j < digsim.components.length; ++j) {
+                digsim.components[j].visited = 0;
+            }
+            if (obj.traverse()) {
+                obj.state = 0;
+                obj.passState(obj.state);
+            }
         }
         digsim.mode = digsim.SIM_MODE;
         digsim.drawComponents();
+    }
+    else if (id == "D_Mode") {
+        $("canvas").css('cursor','default');
+        digsim.mode = digsim.DEFAULT_MODE;
     }
     else {
         $("canvas").css('cursor','default');
@@ -259,7 +268,7 @@ Digsim.prototype.onButtonClicked = function (event) {
         
         
         if (id === "AND" || id === "NAND" || id === "OR" || id === "NOR" || id === "XOR")
-            var numInputs =  prompt("Enter numInputs", "");
+            var numInputs = prompt("Enter numInputs", "");
         else
             numInputs = 0;
         
@@ -281,6 +290,8 @@ Digsim.prototype.onGridClicked = function(event) {
         
         var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
         var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
+        var row = Math.floor(mouseY / digsim.GRID_SIZE);
+        var col = Math.floor(mouseX / digsim.GRID_SIZE);
         var x, y;
                 
         // Tells us where on the grid (we've created) the click is
@@ -289,28 +300,38 @@ Digsim.prototype.onGridClicked = function(event) {
         var diagSep = digsim.GRID_SIZE - relX;
         var wirePos = 0;
         
-        // Determine grid snap for wires. 
-        if (relY < relX) {  // top
+        // Check clicked grid for wire
+        var objClicked;
+        if (objClicked = digsim.placeholder[row][col]) { // It exists
+            if (digsim.components[objClicked.ref].type === digsim.WIRE) {
+                x = col + 0.5;
+                y = row + 0.5;
+                wirePos = digsim.MID;
+            }
+        }
+        
+        // Determine grid snap for wires not connecting to other wires. 
+        else if (relY < relX) {  // top
             if (relY < diagSep) {  // top-left
-                x = Math.floor(mouseX / digsim.GRID_SIZE) + 0.5;
-                y = Math.floor(mouseY / digsim.GRID_SIZE);
+                x = col + 0.5;
+                y = row;
                 wirePos = digsim.TL;
             }
             else { // top-right
-                x = Math.floor(mouseX / digsim.GRID_SIZE) + 1;
-                y = Math.floor(mouseY / digsim.GRID_SIZE) + 0.5;
+                x = col + 1;
+                y = row + 0.5;
                 wirePos = digsim.TR;
             }
         }
         else { // bottom
             if (relY < diagSep) { // bottom-left
-                x = Math.floor(mouseX / digsim.GRID_SIZE);
-                y = Math.floor(mouseY / digsim.GRID_SIZE) + 0.5;
+                x = col;
+                y = row + 0.5;
                 wirePos = digsim.BL;
             }
             else { // bottom-right
-                x = Math.floor(mouseX / digsim.GRID_SIZE) + 0.5;
-                y = Math.floor(mouseY / digsim.GRID_SIZE) + 1;
+                x = col + 0.5;
+                y = row + 1;
                 wirePos = digsim.BR;
             }
         }
@@ -318,7 +339,6 @@ Digsim.prototype.onGridClicked = function(event) {
         // Smart wire logic
         if (digsim.dragging) {
             // TO DO:
-            // connect wire to components
             // avoiding component collisions.... in a long time
 
             digsim.dragging = false;
@@ -340,6 +360,7 @@ Digsim.prototype.onGridClicked = function(event) {
             position[3] = ((digsim.wirePos.startPos === digsim.TR || 
                             digsim.wirePos.startPos === digsim.BL) && 
                            (wirePos === digsim.BR || wirePos === digsim.TL));
+            position[4] = (digsim.wirePos.startPos === digsim.MID);
 
             // Going up/down and left/right?
             var changeY = (y < digsim.wirePos.startY) ? -1 : ((y === digsim.wirePos.startY) ? 0 : 1);
@@ -402,7 +423,7 @@ Digsim.prototype.onGridClicked = function(event) {
                 }
             }
             // Wire started on TR or BL
-            else {
+            else if (position[2] || position[3]) {
 
                 // Determine starting and endoing grids
                 startCol = digsim.wirePos.startX + (changeX === -1 ? changeX : 0);
@@ -441,12 +462,18 @@ Digsim.prototype.onGridClicked = function(event) {
                     wire.path.push( {'x': relX + 0.5 * changeX, 'y': relY + 0.5 * changeY} );
                 }
             }
+            else { // wire started in middle 
+                
+                // Determine starting and ending grids
+                startCol = 
+            }                
             
             wire.draw(digsim.staticContext);
             wire.updatePos();
             wire.checkConnect();
         }
-        else {
+        else if (x && y){
+            console.log("(" + x + ", " + y + ")");
             digsim.dragging = true;
             digsim.wirePos.startX = x;
             digsim.wirePos.startY = y;
@@ -546,6 +573,9 @@ Digsim.prototype.onGridMouseDown = function(event) {
         if (digsim.placeholder[row][col]) {
             var obj = digsim.components[ digsim.placeholder[row][col].ref ];
             if (obj.type === digsim.SWITCH) {
+                for (var j = 0; j < digsim.components.length; ++j) {
+                    digsim.components[j].visited = 0;
+                }
                 obj.passState(!obj.state);
                 digsim.drawComponents();
             }
