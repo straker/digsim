@@ -26,8 +26,7 @@ function Wire() {
     this.endPos = -1;
     
     // Represents the direction that the wire has been drawn. (-1 or 1)
-    this.dx = 0;   
-    this.dy = 0;
+    this.delta = {'x': 0, 'y': 0};
 };
 
 Wire.prototype = new Drawable();
@@ -38,21 +37,16 @@ Wire.prototype = new Drawable();
  *****************************************************************************/
 Wire.prototype.updatePos = function() {
     
-    //console.log("======WIRE======");
-    //console.log(this);
-    this.connectOffset.x = (this.startPos % 2 && this.dx == 1 ? -1 : 0);
-    this.connectOffset.y = (!(this.startPos % 2) && this.dy == 1 ? -1 : 0);
-    //console.log("THIS>PATH>LENGTH: " + this.path.length);
+    this.connectOffset.x = (this.startPos % 2 && this.delta.x == 1 ? -1 : 0);
+    this.connectOffset.y = (!(this.startPos % 2) && this.delta.y == 1 ? -1 : 0);
     if (this.path.length) {
-        this.connectOffset.endX = this.path[this.path.length - 1].x + (this.endPos % 2 && this.dx == -1 ? -1 : 0);
-        this.connectOffset.endY = this.path[this.path.length - 1].y + (!(this.endPos % 2) && this.dy == -1 ? -1 : 0);
+        this.connectOffset.endX = this.path[this.path.length - 1].x + (this.endPos % 2 && this.delta.x == -1 ? -1 : 0);
+        this.connectOffset.endY = this.path[this.path.length - 1].y + (!(this.endPos % 2) && this.delta.y == -1 ? -1 : 0);
     }
     this.connectPoint.x = this.column + this.connectOffset.x;
     this.connectPoint.y = this.row + this.connectOffset.y;
-    //console.log("UPDATE: (" + this.connectPoint.x + ", " + this.connectPoint.y + ")");
     this.connectPoint.endX = this.column + this.connectOffset.endX;
     this.connectPoint.endY = this.row + this.connectOffset.endY;
-    //console.log("WIRE UPDATE END: (" + this.connectPoint.endX + ", " + this.connectPoint.endY + ")\n\n");
 };
 
 /*****************************************************************************
@@ -150,7 +144,7 @@ Wire.prototype.draw = function(context) {
             context.strokeStyle = '#0000FF';
         }
     }        
-    
+
     context.moveTo(0, 0);
     for (var i = 0; i < this.path.length; ++i) {
         context.lineTo(this.path[i].x * digsim.GRID_SIZE, this.path[i].y * digsim.GRID_SIZE);
