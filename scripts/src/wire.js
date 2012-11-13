@@ -56,7 +56,7 @@ Wire.prototype.updatePos = function() {
 Wire.prototype.checkConnect = function() {
     
     console.log("SETP 0");
-    console.log(this);
+    //console.log(this);
     if (obj = digsim.placeholder[Math.floor(this.connectPoint.y)][Math.floor(this.connectPoint.x)]) {
         console.log("STEP 1");
         var conObj = digsim.components[obj.ref];
@@ -136,6 +136,7 @@ Wire.prototype.draw = function(context) {
     context.beginPath();
     context.strokeStyle = '#000000';
     context.lineWidth = 2;
+    context.lineCap = 'round';
     if (digsim.mode === digsim.SIM_MODE) {
         if (this.state) {
             context.strokeStyle = '#FF0000';
