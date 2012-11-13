@@ -212,75 +212,110 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
     //console.log("row: " + row + "\ncol: " + col);
     
     console.log(wire);
-    var col = Math.floor(wire.path[0].x + wire.column); // Current ending pos
-    var row = Math.floor(wire.path[0].y + wire.row); 
+    var endRow = wire.path[0].y + wire.row; 
+    var endCol = wire.path[0].x + wire.column; // Current ending pos
     
+    var floorEndRow = Math.floor(endRow);
+    var floorEndCol = Math.floor(endCol);
+       
     console.log("wire.column: " + wire.column + " wire.row: " + wire.row);
     
-    var i = Math.floor(dx ? Math.floor(wire.column): (dy ? Math.floor(wire.row) : 0));
-    var endBool = (dx ? col : (dy ? row : 0)) + (dx ? dx : (dy ? dy : 0));
+    var initial = Math.floor(dx ? Math.floor(wire.column): (dy ? Math.floor(wire.row) : 0));
+    var endBool = (dx ? floorEndCol + dx : (dy ? floorEndRow + dy : 0));
     var inc = dx ? dx : (dy ? dy : 0);
-    var x, y;
+    var row, col;
     console.log("DX: " + dx + "  DY: " + dy);
-    console.log("I: " + i + "  ENDBOOL " + endBool);
+    console.log("I: " + initial + "  ENDBOOL " + endBool);
     console.log("INC: " + inc);
     
-    for ( ; i !== endBool; i += inc) {
-        x = dy ? i : row;
-        y = dx ? i : col;
+    for (var i = initial; i !== endBool; i += inc) {
+        row = dy ? i : floorEndRow;
+        col = dx ? i : floorEndCol;
         
-        console.log("CHECKED (" + x + ", " + y + ")");
-        if (typeof this.placeholder[x][y] === 'array') {
+        console.log("CHECKED (" + row + ", " + col + ")");
+        if (this.placeholder[row][col] instanceof Array) {
             if (dx) {
-                for (var j = wire.column; j < col + 0.5; j += dx/2) {
-                    if (dx % 1) {
-                        if (this.placeholder[row][Math.floor(j)][(dx === 1 ? 1 : 3)]) {
+                for (var j = col - inc; j !== col && j != endCol; j += inc/2) {
+                    if (j % 1) {
+                        if (this.placeholder[row][col][(dx === 1 ? 1 : 3)]) {
                             console.log("wire collision error!");
                             return false;
                         }
                     }
                     else {
-                        if (this.placeholder[row][Math.floor(j)][(dx === 1 ? 3 : 1)]) {
+                        if (this.placeholder[row][col][(dx === 1 ? 3 : 1)]) {
                             console.log("wire collision error!");
                             return false;
                         }
                     }
                 }
-                
             }
             else if (dy) {
-                for (var j = wire.row; j < row + 0.5; j += dy/2) {
-                    if (dy % 1) {
-                        if (this.placeholder[Math.floor(j)][col][(dy === 1 ? 2 : 0)]) {
+                for (var j = row - inc; j !== row && j != endRow; j += inc/2) {
+                    if (j % 1) {
+                        if (this.placeholder[row][col][(dy === 1 ? 2 : 0)]) {
                             console.log("wire collision error!");
                             return false;
                         }
                     }
                     else {
-                        if (this.placeholder[Math.floor(j)][col][(dy === 1 ? 0 : 2)]) {
+                        if (this.placeholder[row][col][(dy === 1 ? 0 : 2)]) {
                             console.log("wire collision error!");
                             return false;
                         }
                     }
                 }
-                
             }
         }
-        else if (this.placeholder[x][y]) {
-            console.log("ERROR! COMPONENT " + this.placeholder[x][y].ref + " DETECTED IN PATH");
+        else if (this.placeholder[row][col]) {
+            console.log("ERROR! COMPONENT " + this.placeholder[row][col].ref + " DETECTED IN PATH");
             return false;
         }
     }
 
+    console.log("NO COLLISION DETECTED");
     placeholder = new Placeholder(wire.id, 0, 0, 1);
-    for (i = Math.floor(dx ? Math.floor(wire.column): (dy ? Math.floor(wire.row) : 0)); i !== endBool; i += inc) {
-        x = dy ? i : row;
-        y = dx ? i : col;
-        if (typeof this.placeholder[x][y] == 'undefined') {
-            this.placeholder[x][y] = [];
+    for (var i = initial; i !== endBool; i += inc) {
+        row = dy ? i : floorEndRow;
+        col = dx ? i : floorEndCol;
+
+        console.log("PLACING AT (" + row + ", " + col + ")");
+        if (typeof this.placeholder[row][col] == 'undefined') {
+            this.placeholder[row][col] = [];
         }
-        this.placeholder[x][y] = placeholder;
     }
+
+    if (dx) {
+        console.log("DX: " + dx);
+        var end = Math.max(wire.column, endCol);
+        for (var j = Math.min(wire.column, endCol); j !== end; j += Math.abs(dx/2)) {
+            console.log("J: " + j + "  END: " + (endCol) + "  INC/2: " + inc/2)
+            console.log("J%1: " + (j % 1));
+            if (j % 1) {
+                console.log("placed at index " + 1);
+                this.placeholder[Math.floor(wire.row)][Math.floor(j)][1] = placeholder
+            }
+            else {
+                console.log("placed at index " + 3);
+                this.placeholder[Math.floor(wire.row)][Math.floor(j)][3] = placeholder
+            }
+            console.log("");
+        }
+    }
+    else if (dy) {
+        var end = Math.max(wire.row, endRow);
+        for (var j = Math.min(wire.row, endRow); j !== end; j += Math.abs(dy/2)) {
+            console.log("J: " + j + "  END: " + (endRow) + "  INC/2: " + inc/2)
+            console.log("J%1: " + (j % 1));
+            if (j % 1) {
+                this.placeholder[Math.floor(j)][Math.floor(wire.column)][2] = placeholder;
+            }
+            else {
+                this.placeholder[Math.floor(j)][Math.floor(wire.column)][0] = placeholder;
+            }
+        }
+    }
+
     console.log("RETURN TRUE:");
     return true;
 };
@@ -882,12 +917,41 @@ Digsim.prototype.showPlaceholders = function() {
     var row = 0; col = 0;
     for (row = 0; row < this.gridWidth; row++) {
         for (col = 0; col < this.gridHeight; col++) {
-            if (this.placeholder[row][col]) {
+            if (this.placeholder[row][col] instanceof Array) {
+                for (var z = 0; z < 4; z++) {
+                    if (this.placeholder[row][col][z]) {
+                        this.gridContext.fillStyle = 'orange';
+                        this.gridContext.save();
+
+                        this.gridContext.translate(col * this.GRID_SIZE, row * this.GRID_SIZE);
+
+                        this.gridContext.translate(this.GRID_SIZE / 2, this.GRID_SIZE / 2)
+                        this.gridContext.rotate((90 * z) * Math.PI / 180);
+                        this.gridContext.translate(-this.GRID_SIZE / 2, -this.GRID_SIZE / 2)
+
+                        this.gridContext.beginPath();
+                        this.gridContext.moveTo(0,0);
+                        this.gridContext.lineTo(this.GRID_SIZE, 0);
+                        this.gridContext.lineTo(this.GRID_SIZE / 2, this.GRID_SIZE / 2);
+                        this.gridContext.closePath();
+                        this.gridContext.stroke();
+                        this.gridContext.fill();
+
+                        //this.gridContext.fillStyle = 'white';
+                        //this.gridContext.font = "10pt Calibri";
+                        //this.gridContext.fillText(this.placeholder[row][col][z].ref, 0 + this.GRID_SIZE / 2 - 10, 0 + this.GRID_SIZE / 2 - 10);
+                        
+                        this.gridContext.restore();
+                        //break;
+                    }
+                }
+            }
+            else if (this.placeholder[row][col]) {
                 this.gridContext.fillStyle = 'orange';
                 this.gridContext.fillRect(col * this.GRID_SIZE + 1, row * this.GRID_SIZE + 1, this.GRID_SIZE -2, this.GRID_SIZE - 2);
                 this.gridContext.fillStyle = 'white';
                 this.gridContext.font = "20pt Calibri";
-                this.gridContext.fillText(this.placeholder[row][col].ref, col * this.GRID_SIZE + this.GRID_SIZE / 2 - 10, row * this.GRID_SIZE + this.GRID_SIZE / 2 + 10)
+                this.gridContext.fillText(this.placeholder[row][col].ref, col * this.GRID_SIZE + this.GRID_SIZE / 2 - 10, row * this.GRID_SIZE + this.GRID_SIZE / 2 + 10);
             }
         }
     }
