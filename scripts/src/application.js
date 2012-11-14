@@ -223,95 +223,125 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
     var initial = Math.floor(dx ? Math.floor(wire.column): (dy ? Math.floor(wire.row) : 0));
     var endBool = (dx ? floorEndCol + dx : (dy ? floorEndRow + dy : 0));
     var inc = dx ? dx : (dy ? dy : 0);
-    var row, col;
+    var row, col, end, begin, j, thisPH;
     console.log("DX: " + dx + "  DY: " + dy);
     console.log("I: " + initial + "  ENDBOOL " + endBool);
     console.log("INC: " + inc);
-    
-    for (var i = initial; i !== endBool; i += inc) {
-        row = dy ? i : floorEndRow;
-        col = dx ? i : floorEndCol;
-        
-        console.log("CHECKED (" + row + ", " + col + ")");
-        if (this.placeholder[row][col] instanceof Array) {
-            if (dx) {
-                for (var j = col - inc; j !== col && j != endCol; j += inc/2) {
+    if (dx) {
+        console.log("CHECKING FOR COLLISION(DX)");
+        end = Math.max(wire.column, endCol);
+		begin = Math.min(wire.column, endCol);
+        j = Math.floor(begin);
+		while (j < end) {
+            console.log("J: " + j + "  END: " + (end) + "  INC/2: " + inc/2)
+            console.log("J%1: " + (j % 1));
+            thisPH = this.placeholder[floorEndRow][Math.floor(j)];
+
+			if (thisPH instanceof Array) {
+                if (j >= begin) {
+                    
                     if (j % 1) {
-                        if (this.placeholder[row][col][(dx === 1 ? 1 : 3)]) {
+                        console.log("placed at index " + 1);
+                        if (thisPH[1]) {
                             console.log("wire collision error!");
                             return false;
                         }
                     }
-                    else {
-                        if (this.placeholder[row][col][(dx === 1 ? 3 : 1)]) {
-                            console.log("wire collision error!");
-                            return false;
-                        }
+                    else if (thisPH[3]) {
+                        console.log("wire collision error!");
+                        return false;
                     }
                 }
+                j += 0.5;
             }
-            else if (dy) {
-                for (var j = row - inc; j !== row && j != endRow; j += inc/2) {
-                    if (j % 1) {
-                        if (this.placeholder[row][col][(dy === 1 ? 2 : 0)]) {
-                            console.log("wire collision error!");
-                            return false;
-                        }
-                    }
-                    else {
-                        if (this.placeholder[row][col][(dy === 1 ? 0 : 2)]) {
-                            console.log("wire collision error!");
-                            return false;
-                        }
-                    }
-                }
+            else if (thisPH) {
+                console.log("COLLISION! ERROR!");
+                return false;
             }
+            else {
+                ++j;
+            }
+            console.log("");
         }
-        else if (this.placeholder[row][col]) {
-            console.log("ERROR! COMPONENT " + this.placeholder[row][col].ref + " DETECTED IN PATH");
-            return false;
+    }
+    else if (dy) {
+        console.log("CHECKING FOR COLLISION(DY)");
+        end = Math.max(wire.row, endRow);
+		begin = Math.min(wire.row, endRow);
+        j = Math.floor(begin);
+		while (j < end) {
+            console.log("J: " + j + "  END: " + (end) + "  INC/2: " + inc/2)
+            console.log("J%1: " + (j % 1));
+            thisPH = this.placeholder[Math.floor(j)][floorEndCol];
+			if (thisPH instanceof Array) {
+                if (j >= begin) {
+                    
+                    if (j % 1) {
+                        console.log("placed at index " + 1);
+                        if (thisPH[2]) {
+                            console.log("wire collision error!");
+                            return false;
+                        }
+                    }
+                    else if (thisPH[0]) {
+                        console.log("wire collision error!");
+                        return false;
+                    }
+                }
+                j += 0.5;
+            }
+            else if (thisPH) {
+                console.log("COLLISION! ERROR!");
+                return false;
+            }
+            else {
+                ++j;
+            }
+            console.log("");
         }
     }
 
     console.log("NO COLLISION DETECTED");
     placeholder = new Placeholder(wire.id, 0, 0, 1);
-    for (var i = initial; i !== endBool; i += inc) {
-        row = dy ? i : floorEndRow;
-        col = dx ? i : floorEndCol;
-
-        console.log("PLACING AT (" + row + ", " + col + ")");
-        if (typeof this.placeholder[row][col] == 'undefined') {
-            this.placeholder[row][col] = [];
-        }
-    }
 
     if (dx) {
         console.log("DX: " + dx);
         var end = Math.max(wire.column, endCol);
-        for (var j = Math.min(wire.column, endCol); j !== end; j += Math.abs(dx/2)) {
+        for (var j = Math.min(wire.column, endCol); j !== end; j += 0.5) {
             console.log("J: " + j + "  END: " + (endCol) + "  INC/2: " + inc/2)
             console.log("J%1: " + (j % 1));
+            col = Math.floor(j);
+            console.log("typeof thisPH: " + typeof thisPH);
+            if (typeof this.placeholder[floorEndRow][col] === 'undefined') {
+                this.placeholder[floorEndRow][col] = [];
+                console.log("thisPH is undefined");
+            }
             if (j % 1) {
                 console.log("placed at index " + 1);
-                this.placeholder[Math.floor(wire.row)][Math.floor(j)][1] = placeholder
+                this.placeholder[floorEndRow][col][1] = placeholder;
             }
             else {
                 console.log("placed at index " + 3);
-                this.placeholder[Math.floor(wire.row)][Math.floor(j)][3] = placeholder
+                this.placeholder[floorEndRow][col][3] = placeholder;
             }
             console.log("");
         }
     }
     else if (dy) {
         var end = Math.max(wire.row, endRow);
-        for (var j = Math.min(wire.row, endRow); j !== end; j += Math.abs(dy/2)) {
+        for (var j = Math.min(wire.row, endRow); j !== end; j += 0.5) {
             console.log("J: " + j + "  END: " + (endRow) + "  INC/2: " + inc/2)
             console.log("J%1: " + (j % 1));
+            row = Math.floor(j);
+            this.placeholder[row][floorEndCol];
+            if (typeof this.placeholder[row][floorEndCol] == 'undefined') {
+                this.placeholder[row][floorEndCol] = [];
+            }
             if (j % 1) {
-                this.placeholder[Math.floor(j)][Math.floor(wire.column)][2] = placeholder;
+                this.placeholder[row][floorEndCol][2] = placeholder;
             }
             else {
-                this.placeholder[Math.floor(j)][Math.floor(wire.column)][0] = placeholder;
+                this.placeholder[row][floorEndCol][0] = placeholder;
             }
         }
     }
@@ -344,7 +374,7 @@ Digsim.prototype.onButtonClicked = function (event) {
     var MyClass = window;
     MyClass = MyClass[id];
     if (id == "Wire") {
-        $("canvas").css('cursor','crosshair');
+        $("canvas").css('cursor','wait');
 
         digsim.mode = digsim.WIRE_MODE;
     }
@@ -424,264 +454,73 @@ Digsim.prototype.onGridClicked = function(event) {
             var dx = (col < Math.floor(digsim.wirePos.startX)) ? -1 : ((col === Math.floor(digsim.wirePos.startX)) ? 0 : 1);
             
             if (dx == 0 && dy == 0) {
+                // Stop wire placing
                 return;
             }
             
-            var wire = new Wire(); 
-            wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
-            if (digsim.lockH) {
-                //console.log(Math.floor(mouseX / digsim.GRID_SIZE) - digsim.wirePos.startX);
-                
-                wire.path.push( {'x': col + 0.5 - digsim.wirePos.startX, 
-                               'y': 0 } );
-                
-                /*
-                // Set placeholders
-                for ( ; i !== endBool; i += inc/2) {
-                    y = digsim.lockH ? Math.floor(i) : col;
-                    x = digsim.lockV ? Math.floor(i) : row;
-                    if (typeof placeholder[x][y] === 'undefined') {
-                        placeholder[x][y] = [];
-                    }
-                    placeholder[x][y][dx === 1 ? 1 : 3] = new Placeholder;
-                }
-                */
-            }
-            else if (digsim.lockV) {
-                //console.log(Math.floor(mouseY / digsim.GRID_SIZE) - digsim.wirePos.startY);
-                
-                wire.path.push( {'x': 0, 
-                               'y': row + 0.5 - digsim.wirePos.startY } );
-                
-            }
-            else {
-                return;                    
-            }
+            // Valid mouse clickage
+            if ((digsim.lockV && dy) || (digsim.lockH && dx)) {
+                var wire = new Wire(); 
+                wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
 
-            var validPlacement = digsim.setWirePlaceholder(wire, dx, dy);
-
-            if (validPlacement) {
-                console.log("WE HAVE A VALID PLACEMENT!");
-
-                // Create the wire in components array
-                
-                digsim.components[digsim.iComp++] = wire;
-                // Going up/down and left/right?            
                 if (digsim.lockH) {
-                    //console.log(Math.floor(mouseX / digsim.GRID_SIZE) - digsim.wirePos.startX);
-                    
-                    console.log("LOCKH!");
-                    digsim.dragging = true;
-                    digsim.lockH = false;
-                    digsim.lockV = true;
-                    digsim.wirePos.startX = col + 0.5;
-               }
+                    wire.path.push( {'x': col + 0.5 - digsim.wirePos.startX, 'y': 0 } );
+                }
                 else if (digsim.lockV) {
-                    console.log("LOCKV!");
-                    digsim.dragging = true;
-                    digsim.lockH = true;
-                    digsim.lockV = false;
-                    digsim.wirePos.startY = row + 0.5;
-                    // Now we need to move the startXY position to the current position
+                    //console.log(Math.floor(mouseY / digsim.GRID_SIZE) - digsim.wirePos.startY);
+                    
+                    wire.path.push( {'x': 0, 
+                                   'y': row + 0.5 - digsim.wirePos.startY } );
+                    
                 }
                 else {
                     return;                    
                 }
-                // Draws the wire on static context. 
-                wire.draw(digsim.staticContext);
-                wire.updatePos();
-                wire.checkConnect();
+                
+                var validPlacement = digsim.setWirePlaceholder(wire, dx, dy);
+                
+                if (validPlacement) {
+                    console.log("WE HAVE A VALID PLACEMENT!");
+                    
+                    // Create the wire in components array
+                    
+                    digsim.components[digsim.iComp++] = wire;
+                    // Going up/down and left/right?            
+                    if (digsim.lockH) {
+                        //console.log(Math.floor(mouseX / digsim.GRID_SIZE) - digsim.wirePos.startX);
+                        
+                        console.log("LOCKH!");
+                        digsim.dragging = true;
+                        digsim.lockH = false;
+                        digsim.lockV = true;
+                        digsim.wirePos.startX = col + 0.5;
+                    }
+                    else if (digsim.lockV) {
+                        console.log("LOCKV!");
+                        digsim.dragging = true;
+                        digsim.lockH = true;
+                        digsim.lockV = false;
+                        digsim.wirePos.startY = row + 0.5;
+                        // Now we need to move the startXY position to the current position
+                    }
+                    else {
+                        return;                    
+                    }
+                    // Draws the wire on static context. 
+                    wire.draw(digsim.staticContext);
+                    wire.updatePos();
+                    wire.checkConnect();
+                }
+                else {
+                    wire.path.pop();
+                    digsim.dragging = true;
+                    // DO NOT PLACE WIRE, there's something in the way. 
+                }
             }
             else {
-                wire.path.pop();
                 digsim.dragging = true;
-                // DO NOT PLACE WIRE, there's something in the way. 
             }
         }
-
-        
-        /*
-        // Check clicked grid for wire
-        var objClicked;
-        if (objClicked = digsim.placeholder[row][col]) { // It exists
-            if (digsim.components[objClicked.ref].type === digsim.WIRE) {
-                x = col + 0.5;
-                y = row + 0.5;
-                wirePos = digsim.MID;
-            }
-        }
-        
-        // Determine grid snap for wires not connecting to other wires. 
-        else if (relY < relX) {  // top
-            if (relY < diagSep) {  // top-left
-                x = col + 0.5;
-                y = row;
-                wirePos = digsim.TL;
-            }
-            else { // top-right
-                x = col + 1;
-                y = row + 0.5;
-                wirePos = digsim.TR;
-            }
-        }
-        else { // bottom
-            if (relY < diagSep) { // bottom-left
-                x = col;
-                y = row + 0.5;
-                wirePos = digsim.BL;
-            }
-            else { // bottom-right
-                x = col + 0.5;
-                y = row + 1;
-                wirePos = digsim.BR;
-            }
-        }
-        
-        // Smart wire logic
-        if (digsim.dragging) {
-            // TO DO:
-            // avoiding component collisions.... in a long time
-
-            digsim.dragging = false;
-            
-            // Determine which logic set to use based on where the user started and ended their click
-            var position = [];  
-            position[0] = ((digsim.wirePos.startPos === digsim.TL || 
-                           digsim.wirePos.startPos === digsim.BR) && 
-                           (wirePos === digsim.TL || wirePos === digsim.BR));
-            
-            position[1] = ((digsim.wirePos.startPos === digsim.TL || 
-                           digsim.wirePos.startPos === digsim.BR) && 
-                           (wirePos === digsim.BL || wirePos === digsim.TR));
-
-            position[2] = ((digsim.wirePos.startPos === digsim.TR || 
-                            digsim.wirePos.startPos === digsim.BL) && 
-                           (wirePos === digsim.BL || wirePos === digsim.TR));
-
-            position[3] = ((digsim.wirePos.startPos === digsim.TR || 
-                            digsim.wirePos.startPos === digsim.BL) && 
-                           (wirePos === digsim.BR || wirePos === digsim.TL));
-            position[4] = (digsim.wirePos.startPos === digsim.MID);
-
-            // Going up/down and left/right?
-            var changeY = (y < digsim.wirePos.startY) ? -1 : ((y === digsim.wirePos.startY) ? 0 : 1);
-            var changeX = (x < digsim.wirePos.startX) ? -1 : ((x === digsim.wirePos.startX) ? 0 : 1);
-            
-            // You bozo... you clicked in the same spot.
-            if (!changeY && !changeX)
-                return;
-            
-            var wire = new Wire(); 
-            wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
-            digsim.components[digsim.iComp++] = wire;
-            
-            wire.dx = changeX;
-            wire.dy = changeY;
-            wire.startPos = digsim.wirePos.startPos;
-            wire.endPos = wirePos;
-
-            var startCol, startRow, endCol, endRow;
-            relY = 0, relX = 0;
-
-            // Wire started on TL or BR
-            if (position[0] || position[1]) {
-                
-                // Determine starting and ending grids
-                startCol = Math.floor(digsim.wirePos.startX);
-                startRow = digsim.wirePos.startY + (changeY === -1 ? changeY : 0);
-                if (position[0]) {
-                    endCol = Math.floor(x);
-                    endRow = y + (changeY === 1 ? -1 : 0);
-                }
-                else {                                            
-                    endCol = x + (changeX === 1 ? -1 : 0);
-                    endRow = Math.floor(y);                    
-                }
-
-                // Go towards y
-                for(var i = startRow; i != endRow; i += changeY) {
-                    digsim.setWirePlaceholder(wire.id, startCol, i);
-                    relY += changeY;
-                }
-                
-                wire.path.push( {'x': 0, 'y': (!changeY ? 0.5 : relY + 0.5 * changeY)} );
-   
-                // Go towards X
-                for(var i = startCol; i != endCol; i += changeX) {
-                    digsim.setWirePlaceholder(wire.id, i, startRow + relY);
-                    relX += changeX;
-                }
-                
-                digsim.setWirePlaceholder(wire.id, startCol + relX, startRow + relY);
-
-                // Finish the line
-                if (position[0]) {
-                    wire.path.push( {'x': relX, 'y': relY + 0.5 * ((changeY) ? changeY : 1)} );
-                    wire.path.push( {'x': relX, 'y': relY + changeY} );
-                }
-                else {
-                    wire.path.push( {'x': relX + 0.5 * changeX, 'y': relY + 0.5 * changeY} );
-                }
-            }
-            // Wire started on TR or BL
-            else if (position[2] || position[3]) {
-
-                // Determine starting and endoing grids
-                startCol = digsim.wirePos.startX + (changeX === -1 ? changeX : 0);
-                startRow = Math.floor(digsim.wirePos.startY);
-                if (position[2]) {
-                    endCol = x + (changeX === 1 ? -1 : 0);
-                    endRow = Math.floor(y);
-                }
-                else {
-                    endCol = Math.floor(x);
-                    endRow = y + (changeY === 1 ? -1 : 0);
-                }
-                
-                // Go towards x
-                for(var i = startCol; i != endCol; i += changeX) {
-                    digsim.setWirePlaceholder(wire.id, i, startRow + relY);
-                    relX += changeX;
-                }
-                
-                wire.path.push( {'x':  (!changeX ? 0.5 : relX + 0.5 * changeX), 'y': 0} );
-                
-                // Go towards y
-                for(var i = startRow; i != endRow; i += changeY) {
-                    digsim.setWirePlaceholder(wire.id, startCol + relX, i);
-                    relY += changeY;
-                }   
-                
-                digsim.setWirePlaceholder(wire.id, startCol + relX, startRow + relY);
-
-                // Finish the line
-                if (position[2]) {
-                    wire.path.push( {'x': relX + 0.5 * ((changeX) ? changeX : 1), 'y': relY} );
-                    wire.path.push( {'x': relX + changeX, 'y': relY} );
-                }
-                else {
-                    wire.path.push( {'x': relX + 0.5 * changeX, 'y': relY + 0.5 * changeY} );
-                }
-            }
-            else { // wire started in middle 
-                
-                // Determine starting and ending grids
-                
-            }                
-            
-            wire.draw(digsim.staticContext);
-            wire.updatePos();
-            wire.checkConnect();
-        }
-        else if (x && y){
-            console.log("(" + x + ", " + y + ")");
-            digsim.dragging = true;
-            digsim.wirePos.startX = x;
-            digsim.wirePos.startY = y;
-            digsim.wirePos.startPos = wirePos;
-            animateWire();
-        }
-         */
     }
 };                     
 
@@ -862,6 +701,7 @@ function animateWire() {
         context.fillStyle = '#000000';
         context.lineWidth = 2;
         context.lineCap = 'round';
+        context.arc(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
         context.moveTo(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE);
         var x, y;
         if (digsim.lockH) {
