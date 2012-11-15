@@ -32,7 +32,7 @@ function XOR(numInputs) {
         wire.init(0, 0, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = wire;
         wire.connections.push(this);
-        // Reset wire path
+        // Reset wire path 
         wire.path = [];
         wire.path.push({'x': 1, 'y': 0});
         wire.path.push({'x': -1, 'y': 0});
@@ -166,3 +166,4 @@ XOR.prototype.computeLogic = function() {
     }
     this.state = cnt % 2;
 };
+

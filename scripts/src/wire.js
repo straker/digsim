@@ -55,74 +55,37 @@ Wire.prototype.updatePos = function() {
  ****************************************************************************/
 Wire.prototype.checkConnect = function() {
     
-    console.log("SETP 0");
-    //console.log(this);
-    if (obj = digsim.placeholder[Math.floor(this.connectPoint.y)][Math.floor(this.connectPoint.x)]) {
-        console.log("STEP 1");
-        var conObj = digsim.components[obj.ref];
-        console.log(conObj);
-        
-        // If wire is connected to a switch or LED
-        if (conObj.type === digsim.LED || conObj.type === digsim.SWITCH) {
-            console.log("STEP 2");
-            
-            console.log(conObj.connectPoint.x == this.column);
-            console.log(conObj.connectPoint.y == this.row);
-            if (conObj.connectPoint.x == this.column && conObj.connectPoint.y == this.row) {
-                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                this.connections.push(conObj);
-                conObj.connections.push(this);
-
-                
-            }
-        }
-        // If wire connects to other wire. 
-        else if (conObj.type === digsim.WIRE) {
-            console.log("STEP 3");
-                        
-            if ((conObj.column == this.column && conObj.row == this.row) || 
-                (conObj.path[conObj.path.length - 1].x + conObj.column === this.column && 
-                 conObj.path[conObj.path.length - 1].y + conObj.row === this.row)) {
-                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                this.connections.push(conObj);
-                conObj.connections.push(this);
-            }
-        }
-    }
-    
-    if (obj = digsim.placeholder[Math.floor(this.connectPoint.endY)][Math.floor(this.connectPoint.endX)]) {
-        console.log("STEP 4");
-        var conObj = digsim.components[obj.ref];
-        console.log(conObj);
-        if (conObj.type === digsim.LED || conObj.type === digsim.SWITCH) {
-            console.log("STEP 5");
-            
-            console.log(conObj.connectPoint.x == this.column);
-            console.log(conObj.connectPoint.y == this.row);
-            if (conObj.connectPoint.x == this.path[this.path.length - 1].x + this.column && 
-                    conObj.connectPoint.y == this.path[this.path.length - 1].y + this.row) {
-                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                this.connections.push(conObj);
-                conObj.connections.push(this);
-
-            }
-        }
-        else if (conObj.type === digsim.WIRE) {
-            console.log("STEP 6");
-            
-            if ((conObj.column == this.path[this.path.length - 1].x + this.column && conObj.row == this.path[this.path.length - 1].y + this.row) || 
-                (conObj.path[conObj.path.length - 1].x + conObj.column === this.path[this.path.length - 1].x + this.column && 
-                 conObj.path[conObj.path.length - 1].y + conObj.row === this.path[this.path.length - 1].y + this.row)) {
+    console.log("CHECKING CONNECTION!åß¨∑∫∂¬˚¨ß¬∂¥¬˚∆∂…øß∂ˆå¨•••••••••••••••••••••")
+    var PH, obj, row = Math.floor(this.row), col = Math.floor(this.column);
+    // Endpoint contains a wire
+    if (digsim.placeholder[row][col] instanceof Array) {
+        // We want to connect. 
+        for (var i = 0; i < 4; ++i) {
+            if (PH = digsim.placeholder[row][col][i]) {
+                obj = digsim.components[PH.ref];
+                if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                    this.connections.push(conObj);
-                    conObj.connections.push(this);
+                    this.connections.push(obj);
+                    obj.connections.push(this);
                 }
+            }
         }
-
     }
-    
-    this.visitLimit = 2 * (this.connections.length || 2);
-    console.log(this.visitLimit);
+
+    row = Math.floor(this.path[0].y + this.row); col = Math.floor(this.path[0].x + this.column);
+    if (digsim.placeholder[row][col] instanceof Array) {
+        // We want to connect. 
+        for (var i = 0; i < 4; ++i) {
+            if (PH = digsim.placeholder[row][col][i]) {
+                obj = digsim.components[PH.ref];
+                if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
+                    console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                    this.connections.push(obj);
+                    obj.connections.push(this);
+                }
+            }
+        }
+    }
 };
 
 /****************************************************************************
@@ -153,3 +116,4 @@ Wire.prototype.draw = function(context) {
     context.stroke();
     context.restore();
 };
+

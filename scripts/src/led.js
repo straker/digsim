@@ -11,13 +11,12 @@ function LED() {
     this.type = digsim.LED;
     this.prev = [];
     this.connections = [];
-    this.connectOffset.x = 0.5;
-    this.connectOffset.y = 2;
     this.state = 0;
-    this.connectPoint = {'x': -1, 'y': -1};
     this.dimension = {'row': 2, 'col': 1};
     this.visited = 0;
     this.visitLimit = 1;
+    this.conRow = 2;
+    this.conCol = 0;
 };
 
 LED.prototype = new Drawable();
@@ -28,7 +27,7 @@ LED.prototype = new Drawable();
  ***************************************************************************/
 LED.prototype.draw = function(context) {
     context.save();
-    context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
+    context.translate(this.column * digsim.GRID_SIZE, (this.row + 0.5) * digsim.GRID_SIZE);
     context.fillStyle = '#FFFFFF';
     context.lineWidth = 2;
 
@@ -72,7 +71,7 @@ LED.prototype.draw = function(context) {
     context.fill();
     
     context.moveTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 5 / 3);
-    context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 5 / 3);
+    //context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 5 / 3);
     context.lineTo(digsim.GRID_SIZE / 2, 2 * digsim.GRID_SIZE);
     context.stroke();
     

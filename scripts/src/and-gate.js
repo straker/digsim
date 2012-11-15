@@ -14,17 +14,13 @@ function AND(numInputs) {
     this.connections = [];
     this.state = 0;
     this.numInputs = numInputs || 2;
-    this.connectPoint = {'x': -1, 'y': -1};
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': size};
     
     var factor = Math.floor(this.numInputs / 2); 
 
-    this.connectOffset.x = (factor * 2) + 2;
-    this.connectOffset.y = factor;
     this.visitLimit = 2 * this.numInputs;
-    this.visited = 0;
-    
+    this.visited = 0;    
 
     for (var i = 0; i < this.numInputs; ++i) {
         var wire = new Wire();
@@ -34,10 +30,10 @@ function AND(numInputs) {
         wire.connections.push(this);
         // Reset wire path
         wire.path = [];
-        wire.path.push({'x': -1, 'y': 0});
+        wire.path.push({'x': -0.5, 'y': 0});
         wire.startPos = 1;
         wire.endPos = 1;
-        wire.dx = -1;
+        wire.delta.x = -1;
 
     }
     var wire = new Wire();
@@ -48,10 +44,10 @@ function AND(numInputs) {
     
     // Reset wire path
     wire.path = [];
-    wire.path.push({'x': 1, 'y': 0});
+    wire.path.push({'x': 0.5, 'y': 0});
     wire.startPos = 1;
     wire.endPos = 1;
-    wire.dx = 1;
+    wire.delta.x = 1;
 
 };
 
@@ -65,37 +61,8 @@ AND.prototype = new Drawable();
  ****************************************************************************/
 AND.prototype.draw = function(context) {
         
-    context.save();
-    context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
-    context.beginPath();
-    context.fillStyle = '#FFFFFF';
-    context.lineWidth = 2;
-    
-    // Draw gate
-    var factor = Math.floor(this.numInputs / 2); 
-    var gsf = digsim.GRID_SIZE * factor;
-    
-    context.moveTo(0, 0);
-    context.lineTo(gsf,  0);            
-    
-    // var P0x = gsf;
-    // var P0y = 0;
-    // var P1x = gsf;
-    var P1y = gsf * 2 + digsim.GRID_SIZE;
-    // var Mx  = P1y;
-    // var My  = P1y / 2;
-    // var C0y = gsf;
-    var Cx = (4 * P1y - gsf) / 3;
-    // var C1y = gsf;
-    context.bezierCurveTo(Cx, 0, Cx, P1y, gsf, P1y);
-    context.lineTo(0, P1y);
-
-    context.closePath();
-    context.stroke();
-    context.fill();
-    context.restore();
-  
     // Draw wires
+    var factor = Math.floor(this.numInputs / 2); 
     var cnt = 0;
     for (var i = 0; i < this.numInputs; ++i) {
         if (i % 2) { 
@@ -122,6 +89,35 @@ AND.prototype.draw = function(context) {
 
     this.next[0].draw(context);
     this.next[0].updatePos();
+
+    context.save();
+    context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
+    context.beginPath();
+    context.fillStyle = '#FFFFFF';
+    context.lineWidth = 2;
+    
+    // Draw gate
+    var gsf = digsim.GRID_SIZE * factor;
+    
+    context.moveTo(0, 0);
+    context.lineTo(gsf,  0);            
+    
+    // var P0x = gsf;
+    // var P0y = 0;
+    // var P1x = gsf;
+    var P1y = gsf * 2 + digsim.GRID_SIZE;
+    // var Mx  = P1y;
+    // var My  = P1y / 2;
+    // var C0y = gsf;
+    var Cx = (4 * P1y - gsf) / 3;
+    // var C1y = gsf;
+    context.bezierCurveTo(Cx, 0, Cx, P1y, gsf, P1y);
+    context.lineTo(0, P1y);
+
+    context.closePath();
+    context.stroke();
+    context.fill();
+    context.restore();
 };
 
 /*****************************************************************************

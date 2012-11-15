@@ -78,25 +78,18 @@ Drawable.prototype.checkConnect = function() {
     
     console.log("SETP 0");
     console.log(this);
-    if (obj = digsim.placeholder[Math.floor(this.connectPoint.y)][Math.floor(this.connectPoint.x)]) {
+    if ((this.type === digsim.LED) || (this.type === digsim.SWITCH)) {
         console.log("STEP 1");
-        var conObj = digsim.components[obj.ref];
-        if (conObj.type === digsim.WIRE) {
-            console.log("STEP 2");
-            console.log(conObj);
-            
-            console.log(conObj.column == this.connectPoint.x);
-            console.log(conObj.row === this.connectPoint.y);
-            console.log(conObj.path[conObj.path.length - 1].x + conObj.column === this.connectPoint.x);
-            console.log(conObj.path[conObj.path.length - 1].y + conObj.row === this.connectPoint.y);
-            if ((conObj.column == this.connectPoint.x && conObj.row === this.connectPoint.y) ||
-                (conObj.path[conObj.path.length - 1].x + conObj.column === this.connectPoint.x && 
-                    conObj.path[conObj.path.length - 1].y + conObj.row === this.connectPoint.y)) {
-                    
-                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                this.connections.push(conObj);
-                    conObj.connections.push(this);
-                
+        var PH;
+        // Endpoint contains a wire
+        for (var i = 1; i < 4; ++i) {
+            if (PH = digsim.placeholder[this.conRow + this.row][this.conCol + this.column][i]) {
+                obj = digsim.components[PH.ref];
+                if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
+                    console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                    this.connections.push(obj);
+                    obj.connections.push(this);
+                }
             }
         }
     }
@@ -186,7 +179,7 @@ Drawable.prototype.traverse = function() {
             
             //  $ <- jquery stuff
             if ($.inArray(con, currObject.prev) === -1) { // connection is not part of the previous
-                                                    // don't set its next to its previous
+                                                          // don't set its next to its previous
                 console.log("CON.TYPE: " + con.type);
                 console.log(con);
                 
@@ -224,10 +217,11 @@ Drawable.prototype.traverse = function() {
     }
     return true;
 
+/*
     // RECURSIVE VERSION OF traverse(), WHICH IS TOO ROBUST FOR JAVASCRIPT
     // BTW, this works perfectly
     
-    /*
+    
     console.log("\n======START=====");
     console.log(this);
 

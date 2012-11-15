@@ -12,12 +12,11 @@ function Switch() {
     this.next = [];
     this.connections = [];
     this.state = 0;
-    this.connectOffset.x = 2;
-    this.connectOffset.y = 1.5;
-    this.connectPoint = {'x': -1, 'y': -1};
-    this.dimension = {'row': 3, 'col': 2};
+    this.dimension = {'row': 3, 'col': 1};
     this.visited = 0;
     this.visitLimit = 1;
+    this.conRow = 1;
+    this.conCol = 1;
 };
 
 Switch.prototype = new Drawable();
@@ -36,28 +35,23 @@ Switch.prototype.draw = function(context) {
     context.moveTo(0, 0);
     context.beginPath();
     
+    // draw 1 and line thingy
     context.moveTo(digsim.GRID_SIZE / 4, digsim.GRID_SIZE / 4 * 3);
     context.lineTo(digsim.GRID_SIZE / 4, digsim.GRID_SIZE / 4 * 5);
     context.moveTo(digsim.GRID_SIZE / 4, digsim.GRID_SIZE);
-    context.lineTo(digsim.GRID_SIZE, digsim.GRID_SIZE);
+    context.lineTo(digsim.GRID_SIZE * 3 / 4, digsim.GRID_SIZE);
     
+    // draws connection to 1 or 0
     if (this.state) {
-        context.lineTo(digsim.GRID_SIZE / 2 * 3, digsim.GRID_SIZE / 2 * 3);
-    }
-    else {
-        context.moveTo(digsim.GRID_SIZE / 2 * 3, digsim.GRID_SIZE / 2 * 3);
-    }
-    
-    context.lineTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE / 2 * 3);
-    context.moveTo(digsim.GRID_SIZE / 2 * 3, digsim.GRID_SIZE / 2 * 3);
-    
-    if (!this.state) {
-        context.lineTo(digsim.GRID_SIZE, digsim.GRID_SIZE * 2);
-    }
-    else {
-        context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * 2);
-    }
+        context.lineTo(digsim.GRID_SIZE / 4 * 5, digsim.GRID_SIZE / 2 * 3);
+        context.moveTo(digsim.GRID_SIZE * 3 / 4 , digsim.GRID_SIZE * 2);
 
+    }
+    else {
+        context.moveTo(digsim.GRID_SIZE / 4 * 5, digsim.GRID_SIZE / 2 * 3);
+        context.lineTo(digsim.GRID_SIZE * 3 / 4, digsim.GRID_SIZE * 2);
+    }
+    
     context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 2);
     context.stroke();
 
@@ -67,5 +61,13 @@ Switch.prototype.draw = function(context) {
     
     context.stroke();
     context.fill();
+
+    context.beginPath();
+    context.moveTo(digsim.GRID_SIZE / 4 * 5, digsim.GRID_SIZE / 2 * 3);
+    context.lineTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE / 2 * 3);
+
+    context.stroke();
     context.restore();
 };
+
+

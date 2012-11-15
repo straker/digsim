@@ -71,9 +71,7 @@ function Digsim() {
     this.placeholder = [];  // Holds component positions on grid
     for (var i = 0; i < this.NUM_COLS; ++i) {
         this.placeholder[i] = [];
-    }
-    
-    
+    } 
 };
 
 /*****************************************************************************
@@ -185,14 +183,29 @@ Digsim.prototype.setPlaceholders = function(obj) {
     if (obj.type < 0) { //gate
         for (var i = 0; i < obj.numInputs; ++i) {
             var wire = obj.prev[i];
-            this.setWirePlaceholder(wire.id, Math.floor(wire.column) - 1, Math.floor(wire.row));
+            this.setWirePlaceholder(wire, wire.delta.x,wire.delta.y);
             //console.log(wire);
         }
         var wire = obj.next[0];
-        this.setWirePlaceholder(wire.id, Math.floor(wire.column), Math.floor(wire.row));
+        this.setWirePlaceholder(wire, wire.delta.x, wire.delta.y);
 
     }
-    
+    else if (obj.type === digsim.SWITCH) {
+        if (!(this.placeholder[obj.row + 1][obj.column + 1] instanceof Array)) {
+            console.log(obj);
+            this.placeholder[obj.row + 1][obj.column + 1] = [];
+        }
+        var placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+        this.placeholder[obj.row + 1][obj.column + 1][3] = placeholder;
+    }
+    else if (obj.type === digsim.LED) {
+        if (!(this.placeholder[obj.row + 2][obj.column] instanceof Array)) {   
+            console.log(obj);
+            this.placeholder[obj.row + 2][obj.column] = [];
+        }
+        var placeholder = new Placeholder(obj.id, obj.column, obj.row + 2, obj.dimension.col, obj.dimension.row);
+        this.placeholder[obj.row + 2][obj.column][0] = placeholder;
+    }
     // Places the placeholder for the object
     for (row = 0; row < obj.dimension.row; ++row) {
         for (col = 0; col < obj.dimension.col; ++col) {
@@ -796,3 +809,4 @@ Digsim.prototype.showPlaceholders = function() {
         }
     }
 };
+
