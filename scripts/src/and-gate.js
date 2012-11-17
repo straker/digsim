@@ -24,7 +24,7 @@ function AND(numInputs) {
 
     for (var i = 0; i < this.numInputs; ++i) {
         var wire = new Wire();
-        this.setPrev(wire);
+        this.prev[i] = wire;
         wire.init(0, 0, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = wire;
         wire.connections.push(this);

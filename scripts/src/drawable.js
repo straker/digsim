@@ -114,8 +114,9 @@ Drawable.prototype.passState = function(pState) {
             this.next[0].passState(this.state);
         }
         else {
-            if (typeof this.next !== "undefined") {
-                this.state = pState;
+            this.state = pState;
+            console.log(this);
+            if (typeof this.next[0] !== "undefined") {
                 for (iWire in this.next) {                
                     this.next[iWire].passState(pState);
                 }
@@ -156,15 +157,17 @@ Drawable.prototype.setPrev = function(obj) {
 Drawable.prototype.traverse = function() {
     
     var conQueue = [];
-    // Always done on switches, so guaranteed to have only 1 next. 
-    conQueue.push(this.connections[0]);
-    this.setNext(this.connections[0]);
     
+    for (var i = 0, len = this.connections.length; i < len; ++i) {
+        conQueue.push(this.connections[i]);
+        this.setNext(this.connections[i]);
+    }
+
     while (conQueue.length) {
         console.log("\n======START=====");
         console.log(conQueue[0]);
-        
-        for (var i = 0; i < conQueue[0].connections.length; ++i) {
+        var len = conQueue[0].connections.length;
+        for (var i = 0; i < len; ++i) {
             
             var currObject = conQueue[0];
             var con = currObject.connections[i];
@@ -183,26 +186,42 @@ Drawable.prototype.traverse = function() {
                 console.log("CON.TYPE: " + con.type);
                 console.log(con);
                 
+                var found = false;
+                for (var x = 0; x < con.prev.length; ++x) {
+                    if ($.inArray(con.prev[x], currObject.prev) !== -1) {
+                        found = true;
+                        break;
+                    }
+                }
                 if (con.type === digsim.SWITCH) {
                     console.log("ERROR! Multiple switches driving one wire");
                     return false;
                 }
                 else if (con.type === digsim.LED) {
                     currObject.setNext(con);
+                    console.log("CURRObject.setNext(con)");
                 }
                 else if (con.type === digsim.WIRE) {
-                    if (currObject.type >= 0) {
+                    if (currObject.type >= 0 && typeof con.next[0] === "undefined" && !found) {
                         currObject.setNext(con);
                         console.log("NOT A GATE");
+                        con.visitLimit = currObject.visitLimit;
+                        conQueue.splice(1, 0, con);
+                        console.log("conQueue.push(con)");
                     }
-                    con.visitLimit = currObject.visitLimit;
-                    conQueue.push(con);
+                    else if (typeof con.next[0] === "undefined" && currObject.type < 0) {
+                        con.visitLimit = currObject.visitLimit;
+                        conQueue.splice(1, 0, con);
+                        console.log("conQueue.push(con)");
+                    }
                 }
                 else if (con.type < 0) {// Gates have a negative index
                     
                     console.log(con.next[0].next[0]);
+                    currObject.next.push(con);
                     if (typeof con.next[0].next[0] === "undefined") {
-                        conQueue.push(con);
+                        conQueue.splice(1, 0, con);
+                        console.log("conQueue.push(con):: (NEXT OF GATE NOT SET)");
                     }
                     if (con.type === digsim.NOT) {
                         con.visitLimit = currObject.visitLimit;
@@ -212,6 +231,7 @@ Drawable.prototype.traverse = function() {
                     console.log("UNKNOWN CASE IN TRAVERSE() FUNCTION");
                 }
             }
+            console.log("");
         }
         conQueue.shift();
     }

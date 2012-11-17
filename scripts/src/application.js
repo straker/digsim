@@ -560,10 +560,15 @@ Digsim.prototype.onGridMouseDown = function(event) {
         var row = Math.floor(mouseY / digsim.GRID_SIZE);
         
         // Here's where the magic happens
+        console.log("ROW: " + row + ", COL: " + col);
         if (digsim.placeholder[row][col]) {
             digsim.dragging = true;
             
+            console.log("digsim.placeholder[row][col]: ");
+            console.log(digsim.placeholder[row][col]);
+            console.log("");
             var ref = digsim.placeholder[row][col].ref;
+            console.log("REF: " + ref + "\n");
             digsim.draggingGate = digsim.components[ref];
             digsim.draggingGate.drawStatic = false;
             
