@@ -116,18 +116,21 @@ Drawable.prototype.passState = function(pState) {
         else {
             this.state = pState;
             console.log(this);
+            console.log("this.next[0]: ");
+            console.log(this.next[0]);
+            console.log("");
             if (typeof this.next[0] !== "undefined") {
+                console.log("this.next.length = " + this.next.length);
                 for (iWire in this.next) {                
                     this.next[iWire].passState(pState);
                 }
             }
-            else {
+            else if (this.type !== digsim.LED) {
                 console.log("Error! Multiple drivers on 1 wire");
             }
         }
     }
 };
-
 
 /******************************************************************************
  * SET NEXT
@@ -205,12 +208,10 @@ Drawable.prototype.traverse = function() {
                     if (currObject.type >= 0 && typeof con.next[0] === "undefined" && !found) {
                         currObject.setNext(con);
                         console.log("NOT A GATE");
-                        con.visitLimit = currObject.visitLimit;
                         conQueue.splice(1, 0, con);
                         console.log("conQueue.push(con)");
                     }
                     else if (typeof con.next[0] === "undefined" && currObject.type < 0) {
-                        con.visitLimit = currObject.visitLimit;
                         conQueue.splice(1, 0, con);
                         console.log("conQueue.push(con)");
                     }
@@ -223,12 +224,12 @@ Drawable.prototype.traverse = function() {
                         conQueue.splice(1, 0, con);
                         console.log("conQueue.push(con):: (NEXT OF GATE NOT SET)");
                     }
-                    if (con.type === digsim.NOT) {
-                        con.visitLimit = currObject.visitLimit;
-                    }
                 }           
                 else {
                     console.log("UNKNOWN CASE IN TRAVERSE() FUNCTION");
+                }
+                if (currObject.visitLimit > con.visitLimit) {
+                    con.visitLimit = currObject.visitLimit;
                 }
             }
             console.log("");

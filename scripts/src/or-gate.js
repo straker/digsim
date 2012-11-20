@@ -27,20 +27,19 @@ function OR(numInputs) {
     this.connectOffset.y = factor;
     
     
-    for (var i = 0; i < this.numInputs; ++i) {
+        for (var i = 0; i < this.numInputs; ++i) {
         var wire = new Wire();
-        this.setPrev(wire);
+        this.prev[i] = wire;
         wire.init(0, 0, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = wire;
         wire.connections.push(this);
         // Reset wire path
         wire.path = [];
-        wire.path.push({'x': 1, 'y': 0});
-        wire.path.push({'x': -1, 'y': 0});
+        wire.path.push({'x': -0.5, 'y': 0});
         wire.startPos = 1;
         wire.endPos = 1;
-        wire.dx = -1;
-        
+        wire.delta.x = -1;
+
     }
     var wire = new Wire();
     this.setNext(wire);
@@ -50,10 +49,10 @@ function OR(numInputs) {
     
     // Reset wire path
     wire.path = [];
-    wire.path.push({'x': 1, 'y': 0});
+    wire.path.push({'x': 0.5, 'y': 0});
     wire.startPos = 1;
     wire.endPos = 1;
-    wire.dx = 1;
+    wire.delta.x = 1;
     
 };
 
@@ -80,6 +79,13 @@ OR.prototype.draw = function(context) {
             this.prev[i].row = this.row + cnt + .5;
         }
         
+        // Finish wire path to gate (asthetics only)
+        context.beginPath();
+        context.moveTo(this.prev[i].column * digsim.GRID_SIZE, this.prev[i].row * digsim.GRID_SIZE);
+        context.lineTo((this.prev[i].column + 0.6) * digsim.GRID_SIZE, this.prev[i].row * digsim.GRID_SIZE);
+        context.fillStyle = '#FFFFFF';
+        context.lineWidth = 2;
+        context.stroke();
         this.prev[i].draw(context);
         this.prev[i].updatePos();
     }

@@ -16,7 +16,7 @@
  ****************************************************************************/
 function Digsim() {
 	// Constants
-	this.GRID_SIZE = 30;
+	this.GRID_SIZE = 10;
 	this.NUM_COLS = 100;
 	this.NUM_ROWS = 100;
     
@@ -34,6 +34,7 @@ function Digsim() {
     this.DEFAULT_MODE = 0;
 	this.WIRE_MODE = 1;
     this.SIM_MODE = 2;
+    this.DELETE_MODE = 3;
     
     // Wire identifiers
     this.TL = 0;    // top-left
@@ -165,7 +166,7 @@ Digsim.prototype.drawGrid = function(context) {
 Digsim.prototype.drawComponents = function() {
     this.clearCanvas(this.staticContext, this.gridWidth, this.gridHeight);
     for (index in this.components) {
-        if(this.components[index].drawStatic) {
+        if(typeof this.components[index] !== 'undefined' && this.components[index].drawStatic) {
             this.components[index].draw(this.staticContext);
         }
     }
@@ -387,7 +388,7 @@ Digsim.prototype.onButtonClicked = function (event) {
     var MyClass = window;
     MyClass = MyClass[id];
     if (id == "Wire") {
-        $("canvas").css('cursor','wait');
+        $("canvas").css('cursor','crosshair');
 
         digsim.mode = digsim.WIRE_MODE;
     }
@@ -400,6 +401,7 @@ Digsim.prototype.onButtonClicked = function (event) {
             }
             if (obj.traverse()) {
                 obj.state = 0;
+                console.log("********************BEGIN PASS STATE!********************");
                 obj.passState(obj.state);
             }
         }
@@ -407,8 +409,8 @@ Digsim.prototype.onButtonClicked = function (event) {
         digsim.drawComponents();
     }
     else if (id == "D_Mode") {
-        $("canvas").css('cursor','default');
-        digsim.mode = digsim.DEFAULT_MODE;
+        $("canvas").css('cursor','no-drop');
+        digsim.mode = digsim.DELETE_MODE;
     }
     else {
         $("canvas").css('cursor','default');
@@ -444,7 +446,7 @@ Digsim.prototype.onGridClicked = function(event) {
         var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
         var row = Math.floor(mouseY / digsim.GRID_SIZE);
         var col = Math.floor(mouseX / digsim.GRID_SIZE);
-        var x, y;
+        var x, y, dx = 0, dy = 0;
                 
         // Tells us where on the grid the click is
         var relX = mouseX % digsim.GRID_SIZE;
@@ -462,9 +464,14 @@ Digsim.prototype.onGridClicked = function(event) {
         else {
             digsim.dragging = false;
             
+
             // Check wire path for other components.
-            var dy = (row < Math.floor(digsim.wirePos.startY)) ? -1 : ((row === Math.floor(digsim.wirePos.startY)) ? 0 : 1);
-            var dx = (col < Math.floor(digsim.wirePos.startX)) ? -1 : ((col === Math.floor(digsim.wirePos.startX)) ? 0 : 1);
+            if (digsim.lockV) {
+                dy = (row < Math.floor(digsim.wirePos.startY)) ? -1 : ((row === Math.floor(digsim.wirePos.startY)) ? 0 : 1);
+            }
+            else if (digsim.lockH) {
+                dx = (col < Math.floor(digsim.wirePos.startX)) ? -1 : ((col === Math.floor(digsim.wirePos.startX)) ? 0 : 1);
+            }
             
             if (dx == 0 && dy == 0) {
                 // Stop wire placing
@@ -542,6 +549,14 @@ Digsim.prototype.onGridClicked = function(event) {
  *  Click and drag gates. Only called in default mode. 
  ****************************************************************************/
 Digsim.prototype.onGridMouseDown = function(event) {
+    // Gets mouse position on canvas
+    var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
+    var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
+    
+    // Tells us where on the grid (we've created) the click is
+    var col = Math.floor(mouseX / digsim.GRID_SIZE);
+    var row = Math.floor(mouseY / digsim.GRID_SIZE); 
+
     if (digsim.mode === digsim.DEFAULT_MODE) {
         event.preventDefault();
         
@@ -551,17 +566,12 @@ Digsim.prototype.onGridMouseDown = function(event) {
         }
         digsim.dragging = false;
         
-        // Gets mouse position on canvas
-        var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
-        var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
-        
-        // Tells us where on the grid (we've created) the click is
-        var col = Math.floor(mouseX / digsim.GRID_SIZE);
-        var row = Math.floor(mouseY / digsim.GRID_SIZE);
-        
         // Here's where the magic happens
         console.log("ROW: " + row + ", COL: " + col);
-        if (digsim.placeholder[row][col]) {
+        if (digsim.placeholder[row][col] instanceof Array) {
+            // Deal with this later. 
+        }
+        else if (digsim.placeholder[row][col]) {
             digsim.dragging = true;
             
             console.log("digsim.placeholder[row][col]: ");
@@ -572,6 +582,8 @@ Digsim.prototype.onGridMouseDown = function(event) {
             digsim.draggingGate = digsim.components[ref];
             digsim.draggingGate.drawStatic = false;
             
+            digsim.deletePlaceholder(row, col);
+            /*
             // Remove the component from the array
             var placeholder = digsim.placeholder[row][col];
             var posX = placeholder.posX;
@@ -607,6 +619,13 @@ Digsim.prototype.onGridMouseDown = function(event) {
                     digsim.placeholder[digsim.draggingGate.row + factor][digsim.draggingGate.column + digsim.draggingGate.dimension.col] = undefined;
                 }
             }
+            else if (digsim.draggingGate.type == digsim.SWITCH) {
+                digsim.placeholder[digsim.draggingGate.row + 1][digsim.draggingGate.column + 1] = undefined;
+            }
+            else if (digsim.draggingGate.type == digsim.LED) {
+                digsim.placeholder[digsim.draggingGate.row + 2][digsim.draggingGate.column ] = undefined;
+            }
+            */
 
             // Visually remove component from static canvas. 
             digsim.drawComponents();
@@ -620,27 +639,94 @@ Digsim.prototype.onGridMouseDown = function(event) {
             console.log("empty");
         }
     }
-    else if (digsim.mode === digsim.SIM_MODE) {
-        // Gets mouse position on canvas
-        var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
-        var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
-        
-        // Tells us where on the grid (we've created) the click is
-        var col = Math.floor(mouseX / digsim.GRID_SIZE);
-        var row = Math.floor(mouseY / digsim.GRID_SIZE);
-        
+    else if (digsim.mode === digsim.SIM_MODE) {        
         if (digsim.placeholder[row][col]) {
             var obj = digsim.components[ digsim.placeholder[row][col].ref ];
             if (obj.type === digsim.SWITCH) {
                 for (var j = 0; j < digsim.components.length; ++j) {
                     digsim.components[j].visited = 0;
                 }
+                console.log("********************BEGIN PASS STATE!********************");
                 obj.passState(!obj.state);
                 digsim.drawComponents();
             }
         }
     }
+    else if (digsim.mode === digsim.DELETE_MODE) {
+        digsim.deleteComponent(row, col);
+    }
 };
+
+/*****************************************************************************
+ * DELETE PLACEHOLDER
+ *  duh.
+ ****************************************************************************/
+Digsim.prototype.deletePlaceholder = function(row, col) {
+    // Remove the component from the array
+    var placeholder = digsim.placeholder[row][col];
+    var posX = placeholder.posX;
+    var posY = placeholder.posY;
+    var height = placeholder.height;
+    var width = placeholder.width;
+    digsim.offsetRow = posY;
+    digsim.offsetCol = posX;
+    for (var y = 0, iRow = row - posY; y < height; ++y) {
+        for (var x = 0, iCol = col - posX; x < width; ++x) {
+            digsim.placeholder[iRow + y][iCol + x] = undefined;
+        }
+    }
+    
+    // Clean up wire placehoders on gates
+    if (digsim.draggingGate.type < 0) { 
+        if (digsim.draggingGate.type === digsim.NOT) {
+            digsim.placeholder[digsim.draggingGate.row + 1][digsim.draggingGate.column - 1] = undefined;
+            digsim.placeholder[digsim.draggingGate.row + 1][digsim.draggingGate.column + 2] = undefined;
+        }
+        else {
+            var factor = Math.floor(digsim.draggingGate.numInputs / 2); 
+            var cnt = 0;
+            for (var i = 0; i < digsim.draggingGate.numInputs; ++i) {
+                if (i % 2) {
+                    digsim.placeholder[digsim.draggingGate.row + (factor * 2) - cnt++][digsim.draggingGate.column - 1] = undefined;
+                }
+                else {
+                    //console.log("(" + digsim.draggingGate.row + ", " + (digsim.draggingGate.column - 1) + ")");
+                    digsim.placeholder[digsim.draggingGate.row + cnt][digsim.draggingGate.column - 1] = undefined;
+                }
+            }
+            digsim.placeholder[digsim.draggingGate.row + factor][digsim.draggingGate.column + digsim.draggingGate.dimension.col] = undefined;
+        }
+    }
+    else if (digsim.draggingGate.type == digsim.SWITCH) {
+        digsim.placeholder[digsim.draggingGate.row + 1][digsim.draggingGate.column + 1] = undefined;
+    }
+    else if (digsim.draggingGate.type == digsim.LED) {
+        digsim.placeholder[digsim.draggingGate.row + 2][digsim.draggingGate.column ] = undefined;
+    }
+
+    // Visually remove component from static canvas. 
+    digsim.drawComponents();
+}
+
+/*****************************************************************************
+ * DELETE COMPONENT
+ *  duh.
+ ****************************************************************************/
+Digsim.prototype.deleteComponent = function(row, col) {
+    // Remove the component from the array
+    var placeholder = digsim.placeholder[row][col];
+    var comp = digsim.components[placeholder.ref];
+
+    if (comp.type < 0) {
+        for (var i = 1; i <= comp.numInputs; ++i) {
+            digsim.components[placeholder.ref - i - 1] = undefined;
+        }
+        digsim.components[placeholder.ref - 1] = undefined;
+        digsim.components[placeholder.ref] = undefined;
+    }
+    digsim.deletePlaceholder(row, col);
+
+}
 
 /*****************************************************************************
  * ON GRID MOUSE UP

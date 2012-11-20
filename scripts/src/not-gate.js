@@ -21,17 +21,17 @@ function NOT() {
     this.visited = 0;
         
     var wire = new Wire();
-    this.setPrev(wire);
+    this.prev[0] = wire;
     wire.init(0, 0, 0, digsim.iComp);
     digsim.components[digsim.iComp++] = wire;
     wire.connections.push(this);
 
     // Reset input wire path
     wire.path = [];
-    wire.path.push({'x': -1, 'y': 0});
+    wire.path.push({'x': -0.5, 'y': 0});
     wire.startPos = 1;
     wire.endPos = 1;
-    wire.dx = -1;
+    wire.delta.x = -1;
     
     var wire = new Wire();
     this.setNext(wire);
@@ -41,10 +41,10 @@ function NOT() {
     
     // Reset output wire path
     wire.path = [];
-    wire.path.push({'x': 1, 'y': 0});
+    wire.path.push({'x': 0.5, 'y': 0});
     wire.startPos = 1;
     wire.endPos = 1;
-    wire.dx = 1;
+    wire.delta.x = 1;
     
 };
 

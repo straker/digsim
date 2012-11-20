@@ -24,16 +24,16 @@ function NAND(numInputs) {
     
     for (var i = 0; i < this.numInputs; ++i) {
         var wire = new Wire();
-        this.setPrev(wire);
+        this.prev[i] = wire;
         wire.init(0, 0, 0, digsim.iComp);
         digsim.components[digsim.iComp++] = wire;
         wire.connections.push(this);
         // Reset wire path
         wire.path = [];
-        wire.path.push({'x': -1, 'y': 0});
+        wire.path.push({'x': -0.5, 'y': 0});
         wire.startPos = 1;
         wire.endPos = 1;
-        wire.dx = -1;
+        wire.delta.x = -1;
         
     }
     var wire = new Wire();
@@ -44,10 +44,10 @@ function NAND(numInputs) {
     
     // Reset wire path
     wire.path = [];
-    wire.path.push({'x': 1, 'y': 0});
+    wire.path.push({'x': 0.5, 'y': 0});
     wire.startPos = 1;
     wire.endPos = 1;
-    wire.dx = 1;
+    wire.delta.x = 1;
     
 
 };
