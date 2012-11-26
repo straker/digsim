@@ -48,6 +48,30 @@ header, footer, aside, nav, article {
         padding: 5px;
 }
 
+.controls {
+    display: block;
+}
+
+.controls ul {
+    float: left;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.controls ul li {
+    height: 35px;
+    line-height: 35px;
+    float: left;
+}
+
+.AND {
+    background-image: ulr('test.png');
+    background-repeat: no-repeat;
+    width: 71px;
+    height: 71px;
+}
+
 /**
  * CANVAS
  */

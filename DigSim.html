@@ -8,18 +8,77 @@
   
 </head>
 <body onload="digsim.run()">
-	<div class="buttons">
-		<button id="AND" type="button">AND</button>
-		<button id="NAND" type="button">NAND</button>
-		<button id="OR" type="button">OR</button>
-		<button id="NOR" type="button">NOR</button>
-		<button id="XOR" type="button">XOR</button>
-		<button id="NOT" type="button">NOT</button>
-		<button id="LED" type="button">LED</button>
-		<button id="Wire" type="button">WIRE</button>
-		<button id="Switch" type="button">SWITCH</button>
-		<button id="Simulate" type="button">SIMULATE</button>
-		<button id= "D_Mode" type="button">D</button>
+	<div class="menu">
+		<ul class="row header">
+			<li class="col file">File</li>
+			<li class="col gates">Gates</li>
+			<li class="col io">I/O</li>
+			<li class="col modes">Modes</li>
+			<li class="col controls">Controls</li>
+			<li class="col end">&nbsp;</li>
+		</ul>
+		<div class="row">
+			<ul class="col file">
+				<li class="new"></li>
+				<li class="open"></li>
+				<li class="save"></li>			
+			</ul>
+			<ul class="col gates">
+				<li class="AND">
+					<a href="#" id="AND" title="AND Gate"><img src="imgs/AND.png" width="33" height="25" alt="AND Gate"/>AND</a>
+				</li>
+				<li class="OR">
+					<a href="#" id="OR" title="OR Gate"><img src="imgs/OR.png" width="33" height="25" alt="OR Gate"/>OR</a>
+				</li>
+				<li class="NOT">
+					<a href="#" id="NOT" title="NOT Gate"><img src="imgs/NOT.png" width="33" height="25" alt="NOT Gate"/>NOT</a>
+				</li>
+			</ul>
+			<ul class="col io">
+				<li class="Switch">
+					<a href="#" id="Switch" title="Switch"><img src="imgs/Switch.png" width="33" height="25" alt="Switch"/>Switch</a>
+				</li>
+			</ul>
+			<ul class="col modes">
+				<li class="Wire">
+					<a href="#" id="Wire" title="Wire Mode"><img src="imgs/Wire.png" width="33" height="25" alt="Wire Mode"/>Wire</a>
+				</li>
+			</ul>
+			<ul class="col controls">
+				<li class="delete" id="delete"></li>
+				<li class="rotate-clock" id="rotate-clock"></li>
+				<li class="rotate-counter" id="rotate-counter"></li>
+			</ul>
+		</div>
+		<div class="row">
+			<ul class="col file">
+				<li class="submit"></li>
+				<li class="toggle-grid"></li>
+				<li class="zoom-in"></li>
+				<li class="zoom-out"></li>		
+			</ul>
+			<ul class="col gates">
+				<li class="NAND">
+					<a href="#" id="NAND" title="NAND Gate"><img src="imgs/NAND.png" width="33" height="25" alt="NAND Gate"/>NAND</a>
+				</li>
+				<li class="NOR">
+					<a href="#" id="NOR" title="NOR Gate"><img src="imgs/NOR.png" width="33" height="25" alt="NOR Gate"/>NOR</a>
+				</li>
+				<li class="XOR">
+					<a href="#" id="XOR" title="XOR Gate"><img src="imgs/XOR.png" width="33" height="25" alt="XOR Gate"/>XOR</a>
+				</li>
+			</ul>
+			<ul class="col io">
+				<li class="LED">
+					<a href="#" id="LED" title="LED"><img src="imgs/LED.png" width="33" height="25" alt="LED"/>LED</a>
+				</li>
+			</ul>
+			<ul class="col modes">
+				<li class="Run">
+					<a href="#" id="Run" title="Run"><img src="imgs/Run.png" width="33" height="25" alt="Run"/>Run</a>
+				</li>
+			</ul>
+		</div>
 	</div>
 	<div class="canvases">
 		<canvas id="grid">Your browser does not support HTML5 canvas element.

@@ -10,15 +10,23 @@
  *  A (soon-to-be) fully functional circuit simulation program. 
  ****************************************************************************/
 
+var file = $('.file').outerWidth();
+var gates = $('.gates').outerWidth();
+var io = $('.io').outerWidth();
+var modes = $('.modes').outerWidth();
+var controls = $('.controls').outerWidth();
+
+$('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
+
 /*****************************************************************************
  * DIGSIM
  *  Holds all the constants, animation, and data variables for the program
  ****************************************************************************/
 function Digsim() {
 	// Constants
-	this.GRID_SIZE = 10;
-	this.NUM_COLS = 100;
-	this.NUM_ROWS = 100;
+	this.GRID_SIZE = 20;
+	this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
+	this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
     
     // Type identifiers
     this.AND = -1;  // Gates are negative because they have a special
@@ -72,7 +80,7 @@ function Digsim() {
     this.placeholder = [];  // Holds component positions on grid
     for (var i = 0; i < this.NUM_COLS; ++i) {
         this.placeholder[i] = [];
-    } 
+    }
 };
 
 /*****************************************************************************
@@ -87,11 +95,6 @@ Digsim.prototype.init = function() {
 	
 	// Test to see if canvas is supported
 	if (this.gridCanvas.getContext) {
-        // onClick events
-        $("canvas").mousedown(digsim.onGridMouseDown);
-        $("canvas").mouseup(digsim.onGridMouseUp);
-        $("button").click(digsim.onButtonClicked);
-        $("canvas").click(digsim.onGridClicked);
 
 		// Canvas variables
 		var canvasWidth = this.gridWidth + 1;
@@ -371,6 +374,12 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
  ****************************************************************************/
 Digsim.prototype.run = function() {
     if(this.init()) {
+        // onClick events
+        $("canvas").mousedown(digsim.onGridMouseDown);
+        $("canvas").mouseup(digsim.onGridMouseUp);
+        $("li a").click(digsim.onButtonClicked);
+        $("canvas").click(digsim.onGridClicked);
+
         this.drawGrid(this.gridContext);
     }
 };
@@ -383,53 +392,79 @@ Digsim.prototype.run = function() {
  ****************************************************************************/
 Digsim.prototype.onButtonClicked = function (event) {
     var id = $(this).attr("id");
-    
+
     // Use reflection to dynamically create gate based on id :) 
     var MyClass = window;
     MyClass = MyClass[id];
-    if (id == "Wire") {
-        $("canvas").css('cursor','crosshair');
 
-        digsim.mode = digsim.WIRE_MODE;
-    }
-    else if (id == "Simulate") {
-        $("canvas").css('cursor','pointer');
-        for (var i = 0; i < digsim.switches.length; ++i) {
-            var obj = digsim.components[ digsim.switches[i] ];
-            for (var j = 0; j < digsim.components.length; ++j) {
-                digsim.components[j].visited = 0;
-            }
-            if (obj.traverse()) {
-                obj.state = 0;
-                console.log("********************BEGIN PASS STATE!********************");
-                obj.passState(obj.state);
-            }
+    // Activate butotn
+    if (!$(this).hasClass('active')) {
+        // Remove the active class from all buttons that have it
+        $('.active').removeClass('active');
+        $(this).addClass('active');
+
+        if (id == "Wire") {
+            $("canvas").css('cursor','crosshair');
+            digsim.mode = digsim.WIRE_MODE;
         }
-        digsim.mode = digsim.SIM_MODE;
-        digsim.drawComponents();
+        else if (id == "Run") {
+            $("canvas").css('cursor','pointer');
+            for (var i = 0; i < digsim.switches.length; ++i) {
+                var obj = digsim.components[ digsim.switches[i] ];
+                for (var j = 0; j < digsim.components.length; ++j) {
+                    digsim.components[j].visited = 0;
+                }
+                if (obj.traverse()) {
+                    obj.state = 0;
+                    console.log("********************BEGIN PASS STATE!********************");
+                    obj.passState(obj.state);
+                }
+            }
+            digsim.mode = digsim.SIM_MODE;
+            digsim.drawComponents();
+        }
+        else if (id == "D_Mode") {
+            $("canvas").css('cursor','no-drop');
+            digsim.mode = digsim.DELETE_MODE;
+        }
+        else {
+            $("canvas").css('cursor','default');
+            if (id == "Switch") {
+                digsim.switches.push(digsim.iComp);
+            }
+            digsim.mode = digsim.DEFAULT_MODE;
+            
+            
+            if (id === "AND" || id === "NAND" || id === "OR" || id === "NOR" || id === "XOR")
+                var numInputs = prompt("Enter numInputs", "");
+            else
+                numInputs = 0;
+            
+            var gate = new MyClass(numInputs); 
+            gate.init(2, 2, 0, digsim.iComp);
+            digsim.components[digsim.iComp++] = gate;
+            digsim.setPlaceholders(gate);
+            gate.draw(digsim.staticContext);
+        }
     }
-    else if (id == "D_Mode") {
-        $("canvas").css('cursor','no-drop');
-        digsim.mode = digsim.DELETE_MODE;
-    }
+    // Deactivate button
     else {
-        $("canvas").css('cursor','default');
-        if (id == "Switch") {
-            digsim.switches.push(digsim.iComp);
-        }
-        digsim.mode = digsim.DEFAULT_MODE;
-        
-        
-        if (id === "AND" || id === "NAND" || id === "OR" || id === "NOR" || id === "XOR")
-            var numInputs = prompt("Enter numInputs", "");
-        else
-            numInputs = 0;
-        
-        var gate = new MyClass(numInputs); 
-        gate.init(2, 2, 0, digsim.iComp);
-        digsim.components[digsim.iComp++] = gate;
-        digsim.setPlaceholders(gate);
-        gate.draw(digsim.staticContext);
+        digsim.deactivate(id);
+    }
+};
+
+/*****************************************************************************
+ * ON GRID CLICKED
+ *  Called when wire mode is on - for dragging wires. 
+ ****************************************************************************/
+ Digsim.prototype.deactivate = function(id) {
+    $("canvas").css('cursor','default');
+    $('.active').removeClass('active');
+    digsim.mode = digsim.DEFAULT_MODE;
+
+    if (id == "Run") {
+        console.log("done running");
+        digsim.drawComponents();
     }
 };
 
@@ -901,3 +936,56 @@ Digsim.prototype.showPlaceholders = function() {
     }
 };
 
+/*****************************************************************************
+ * WINDOW RESIZE
+ *  Handles resizing of the browser window and sets all needed variables to 
+ *  set canvas size
+ ****************************************************************************/
+$(window).resize(function() {
+    console.log("RESIZE");
+    digsim.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE);
+    digsim.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE);
+    $('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
+    digsim.gridWidth = digsim.NUM_COLS * digsim.GRID_SIZE;
+    digsim.gridHeight = digsim.NUM_ROWS * digsim.GRID_SIZE;
+    $('canvas').width(digsim.gridWidth);
+    $('canvas').height(digsim.gridHeight);
+    digsim.init();
+    digsim.drawGrid(digsim.gridContext);
+    digsim.drawComponents();
+});
+
+/*****************************************************************************
+ * KEY EVENTS
+ *  The keycodes that will be mapped when a user presses a button
+ ****************************************************************************/
+KEY_CODES = {
+  27: 'esc',
+  50: 'two',
+  51: 'three',
+  52: 'four',
+  65: 'NAND',
+  82: 'NOR',
+  97: 'AND',
+  101: 'LED',
+  110: 'NOT',
+  114: 'OR',
+  115: 'Switch',
+  117: 'Run',
+  119: 'Wire',
+  120: 'XOR'
+}
+
+document.onkeydown = function(e) {
+    // Firefox and opera use charCode instead of keyCode to
+    // return which key was pressed.
+    var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+
+    console.log('Pressed: ' + keyCode);
+
+    if (KEY_CODES[keyCode]) {
+        e.preventDefault();
+        var id = "." + KEY_CODES[keyCode];
+        $(id).click();
+    }
+}

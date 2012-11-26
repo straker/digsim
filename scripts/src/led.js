@@ -46,7 +46,7 @@ LED.prototype.draw = function(context) {
     context.moveTo(P0x, P0y);
     context.bezierCurveTo(C0x, Cy, C1x, Cy, P1x, P1y); 
     
-    if (this.state) {
+    if (this.state && digsim.mode === digsim.SIM_MODE) {
         context.fillStyle = '#FF0000';
     }
     context.stroke();

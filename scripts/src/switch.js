@@ -42,7 +42,7 @@ Switch.prototype.draw = function(context) {
     context.lineTo(digsim.GRID_SIZE * 3 / 4, digsim.GRID_SIZE);
     
     // draws connection to 1 or 0
-    if (this.state) {
+    if (this.state && digsim.mode === digsim.SIM_MODE) {
         context.lineTo(digsim.GRID_SIZE / 4 * 5, digsim.GRID_SIZE / 2 * 3);
         context.moveTo(digsim.GRID_SIZE * 3 / 4 , digsim.GRID_SIZE * 2);
 
