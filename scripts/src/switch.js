@@ -17,6 +17,7 @@ function Switch() {
     this.visitLimit = 1;
     this.conRow = 1;
     this.conCol = 1;
+    this.junct = 0;
 };
 
 Switch.prototype = new Drawable();
@@ -68,6 +69,18 @@ Switch.prototype.draw = function(context) {
 
     context.stroke();
     context.restore();
+
+    if (this.junct) {
+        console.log(".onSjunct:…………………………………………");
+        console.log("ROW: " + this.row + " COL: " + this.column);
+
+        context.beginPath();
+        context.strokeStyle = '#000000';
+        context.fillStyle = '#000000';
+        context.arc((this.column + 1.5) * digsim.GRID_SIZE, (this.row + 1.5) * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
+        context.fill();
+        context.stroke();
+    }
 };
 
 

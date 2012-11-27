@@ -17,6 +17,7 @@ function LED() {
     this.visitLimit = 1;
     this.conRow = 2;
     this.conCol = 0;
+    this.junct = 0;
 };
 
 LED.prototype = new Drawable();
@@ -76,4 +77,16 @@ LED.prototype.draw = function(context) {
     context.stroke();
     
     context.restore();
+
+    if (this.junct) {
+        console.log(".onSjunct:…………………………………………");
+        console.log("ROW: " + this.row + " COL: " + this.column);
+
+        context.beginPath();
+        context.strokeStyle = '#000000';
+        context.fillStyle = '#000000';
+        context.arc((this.column + 0.5) * digsim.GRID_SIZE, (this.row + 2.5) * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
+        context.fill();
+        context.stroke();
+    }
 };

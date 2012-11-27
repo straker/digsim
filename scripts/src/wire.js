@@ -24,6 +24,10 @@ function Wire() {
     // Represents orientation of the wire at start and end.
     this.startPos = -1; 
     this.endPos = -1;
+
+    // Junction dots drawn on certain intersection points
+    this.eJunct = false;
+    this.sJunct = false;
     
     // Represents the direction that the wire has been drawn. (-1 or 1)
     this.delta = {'x': 0, 'y': 0};
@@ -56,37 +60,59 @@ Wire.prototype.updatePos = function() {
 Wire.prototype.checkConnect = function() {
     
     console.log("CHECKING CONNECTION!åß¨∑∫∂¬˚¨ß¬∂¥¬˚∆∂…øß∂ˆå¨•••••••••••••••••••••")
-    var PH, obj, row = Math.floor(this.row), col = Math.floor(this.column);
+    var row = Math.floor(this.row); 
+    var col = Math.floor(this.column);
+    this.checkJunction(row, col, "start");
+
+    row = Math.floor(this.path[0].y + this.row); 
+    col = Math.floor(this.path[0].x + this.column);
+    this.checkJunction(row, col, "end");
+};
+
+/*****************************************************************************
+ * CHECK JUNCTION
+ *  Checks connections for jucntions so we can add aesthetic dots. 
+ ****************************************************************************/
+Wire.prototype.checkJunction = function(row, col, pos) {
+    var PH, obj, wireCnt = 0, dot = 0;
     // Endpoint contains a wire
     if (digsim.placeholder[row][col] instanceof Array) {
         // We want to connect. 
         for (var i = 0; i < 4; ++i) {
             if (PH = digsim.placeholder[row][col][i]) {
                 obj = digsim.components[PH.ref];
+                ++wireCnt;
                 if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                     this.connections.push(obj);
                     obj.connections.push(this);
+
+                    // Check for dots
+                    if (obj.type === digsim.LED || obj.type === digsim.SWITCH) {
+
+                        dot = 1;
+                    }
+                    else if ((obj.connections[0] && obj.connections[0].type < 0) || (obj.prev[0] && obj.prev[0].type < 0)) {
+                        dot = 1;
+                    }
                 }
+                if (wireCnt > 2) {
+                    console.log("wireCnt > 1 £££££££££££££££££££££££££££££")
+                    dot = 1;
+                }
+
             }
         }
     }
 
-    row = Math.floor(this.path[0].y + this.row); col = Math.floor(this.path[0].x + this.column);
-    if (digsim.placeholder[row][col] instanceof Array) {
-        // We want to connect. 
-        for (var i = 0; i < 4; ++i) {
-            if (PH = digsim.placeholder[row][col][i]) {
-                obj = digsim.components[PH.ref];
-                if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
-                    console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                    this.connections.push(obj);
-                    obj.connections.push(this);
-                }
-            }
-        }
+    console.log(pos + " DOT: " + dot);
+    if (pos === "start") {
+        this.sJunct = dot;
     }
-};
+    else {
+        this.eJunct = dot;
+    }
+}
 
 /****************************************************************************
  * DRAW
@@ -98,6 +124,7 @@ Wire.prototype.draw = function(context) {
 
     context.beginPath();
     context.strokeStyle = '#000000';
+    context.fillStyle = '#000000';
     context.lineWidth = 2;
     context.lineCap = 'round';
     if (digsim.mode === digsim.SIM_MODE) {
@@ -115,5 +142,33 @@ Wire.prototype.draw = function(context) {
     }
     context.stroke();
     context.restore();
+
+
+    if (this.eJunct) {
+        console.log(".onEjunct:…………………………………………");
+        row = this.path[0].y + this.row; 
+        col = this.path[0].x + this.column;
+        console.log("ROW: " + row + " COL: " + col);
+
+        context.beginPath();
+        context.strokeStyle = '#000000';
+        context.fillStyle = '#000000';
+        context.arc(col * digsim.GRID_SIZE, row * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
+        context.fill();
+        context.stroke();
+    }
+
+    if (this.sJunct) {
+        console.log(".onSjunct:…………………………………………");
+        console.log("ROW: " + this.row + " COL: " + this.column);
+
+        context.beginPath();
+        context.strokeStyle = '#000000';
+        context.fillStyle = '#000000';
+        context.arc(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
+        context.fill();
+        context.stroke();
+    }
+
 };
 

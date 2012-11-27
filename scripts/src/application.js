@@ -444,6 +444,7 @@ Digsim.prototype.onButtonClicked = function (event) {
             gate.init(2, 2, 0, digsim.iComp);
             digsim.components[digsim.iComp++] = gate;
             digsim.setPlaceholders(gate);
+            gate.checkConnect();
             gate.draw(digsim.staticContext);
         }
     }
@@ -562,9 +563,9 @@ Digsim.prototype.onGridClicked = function(event) {
                         return;                    
                     }
                     // Draws the wire on static context. 
-                    wire.draw(digsim.staticContext);
                     wire.updatePos();
                     wire.checkConnect();
+                    wire.draw(digsim.staticContext);
                 }
                 else {
                     wire.path.pop();
@@ -774,10 +775,10 @@ Digsim.prototype.onGridMouseUp = function(event) {
             digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
             digsim.draggingGate.drawStatic = true;
             digsim.setPlaceholders(digsim.draggingGate);
-            digsim.draggingGate.draw(digsim.staticContext);
             digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
             digsim.draggingGate.updatePos();
             digsim.draggingGate.checkConnect();
+            digsim.draggingGate.draw(digsim.staticContext);
         }
         digsim.dragging = false;
     }
@@ -984,7 +985,7 @@ document.onkeydown = function(e) {
     console.log('Pressed: ' + keyCode);
 
     if (KEY_CODES[keyCode]) {
-        e.preventDefault();
+        //e.preventDefault();
         var id = "." + KEY_CODES[keyCode];
         $(id).click();
     }

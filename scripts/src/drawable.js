@@ -89,6 +89,8 @@ Drawable.prototype.checkConnect = function() {
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                     this.connections.push(obj);
                     obj.connections.push(this);
+
+                    this.junct = 1;
                 }
             }
         }
