@@ -25,6 +25,9 @@ $('.end').css('width', (window.innerWidth - file - gates - io - modes - controls
 function Digsim() {
 	// Constants
 	this.GRID_SIZE = 20;
+    this.GRID_ZOOM = 5;
+    this.MAX_GRID_SIZE = 100;
+    this.MIN_GRID_SIZE = 5;
 	this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
 	this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
     
@@ -51,7 +54,6 @@ function Digsim() {
     this.BL = 3;    // bottom-left
     this.MID = 4;   // connect wire to wire
 
-    
     // Animation variables
     this.wirePos = {
         startX: -1, 
@@ -69,6 +71,7 @@ function Digsim() {
     this.mousePos = { x: -1, y: -1 };
     this.offsetCol = 0;
     this.offsetRow = 0;
+    this.toggleGrid = 1;
     
     // Gate identifier
     this.iComp = 0;
@@ -139,26 +142,30 @@ Digsim.prototype.clearCanvas = function(context, width, height) {
  ****************************************************************************/
 Digsim.prototype.drawGrid = function(context) {
 	// Outline the canvas	
+    this.clearCanvas(context, this.gridWidth, this.gridHeight);
+    context.strokeStyle = '#000000';
 	context.strokeRect(0, 0, this.gridWidth, this.gridHeight);
 	
-	context.strokeStyle = '#8DCFF4';
-    context.lineWidth = 1;
-    context.save();
-	context.translate(0.5, 0.5);
-	context.beginPath();
-	
-	// Draw the columns
-	for (var col = 1; col < this.NUM_COLS; col++) {
-		context.moveTo(col * this.GRID_SIZE, 1);
-		context.lineTo(col * this.GRID_SIZE, this.gridHeight-1);
-	}
-	// Draw the rows
-	for (var row = 1; row < this.NUM_ROWS; row++) {
-		context.moveTo(1, row * this.GRID_SIZE);
-		context.lineTo(this.gridWidth-1, row * this.GRID_SIZE);
-	}
-	context.stroke();
-    context.restore();
+    if (this.toggleGrid) {
+    	context.strokeStyle = '#8DCFF4';
+        context.lineWidth = 1;
+        context.save();
+    	context.translate(0.5, 0.5);
+    	context.beginPath();
+    	
+    	// Draw the columns
+    	for (var col = 1; col < this.NUM_COLS; col++) {
+    		context.moveTo(col * this.GRID_SIZE, 1);
+    		context.lineTo(col * this.GRID_SIZE, this.gridHeight-1);
+    	}
+    	// Draw the rows
+    	for (var row = 1; row < this.NUM_ROWS; row++) {
+    		context.moveTo(1, row * this.GRID_SIZE);
+    		context.lineTo(this.gridWidth-1, row * this.GRID_SIZE);
+    	}
+    	context.stroke();
+        context.restore();
+    }
 };
 
 /*****************************************************************************
@@ -192,7 +199,6 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
         var wire = obj.next[0];
         this.setWirePlaceholder(wire, wire.delta.x, wire.delta.y);
-
     }
     else if (obj.type === digsim.SWITCH) {
         if (!(this.placeholder[obj.row + 1][obj.column + 1] instanceof Array)) {
@@ -392,7 +398,7 @@ Digsim.prototype.run = function() {
  ****************************************************************************/
 Digsim.prototype.onButtonClicked = function (event) {
     var id = $(this).attr("id");
-
+    console.log("CLICKED");
     // Use reflection to dynamically create gate based on id :) 
     var MyClass = window;
     MyClass = MyClass[id];
@@ -400,7 +406,7 @@ Digsim.prototype.onButtonClicked = function (event) {
     // Activate butotn
     if (!$(this).hasClass('active')) {
         // Remove the active class from all buttons that have it
-        $('.active').removeClass('active');
+        digsim.deactivate($('.active').attr('id'));
         $(this).addClass('active');
 
         if (id == "Wire") {
@@ -426,6 +432,14 @@ Digsim.prototype.onButtonClicked = function (event) {
         else if (id == "D_Mode") {
             $("canvas").css('cursor','no-drop');
             digsim.mode = digsim.DELETE_MODE;
+        }
+        else if (id === "Zoom_In") {
+            digsim.zoomIn();
+            $('.active').removeClass('active');
+        }
+        else if (id === "Zoom_Out") {
+            digsim.zoomOut();
+            $('.active').removeClass('active');
         }
         else {
             $("canvas").css('cursor','default');
@@ -455,8 +469,9 @@ Digsim.prototype.onButtonClicked = function (event) {
 };
 
 /*****************************************************************************
- * ON GRID CLICKED
- *  Called when wire mode is on - for dragging wires. 
+ * DEACTIVATE
+ *  Removes the active class from any button, and redraws the components if
+ *  the active button was Run.
  ****************************************************************************/
  Digsim.prototype.deactivate = function(id) {
     $("canvas").css('cursor','default');
@@ -524,10 +539,7 @@ Digsim.prototype.onGridClicked = function(event) {
                 }
                 else if (digsim.lockV) {
                     //console.log(Math.floor(mouseY / digsim.GRID_SIZE) - digsim.wirePos.startY);
-                    
-                    wire.path.push( {'x': 0, 
-                                   'y': row + 0.5 - digsim.wirePos.startY } );
-                    
+                    wire.path.push( {'x': 0, 'y': row + 0.5 - digsim.wirePos.startY } );
                 }
                 else {
                     return;                    
@@ -833,8 +845,7 @@ function animateWire() {
             else if (Math.abs(digsim.wirePos.startY * digsim.GRID_SIZE - digsim.mousePos.y) > digsim.GRID_SIZE / 2) {
                 digsim.lockV = 1;
             }
-        }
-            
+        }   
         
         // Draw wire
         context.beginPath();
@@ -883,13 +894,9 @@ function animate() {
 };
 
 /*****************************************************************************
- * NAMESPACE THINGY
- *  Create namespace for the application. If namespace already exisists, don't
- *  override it, otherwise create an empty object.
+ * SHOW PLACEHOLDERS
+ *  Debug method used to see placeholder objects visually on the grid.
  ****************************************************************************/
-var digsim = digsim || new Digsim();
-
-
 Digsim.prototype.showPlaceholders = function() {
     this.clearCanvas(this.gridContext, this.gridWidth, this.gridHeight);
     this.drawGrid(this.gridContext);
@@ -943,7 +950,6 @@ Digsim.prototype.showPlaceholders = function() {
  *  set canvas size
  ****************************************************************************/
 $(window).resize(function() {
-    console.log("RESIZE");
     digsim.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE);
     digsim.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE);
     $('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
@@ -957,6 +963,42 @@ $(window).resize(function() {
 });
 
 /*****************************************************************************
+ * ZOOM IN
+ *  Zoom in on the canvas
+ ****************************************************************************/
+Digsim.prototype.zoomIn = function() {
+    this.GRID_SIZE += this.GRID_ZOOM;
+    if (this.GRID_SIZE > this.MAX_GRID_SIZE) {
+        this.GRID_SIZE = this.MAX_GRID_SIZE;
+    }
+    else {
+        this.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE;
+        this.NUM_ROWS = (window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE;
+        this.init();
+        this.drawGrid(this.gridContext);
+        this.drawComponents();
+    }
+};
+
+/*****************************************************************************
+ * ZOOM OUT
+ *  Zoom out on the canvas
+ ****************************************************************************/
+Digsim.prototype.zoomOut = function() {
+    this.GRID_SIZE -= this.GRID_ZOOM;
+    if (this.GRID_SIZE < this.MIN_GRID_SIZE) {
+        this.GRID_SIZE = this.MIN_GRID_SIZE;
+    }
+    else {
+        this.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE;
+        this.NUM_ROWS = (window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE;
+        this.init();
+        this.drawGrid(this.gridContext);
+        this.drawComponents();
+    }
+};
+
+/*****************************************************************************
  * KEY EVENTS
  *  The keycodes that will be mapped when a user presses a button
  ****************************************************************************/
@@ -965,16 +1007,16 @@ KEY_CODES = {
   50: 'two',
   51: 'three',
   52: 'four',
-  65: 'NAND',
-  82: 'NOR',
-  97: 'AND',
-  101: 'LED',
-  110: 'NOT',
-  114: 'OR',
-  115: 'Switch',
-  117: 'Run',
-  119: 'Wire',
-  120: 'XOR'
+  's65': 'NAND',
+  's82': 'NOR',
+  65: 'AND',
+  69: 'LED',
+  78: 'NOT',
+  82: 'OR',
+  83: 'Switch',
+  85: 'Run',
+  87: 'Wire',
+  88: 'XOR'
 }
 
 document.onkeydown = function(e) {
@@ -983,10 +1025,24 @@ document.onkeydown = function(e) {
     var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
 
     console.log('Pressed: ' + keyCode);
+    console.log(e);
 
     if (KEY_CODES[keyCode]) {
-        //e.preventDefault();
-        var id = "." + KEY_CODES[keyCode];
-        $(id).click();
+        var id;
+        if(e.shiftKey) {
+            id = KEY_CODES['s'+keyCode];
+        }
+        else {
+            id = KEY_CODES[keyCode];
+        }
+        console.log("ID: " + id);
+        $("#" + id).click();
     }
 }
+
+/*****************************************************************************
+ * NAMESPACE
+ *  Create namespace for the application. If namespace already exisists, don't
+ *  override it, otherwise create an empty object.
+ ****************************************************************************/
+var digsim = digsim || new Digsim();

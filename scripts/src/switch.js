@@ -58,7 +58,7 @@ Switch.prototype.draw = function(context) {
 
     context.beginPath();
     
-    context.arc(digsim.GRID_SIZE / 4, digsim.GRID_SIZE * 2, digsim.GRID_SIZE / 4, 0, 2 * Math.PI);
+    context.arc(digsim.GRID_SIZE / 3, digsim.GRID_SIZE * 2, digsim.GRID_SIZE / 5, 0, 2 * Math.PI);
     
     context.stroke();
     context.fill();

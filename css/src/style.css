@@ -51,20 +51,21 @@ img {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    background-color: #F0F0F0;
 }
 
 /**
  * CONTROLS
  */
-
 .menu {
     display: block;
     position: absolute;
     top: 0px;
     left: 0px;
-    background-color: #F0F0F0;;
+    background-color: #F0F0F0;
     overflow: hidden;
     width: 100%;
+    min-width: 500px;
 }
 
 .header li {
@@ -95,7 +96,7 @@ img {
 }
 
 .file {
-    width: 100px;
+    width: 200px;
 }
 .gates {
     width: 160px;
@@ -168,6 +169,7 @@ canvas {
 }
 #grid {
 	z-index: 0;
+    background-color: #FFFFFF;
 }
 #static {
 	z-index: 1;
