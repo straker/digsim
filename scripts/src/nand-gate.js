@@ -12,44 +12,14 @@ function NAND(numInputs) {
     this.next = [];
     this.prev = [];
     this.state = 0;
-    this.connections = [];
+    this.prevConnect = [];
+    this.nextConnect = [];
     this.numInputs = numInputs || 2;
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': size};
     
     this.visitLimit = 2 * this.numInputs;
     this.visited = 0;
-    
-    var factor = Math.floor(this.numInputs / 2); 
-    
-    for (var i = 0; i < this.numInputs; ++i) {
-        var wire = new Wire();
-        this.prev[i] = wire;
-        wire.init(0, 0, 0, digsim.iComp);
-        digsim.components[digsim.iComp++] = wire;
-        wire.connections.push(this);
-        // Reset wire path
-        wire.path = [];
-        wire.path.push({'x': -0.5, 'y': 0});
-        wire.startPos = 1;
-        wire.endPos = 1;
-        wire.delta.x = -1;
-        
-    }
-    var wire = new Wire();
-    this.setNext(wire);
-    this.connections[0] = wire;
-    wire.init(0, 0, 0, digsim.iComp);
-    digsim.components[digsim.iComp++] = wire;
-    
-    // Reset wire path
-    wire.path = [];
-    wire.path.push({'x': 0.5, 'y': 0});
-    wire.startPos = 1;
-    wire.endPos = 1;
-    wire.delta.x = 1;
-    
-
 };
 
 NAND.prototype = new Drawable();
@@ -62,27 +32,7 @@ NAND.prototype = new Drawable();
  ****************************************************************************/
 NAND.prototype.draw = function(context) {
     
-    var factor = Math.floor(this.numInputs / 2); 
-    
-    // Draw wires
-    var cnt = 0;
-    for (var i = 0; i < this.numInputs; ++i) {
-        if (i % 2) { 
-            this.prev[i].column = this.column;
-            this.prev[i].row = this.row + (factor * 2) + .5 - cnt++;
-        }
-        else {
-            this.prev[i].column = this.column;
-            this.prev[i].row = this.row + cnt + .5;
-        }        
-        this.prev[i].draw(context);
-        this.prev[i].updatePos();
-    }
-    
-    this.next[0].column = this.column + (factor * 2) + 1;
-    this.next[0].row = this.row + factor + .5;    
-    this.next[0].draw(context);
-    this.next[0].updatePos();
+    this.drawWires(context);
 
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
@@ -91,6 +41,7 @@ NAND.prototype.draw = function(context) {
     context.lineWidth = 2;
     
     // Draw gate
+    var factor = Math.floor(this.numInputs / 2); 
     var gsf = digsim.GRID_SIZE * factor;
     
     context.moveTo(0, 0);

@@ -12,46 +12,15 @@ function XOR(numInputs) {
     this.next = [];
     this.prev = [];
     this.state = 0;
-    this.connections = [];
+    this.prevConnect = [];
+    this.nextConnect = [];
     this.numInputs = numInputs || 2;
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': (size + 1)};
 
     this.visitLimit = 2 * this.numInputs;
     this.visited = 0;
-
-    var factor = Math.floor(this.numInputs / 2); 
-    
-    this.connectOffset.x = (factor * 2) + 2;
-    this.connectOffset.y = factor;
-    
-    
-    for (var i = 0; i < this.numInputs; ++i) {
-        var wire = new Wire();
-        this.prev[i] = wire;
-        wire.init(0, 0, 0, digsim.iComp);
-        digsim.components[digsim.iComp++] = wire;
-        wire.connections.push(this);
-        // Reset wire path
-        wire.path = [];
-        wire.path.push({'x': -0.5, 'y': 0});
-        wire.startPos = 1;
-        wire.endPos = 1;
-        wire.delta.x = -1;
-
-    }
-    var wire = new Wire();
-    this.setNext(wire);
-    this.connections[0] = wire;
-    wire.init(0, 0, 0, digsim.iComp);
-    digsim.components[digsim.iComp++] = wire;
-    
-    // Reset wire path
-    wire.path = [];
-    wire.path.push({'x': 0.5, 'y': 0});
-    wire.startPos = 1;
-    wire.endPos = 1;
-    wire.delta.x = 1;
+    this.outPt = 2;
 };
 
 XOR.prototype = new Drawable();
@@ -63,47 +32,15 @@ XOR.prototype = new Drawable();
  *  to draw a half circle with the bezierCurveTo method. 
  ****************************************************************************/
 XOR.prototype.draw = function(context) {
-    var factor = Math.floor(this.numInputs / 2);
     
-    context.fillStyle = '#FFFFFF';
-    context.lineWidth = 2;
-
-    // Draw wires
-    var cnt = 0;
-    for (var i = 0; i < this.numInputs; ++i) {
-        if (i % 2) { 
-            this.prev[i].column = this.column;
-            this.prev[i].row = this.row + (factor * 2) + .5 - cnt++;
-        }
-        else {
-            this.prev[i].column = this.column;
-            this.prev[i].row = this.row + cnt + .5;
-        }
-        
-        // Finish wire path to gate (asthetics only)
-        context.beginPath();
-        context.moveTo(this.prev[i].column * digsim.GRID_SIZE, this.prev[i].row * digsim.GRID_SIZE);
-        context.lineTo((this.prev[i].column + 0.6) * digsim.GRID_SIZE, this.prev[i].row * digsim.GRID_SIZE);
-        context.fillStyle = '#FFFFFF';
-        context.lineWidth = 2;
-        context.stroke();
-        
-        this.prev[i].draw(context);
-        this.prev[i].updatePos();
-    }
-    
-    this.next[0].column = this.column + (factor * 2) + 2;
-    this.next[0].row = this.row + factor + .5;
-    // Reset wire path
-    //this.next[0].path = [];
-    //this.next[0].path.push({'x': 1, 'y': 0});
-    
-    this.next[0].draw(context);
-    this.next[0].updatePos();
+    this.drawWires(context);
     
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
+    context.fillStyle = '#FFFFFF';
+    context.lineWidth = 2;
+
     
     // Draw gate
     var factor = Math.floor(this.numInputs / 2); 

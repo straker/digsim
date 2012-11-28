@@ -188,19 +188,41 @@ Digsim.prototype.drawComponents = function() {
  *  identifier. 
  ****************************************************************************/
 Digsim.prototype.setPlaceholders = function(obj) {
-    var row, col;
-    
-    // Place wire placehodlers
+
+    var row, col, cnt = 0, conCol, conRow;
+    var factor = Math.floor(obj.numInputs / 2) || 1; 
+    // Place wire placeholders
     if (obj.type < 0) { //gate
-        for (var i = 0; i < obj.numInputs; ++i) {
-            var wire = obj.prev[i];
-            this.setWirePlaceholder(wire, wire.delta.x,wire.delta.y);
-            //console.log(wire);
+        conCol = obj.column - 1;
+        // Previii
+        for (var i = 0; i < obj.numInputs; ++i) {            
+            if (obj.type === digsim.NOT) {
+                conRow = obj.row + 1;
+            }
+            else {
+                if (i % 2) { 
+                    conRow = obj.row + (factor * 2) - cnt++;
+                }
+                else {
+                    conRow = obj.row + cnt;
+                }
+            }
+            if (!(this.placeholder[conRow][conCol] instanceof Array)) {
+                this.placeholder[conRow][conCol] = [];
+            }
+            var placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+            this.placeholder[conRow][conCol][1] = placeholder;
         }
-        var wire = obj.next[0];
-        this.setWirePlaceholder(wire, wire.delta.x, wire.delta.y);
+        // Nexts
+        conCol = obj.column + factor * 2 + obj.outPt;
+        conRow = obj.row + factor;
+        if (!(this.placeholder[conRow][conCol] instanceof Array)) {
+            this.placeholder[conRow][conCol] = [];
+        }
+        var placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+        this.placeholder[conRow][conCol][3] = placeholder;
     }
-    else if (obj.type === digsim.SWITCH) {
+    if (obj.type === digsim.SWITCH) {
         if (!(this.placeholder[obj.row + 1][obj.column + 1] instanceof Array)) {
             console.log(obj);
             this.placeholder[obj.row + 1][obj.column + 1] = [];
@@ -970,6 +992,10 @@ Digsim.prototype.zoomIn = function() {
     this.GRID_SIZE += this.GRID_ZOOM;
     if (this.GRID_SIZE > this.MAX_GRID_SIZE) {
         this.GRID_SIZE = this.MAX_GRID_SIZE;
+        /*$('#Zoom_In').addClass('disabled');
+        $('#Zoom_In').off('click');
+        $('#Zoom_In').removeAttr('href');
+        $('#Zoom_In').removeAttr('title');*/
     }
     else {
         this.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE;

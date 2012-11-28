@@ -11,7 +11,8 @@ function NOT() {
     this.type = digsim.NOT;
     this.next = [];
     this.prev = [];
-    this.connections = [];
+    this.prevConnect = [];
+    this.nextConnect = [];
     this.state = 0;
     this.numInputs = 1;
     this.connectPoint = {'x': -1, 'y': -1};
@@ -19,33 +20,7 @@ function NOT() {
     
     this.visitLimit = 2 * this.numInputs;
     this.visited = 0;
-        
-    var wire = new Wire();
-    this.prev[0] = wire;
-    wire.init(0, 0, 0, digsim.iComp);
-    digsim.components[digsim.iComp++] = wire;
-    wire.connections.push(this);
-
-    // Reset input wire path
-    wire.path = [];
-    wire.path.push({'x': -0.5, 'y': 0});
-    wire.startPos = 1;
-    wire.endPos = 1;
-    wire.delta.x = -1;
-    
-    var wire = new Wire();
-    this.setNext(wire);
-    this.connections[0] = wire;
-    wire.init(0, 0, 0, digsim.iComp);
-    digsim.components[digsim.iComp++] = wire;
-    
-    // Reset output wire path
-    wire.path = [];
-    wire.path.push({'x': 0.5, 'y': 0});
-    wire.startPos = 1;
-    wire.endPos = 1;
-    wire.delta.x = 1;
-    
+    this.outPt = 0; 
 };
 
 NOT.prototype = new Drawable();
@@ -53,7 +28,7 @@ NOT.prototype = new Drawable();
 /******************************************************************************
  * INIT
  *  Initiates a drawable object at a given column, row, and rotation
- *****************************************************************************/
+ *****************************************************************************
 NOT.prototype.init = function (col, row, rot, id) {
     this.column = col;
     this.row = row;
@@ -76,6 +51,7 @@ NOT.prototype.init = function (col, row, rot, id) {
  ****************************************************************************/
 NOT.prototype.draw = function(context) {
     
+    this.drawWires(context);
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
@@ -96,20 +72,6 @@ NOT.prototype.draw = function(context) {
     context.fill();
     context.stroke();
     context.restore();
-
-    // Draw wires
-    this.prev[0].column = this.column;
-    this.prev[0].row = this.row + 1.5;
-    this.prev[0].drawStatic = false;
-    this.next[0].column = this.column + 2;
-    this.next[0].row = this.row + 1.5;
-
-    this.next[0].drawStatic = false;
-    this.prev[0].draw(context);
-    this.prev[0].updatePos();
-    
-    this.next[0].draw(context);
-    this.next[0].updatePos();
 };
 
 /*****************************************************************************

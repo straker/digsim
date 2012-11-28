@@ -26,6 +26,7 @@ function Drawable(col, row, rot) {
     this.connections = [];
     this.state = 0;
     this.drawStatic = true;
+    this.outPt = 1;
 };
 
 /******************************************************************************
@@ -39,24 +40,6 @@ Drawable.prototype.init = function (col, row, rot, id) {
     this.id = id;
     this.drawStatic = true;
     this.updatePos(); 
-    
-    if (this.type < 0) { // Houston, we have a gate...
-        
-        var cnt = 0;
-        var factor = Math.floor(this.numInputs / 2); 
-        
-        for (var i = 0; i < this.numInputs; ++i) {
-            if (i % 2) { 
-                this.prev[i].init(this.column, this.row + (factor * 2) + .5 - cnt++, row, this.prev[i].id);
-            }
-            else {
-                this.prev[i].init(this.column, this.row + cnt + .5, rot, this.prev[i].id);
-            }
-            this.prev[i].drawStatic = false;
-        }
-        this.next[0].init(this.column + this.dimension.col, this.row + factor + .5, rot, this.next[0].id);
-        this.next[0].drawStatic = false;
-    }
 };
 
 /******************************************************************************
@@ -95,12 +78,54 @@ Drawable.prototype.checkConnect = function() {
             }
         }
     }
-    
-    if (this.type < 0) { // gate
-        for (var i = 0; i < this.numInputs; ++i) {
-            this.prev[i].checkConnect();
+    else {
+        console.log("STEP 1.5");
+        var PH, cnt = 0, conRow, conCol;
+        var factor = Math.floor(this.numInputs / 2); 
+        console.log("THIS.NUMINPUTS: " + this.numInputs);
+        // Endpoint contains a wire
+        for (var j = 0; j < this.numInputs; ++j) {
+            conCol = this.column - 1;
+            if (this.type === digsim.NOT) {
+                conRow = this.row + 1;
+            }
+            else {
+                if (j % 2) { 
+                    conRow = this.row + (factor * 2) - cnt++;
+                }
+                else {
+                    conRow = this.row + cnt;
+                }
+            }
+            console.log("conRow: " + conRow);
+            console.log("conCol: " + conCol);
+            for (var i = 1; i < 4; ++i) {
+                if (PH = digsim.placeholder[conRow][conCol][i]) {
+                    obj = digsim.components[PH.ref];
+                    if ((obj !== this) && ($.inArray(obj, this.prevConnect) === -1)) { // connection is not part of the previous
+                        console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                        this.prevConnect.push(obj);
+                        obj.type < 0 ? obj.nextConnect.push(this) : obj.connections.push(this);
+                        this.junct = 1;
+                    }
+                }
+            }
         }
-        this.next[0].checkConnect();
+
+        // Output wire
+        conCol = obj.column + factor * 2 + obj.outPt;
+        conRow = obj.row + factor;
+        for (var i = 1; i < 4; ++i) {
+            if (PH = digsim.placeholder[conRow][conCol][i]) {
+                obj = digsim.components[PH.ref];
+                if ((obj !== this) && ($.inArray(obj, this.nextConnect) === -1)) { // connection is not part of the previous
+                    console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                    this.nextConnect.push(obj);
+                    obj.type < 0 ? obj.prevConnect.push(this) : obj.connections.push(this);
+                    this.junct = 1;
+                }
+            }
+        }
     }
 };
 
@@ -133,6 +158,43 @@ Drawable.prototype.passState = function(pState) {
         }
     }
 };
+
+/******************************************************************************
+ * DRAW WIRES
+ *  Draws..... wires?
+ *****************************************************************************/
+Drawable.prototype.drawWires = function(context) {
+     // Draw wires
+    context.beginPath();
+    context.fillStyle = '#FFFFFF';
+    context.lineWidth = 2;
+
+    var factor = Math.floor(this.numInputs / 2) || 1; 
+    var cnt = 0;
+    if (this.type != digsim.NOT) {
+        for (var i = 0; i < this.numInputs; ++i) {
+            if (i % 2) { 
+                context.moveTo((this.column + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + (factor * 2) + .5 - cnt));   
+                context.lineTo((this.column - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + (factor * 2) + .5 - cnt++));
+            }
+            else {
+                context.moveTo((this.column + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + .5));   
+                context.lineTo((this.column - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + .5));
+            }
+        }
+    }
+    else {
+        context.moveTo((this.column + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));   
+        context.lineTo((this.column - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));     
+    }
+
+
+    var pt = this.type === NOR || this.type 
+    context.moveTo((this.column + (factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));   
+    context.lineTo((this.column + (factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));   
+
+    context.stroke();
+}
 
 /******************************************************************************
  * SET NEXT

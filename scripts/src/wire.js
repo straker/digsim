@@ -85,7 +85,17 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                 if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                     this.connections.push(obj);
-                    obj.connections.push(this);
+                    if (obj.type < 0) {
+                        if (col < obj.column) {
+                            obj.prevConnect.push(this);
+                        }
+                        else {
+                            obj.nextConnect.push(this);
+                        }
+                    }
+                    else {
+                        obj.connections.push(this);
+                    }
 
                     // Check for dots
                     if (obj.type === digsim.LED || obj.type === digsim.SWITCH) {
