@@ -71,7 +71,7 @@ function Digsim() {
     this.mousePos = { x: -1, y: -1 };
     this.offsetCol = 0;
     this.offsetRow = 0;
-    this.toggleGrid = 1;
+    this.gridToggle = 1;
     
     // Gate identifier
     this.iComp = 0;
@@ -146,7 +146,7 @@ Digsim.prototype.drawGrid = function(context) {
     context.strokeStyle = '#000000';
 	context.strokeRect(0, 0, this.gridWidth, this.gridHeight);
 	
-    if (this.toggleGrid) {
+    if (this.gridToggle) {
     	context.strokeStyle = '#8DCFF4';
         context.lineWidth = 1;
         context.save();
@@ -155,7 +155,7 @@ Digsim.prototype.drawGrid = function(context) {
     	
     	// Draw the columns
     	for (var col = 1; col < this.NUM_COLS; col++) {
-    		context.moveTo(col * this.GRID_SIZE, 1);
+    		context.moveTo(col * this.GRID_SIZE, 0);
     		context.lineTo(col * this.GRID_SIZE, this.gridHeight-1);
     	}
     	// Draw the rows
@@ -403,10 +403,32 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
 Digsim.prototype.run = function() {
     if(this.init()) {
         // onClick events
-        $("canvas").mousedown(digsim.onGridMouseDown);
-        $("canvas").mouseup(digsim.onGridMouseUp);
-        $("li a").click(digsim.onButtonClicked);
-        $("canvas").click(digsim.onGridClicked);
+        $("canvas").on("mousedown", digsim.onGridMouseDown);
+        $("canvas").on("mouseup", digsim.onGridMouseUp);
+        $(".gates a, .io a, .modes a").on("click", digsim.onButtonClicked);
+        $("#New").on("click", false);
+        $("#Toggle_Grid").on("click", digsim.toggleGrid);
+        $("#Zoom_In").on("click", digsim.zoomIn);
+        $("#Zoom_Out").on("click", digsim.zoomOut);
+        $("canvas").on("click", digsim.onGridClicked);
+
+        // Set hotkey info on buttons
+        var curr, hotkey;
+        $("li a").each(function(index) {
+            curr = $(this);
+            hotkey = HOT_KEYS[curr.attr('id')]
+            if (hotkey) {
+                curr.attr('title', curr.attr('title') + " (" + hotkey + ")");
+            }
+        });
+
+        /*** Temporary disable buttons as functionality is being worked out ****/
+        this.disableButton("New");
+        this.disableButton("Open");
+        this.disableButton("Save");
+        this.disableButton("Submit");
+        this.disableButton("Empty");
+        this.disableButton("Delete");
 
         this.drawGrid(this.gridContext);
     }
@@ -419,9 +441,11 @@ Digsim.prototype.run = function() {
  *  "AND", "OR", etc...
  ****************************************************************************/
 Digsim.prototype.onButtonClicked = function (event) {
-    var id = $(this).attr("id");
+    event.preventDefault();
     console.log("CLICKED");
-    // Use reflection to dynamically create gate based on id :) 
+    
+    // Use reflection to dynamically create gate based on id :)
+    var id = $(this).attr("id");
     var MyClass = window;
     MyClass = MyClass[id];
 
@@ -450,18 +474,6 @@ Digsim.prototype.onButtonClicked = function (event) {
             }
             digsim.mode = digsim.SIM_MODE;
             digsim.drawComponents();
-        }
-        else if (id == "D_Mode") {
-            $("canvas").css('cursor','no-drop');
-            digsim.mode = digsim.DELETE_MODE;
-        }
-        else if (id === "Zoom_In") {
-            digsim.zoomIn();
-            $('.active').removeClass('active');
-        }
-        else if (id === "Zoom_Out") {
-            digsim.zoomOut();
-            $('.active').removeClass('active');
         }
         else {
             $("canvas").css('cursor','default');
@@ -988,21 +1000,25 @@ $(window).resize(function() {
  * ZOOM IN
  *  Zoom in on the canvas
  ****************************************************************************/
-Digsim.prototype.zoomIn = function() {
-    this.GRID_SIZE += this.GRID_ZOOM;
-    if (this.GRID_SIZE > this.MAX_GRID_SIZE) {
-        this.GRID_SIZE = this.MAX_GRID_SIZE;
-        /*$('#Zoom_In').addClass('disabled');
-        $('#Zoom_In').off('click');
-        $('#Zoom_In').removeAttr('href');
-        $('#Zoom_In').removeAttr('title');*/
+Digsim.prototype.zoomIn = function(event) {
+    digsim.GRID_SIZE += digsim.GRID_ZOOM;
+    if (digsim.GRID_SIZE > digsim.MAX_GRID_SIZE) {
+        digsim.GRID_SIZE = digsim.MAX_GRID_SIZE;
+        digsim.disableButton('Zoom_In');
     }
     else {
-        this.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE;
-        this.NUM_ROWS = (window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE;
-        this.init();
-        this.drawGrid(this.gridContext);
-        this.drawComponents();
+        if ($('#Zoom_Out').hasClass('disabled')) {
+            digsim.enableButton('Zoom_Out');
+        }
+        digsim.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE;
+        digsim.NUM_ROWS = (window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE;
+        digsim.init();
+        digsim.drawGrid(digsim.gridContext);
+        digsim.drawComponents();
+
+        if (digsim.GRID_SIZE === digsim.MAX_GRID_SIZE) {
+            digsim.disableButton('Zoom_In');
+        }
     }
 };
 
@@ -1010,39 +1026,98 @@ Digsim.prototype.zoomIn = function() {
  * ZOOM OUT
  *  Zoom out on the canvas
  ****************************************************************************/
-Digsim.prototype.zoomOut = function() {
-    this.GRID_SIZE -= this.GRID_ZOOM;
-    if (this.GRID_SIZE < this.MIN_GRID_SIZE) {
-        this.GRID_SIZE = this.MIN_GRID_SIZE;
+Digsim.prototype.zoomOut = function(event) {
+    digsim.GRID_SIZE -= digsim.GRID_ZOOM;
+    if (digsim.GRID_SIZE < digsim.MIN_GRID_SIZE) {
+        digsim.GRID_SIZE = digsim.MIN_GRID_SIZE;
     }
     else {
-        this.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE;
-        this.NUM_ROWS = (window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE;
-        this.init();
-        this.drawGrid(this.gridContext);
-        this.drawComponents();
+        console.log("CLASS: " + $('#Zoom_In').hasClass('disabled'))
+        if ($('#Zoom_In').hasClass('disabled')) {
+            digsim.enableButton('Zoom_In');
+        }
+        
+        digsim.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE;
+        digsim.NUM_ROWS = (window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE;
+        digsim.init();
+        digsim.drawGrid(digsim.gridContext);
+        digsim.drawComponents();
+        if (digsim.GRID_SIZE === digsim.MIN_GRID_SIZE) {
+            digsim.disableButton('Zoom_Out');
+        }
     }
 };
+
+/*****************************************************************************
+ * DISABLE BUTTON
+ *  Disable a button
+ ****************************************************************************/
+Digsim.prototype.disableButton = function(id) {
+    $('#' + id).addClass('disabled');
+    $('#' + id).removeAttr('href');
+    $('#' + id).removeAttr('title');
+}
+
+/*****************************************************************************
+ * ENABLE BUTTON
+ *  Enable a button
+ ****************************************************************************/
+Digsim.prototype.enableButton = function(id) {
+    var title = id.replace("_", " ");
+
+    $('#' + id).removeClass('disabled');
+    $('#' + id).attr('href', '#');
+    $('#' + id).attr('title', title + " (" + HOT_KEYS[id] + ")");
+}
+
+/*****************************************************************************
+ * TOGGLE GRID
+ *  Toggle grid on/off
+ ****************************************************************************/
+Digsim.prototype.toggleGrid = function(event) {
+    digsim.gridToggle = !digsim.gridToggle;
+    digsim.drawGrid(digsim.gridContext);
+}
 
 /*****************************************************************************
  * KEY EVENTS
  *  The keycodes that will be mapped when a user presses a button
  ****************************************************************************/
 KEY_CODES = {
-  27: 'esc',
-  50: 'two',
-  51: 'three',
-  52: 'four',
-  's65': 'NAND',
-  's82': 'NOR',
-  65: 'AND',
-  69: 'LED',
-  78: 'NOT',
-  82: 'OR',
-  83: 'Switch',
-  85: 'Run',
-  87: 'Wire',
-  88: 'XOR'
+    27: 'esc',
+    50: 'two',
+    51: 'three',
+    52: 'four',
+    's65': 'NAND',
+    's82': 'NOR',
+    65: 'AND',
+    69: 'LED',
+    84: 'NOT',
+    82: 'OR',
+    83: 'Switch',
+    85: 'Run',
+    87: 'Wire',
+    88: 'XOR',
+    71: 'Toggle_Grid',
+    90: 'Zoom_In',
+    's90': 'Zoom_Out',
+    68: 'Delete'
+}
+HOT_KEYS = {
+    'AND': 'A',
+    'OR': 'R',
+    'NOT': 'T',
+    'NAND': 'shift+A',
+    'NOR': 'shift+R',
+    'XOR': 'X',
+    'Switch': 'S',
+    'LED': 'E',
+    'Wire': 'W',
+    'Run': 'U',
+    'Toggle_Grid': 'G',
+    'Zoom_In': 'Z',
+    'Zoom_Out': 'shift+Z',
+    'Delete': 'D'
 }
 
 document.onkeydown = function(e) {
