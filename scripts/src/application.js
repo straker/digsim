@@ -422,13 +422,18 @@ Digsim.prototype.run = function() {
             }
         });
 
-        /*** Temporary disable buttons as functionality is being worked out ****/
+        /*** Temporary disable buttons as functionality is being worked out ****
         this.disableButton("New");
         this.disableButton("Open");
         this.disableButton("Save");
         this.disableButton("Submit");
         this.disableButton("Empty");
         this.disableButton("Delete");
+        this.disableButton("Rotate_Left");
+        this.disableButton("Rotate_Right");
+        this.disableButton("Cut");
+        this.disableButton("Copy");
+        this.disableButton("Paste");*/
 
         this.drawGrid(this.gridContext);
     }
@@ -792,7 +797,7 @@ Digsim.prototype.deletePlaceholder = function(row, col) {
 
     // Visually remove component from static canvas. 
     digsim.drawComponents();
-}
+};
 
 /*****************************************************************************
  * DELETE COMPONENT
@@ -812,7 +817,7 @@ Digsim.prototype.deleteComponent = function(row, col) {
     }
     digsim.deletePlaceholder(row, col);
 
-}
+};
 
 /*****************************************************************************
  * ON GRID MOUSE UP
@@ -1060,7 +1065,7 @@ Digsim.prototype.disableButton = function(id) {
     $('#' + id).addClass('disabled');
     $('#' + id).removeAttr('href');
     $('#' + id).removeAttr('title');
-}
+};
 
 /*****************************************************************************
  * ENABLE BUTTON
@@ -1073,7 +1078,7 @@ Digsim.prototype.enableButton = function(id) {
     $('#' + id).removeClass('disabled');
     $('#' + id).attr('href', '#');
     $('#' + id).attr('title', title + (hotkey ? " (" + HOT_KEYS[id] + ")" : ""));
-}
+};
 
 /*****************************************************************************
  * TOGGLE GRID
@@ -1082,7 +1087,7 @@ Digsim.prototype.enableButton = function(id) {
 Digsim.prototype.toggleGrid = function(event) {
     digsim.gridToggle = !digsim.gridToggle;
     digsim.drawGrid(digsim.gridContext);
-}
+};
 
 /*****************************************************************************
  * KEY EVENTS
@@ -1106,8 +1111,11 @@ KEY_CODES = {
     71: 'Toggle_Grid',
     90: 'Zoom_In',
     's90': 'Zoom_Out',
-    68: 'Delete'
-}
+    68: 'Delete',
+    'c88': 'Cut',
+    'c67': 'Copy',
+    'c86': 'Paste'
+};
 HOT_KEYS = {
     'AND': 'A',
     'OR': 'R',
@@ -1122,29 +1130,37 @@ HOT_KEYS = {
     'Toggle_Grid': 'G',
     'Zoom_In': 'Z',
     'Zoom_Out': 'shift+Z',
-    'Delete': 'D'
-}
+    'Delete': 'D',
+    'Cut': 'ctrl+X',
+    'Copy': 'ctrl+C',
+    'Paste': 'ctrl+V'
+};
 
 document.onkeydown = function(e) {
     // Firefox and opera use charCode instead of keyCode to
     // return which key was pressed.
     var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+    var id;
 
     console.log('Pressed: ' + keyCode);
     console.log(e);
 
-    if (KEY_CODES[keyCode]) {
-        var id;
-        if(e.shiftKey) {
-            id = KEY_CODES['s'+keyCode];
-        }
-        else {
-            id = KEY_CODES[keyCode];
-        }
-        console.log("ID: " + id);
+    if(e.shiftKey) {
+        id = KEY_CODES['s'+keyCode];
+    }
+    else if (e.ctrlKey) {
+        console.log("ctrl down");
+        id = KEY_CODES['c'+keyCode];
+    }
+    else {
+        id = KEY_CODES[keyCode];
+    }
+    console.log("ID: " + id);
+
+    if (id) {
         $("#" + id).click();
     }
-}
+};
 
 /*****************************************************************************
  * NAMESPACE

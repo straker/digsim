@@ -55,7 +55,7 @@ img {
 }
 
 /**
- * CONTROLS
+ * MENU
  */
 .menu {
     display: block;
@@ -110,6 +110,19 @@ img {
 .controls {
     width: 160px;
 }
+.messages {
+    position: absolute;
+    top: 129px;
+    height: 400px;
+    width: 212px;
+}
+#messages {
+    background-color: #FFFFFF;
+    overflow-y: auto;
+    width: 212px;
+    height: 400px;
+    font-size: 12px;
+}
 
 .col {
     float: left;
@@ -158,13 +171,14 @@ img {
     filter: alpha(opacity=30); /* msie */
     cursor: default;
 }
+
 /**
  * CANVAS
  */
 .canvases {
 	position: absolute;
 	top: 130px;
-	left: 100px;
+	left: 212px;
 }
 canvas {
     background: transparent;
