@@ -1068,10 +1068,11 @@ Digsim.prototype.disableButton = function(id) {
  ****************************************************************************/
 Digsim.prototype.enableButton = function(id) {
     var title = id.replace("_", " ");
+    var hotkey = HOT_KEYS[id];
 
     $('#' + id).removeClass('disabled');
     $('#' + id).attr('href', '#');
-    $('#' + id).attr('title', title + " (" + HOT_KEYS[id] + ")");
+    $('#' + id).attr('title', title + (hotkey ? " (" + HOT_KEYS[id] + ")" : ""));
 }
 
 /*****************************************************************************
