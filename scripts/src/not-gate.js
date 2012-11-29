@@ -12,7 +12,8 @@ function NOT() {
     this.next = [];
     this.prev = [];
     this.prevConnect = [];
-    this.nextConnect = [];
+    this.connections = [];
+    this.juncts = [];
     this.state = 0;
     this.numInputs = 1;
     this.connectPoint = {'x': -1, 'y': -1};
@@ -72,6 +73,18 @@ NOT.prototype.draw = function(context) {
     context.fill();
     context.stroke();
     context.restore();
+
+    for (var i = 0; i < this.juncts.length; ++i) {
+        // console.log(".onSjunct:…………………………………………");
+        // console.log("ROW: " + this.row + " COL: " + this.column);
+
+        context.beginPath();
+        context.strokeStyle = '#000000';
+        context.fillStyle = '#000000';
+        context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
+        context.fill();
+        context.stroke();
+    }
 };
 
 /*****************************************************************************
@@ -79,7 +92,7 @@ NOT.prototype.draw = function(context) {
  *  NOTs all the input wires together to set the current state of the gate. 
  ****************************************************************************/
 NOT.prototype.computeLogic = function() {
-    this.state = !this.prev[0].state;
+    this.state = !(this.prev[0] ? this.prev[0].state : 0);
     console.log("PREVIOUS: " + this.prev[0].state);
 };
 

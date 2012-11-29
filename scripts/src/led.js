@@ -11,6 +11,7 @@ function LED() {
     this.type = digsim.LED;
     this.prev = [];
     this.connections = [];
+    this.juncts = [];
     this.state = 0;
     this.dimension = {'row': 2, 'col': 1};
     this.visited = 0;
@@ -48,7 +49,7 @@ LED.prototype.draw = function(context) {
     context.bezierCurveTo(C0x, Cy, C1x, Cy, P1x, P1y); 
     
     if (this.state && digsim.mode === digsim.SIM_MODE) {
-        context.fillStyle = 'yellow';
+        context.fillStyle = '#FF0000';
     }
     context.stroke();
     context.fill();
@@ -78,14 +79,14 @@ LED.prototype.draw = function(context) {
     
     context.restore();
 
-    if (this.junct) {
-        console.log(".onSjunct:…………………………………………");
-        console.log("ROW: " + this.row + " COL: " + this.column);
+    for (var i = 0; i < this.juncts.length; ++i) {
+        // console.log(".onSjunct:…………………………………………");
+        // console.log("ROW: " + this.row + " COL: " + this.column);
 
         context.beginPath();
         context.strokeStyle = '#000000';
         context.fillStyle = '#000000';
-        context.arc((this.column + 0.5) * digsim.GRID_SIZE, (this.row + 2.5) * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
+        context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
         context.fill();
         context.stroke();
     }

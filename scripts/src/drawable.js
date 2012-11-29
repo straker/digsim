@@ -73,7 +73,7 @@ Drawable.prototype.checkConnect = function() {
                     this.connections.push(obj);
                     obj.connections.push(this);
 
-                    this.junct = 1;
+                    this.juncts.push( { 'x': (this.conCol + this.column), 'y': (this.conRow + this.row) } );
                 }
             }
         }
@@ -81,7 +81,7 @@ Drawable.prototype.checkConnect = function() {
     else {
         console.log("STEP 1.5");
         var PH, cnt = 0, conRow, conCol;
-        var factor = Math.floor(this.numInputs / 2); 
+        var factor = Math.floor(this.numInputs / 2) || 1; 
         console.log("THIS.NUMINPUTS: " + this.numInputs);
         // Endpoint contains a wire
         for (var j = 0; j < this.numInputs; ++j) {
@@ -105,24 +105,31 @@ Drawable.prototype.checkConnect = function() {
                     if ((obj !== this) && ($.inArray(obj, this.prevConnect) === -1)) { // connection is not part of the previous
                         console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                         this.prevConnect.push(obj);
-                        obj.type < 0 ? obj.nextConnect.push(this) : obj.connections.push(this);
-                        this.junct = 1;
+                        obj.connections.push(this);
+                        this.juncts.push( {'x': conCol, 'y': conRow} );
                     }
                 }
             }
         }
 
         // Output wire
-        conCol = obj.column + factor * 2 + obj.outPt;
-        conRow = obj.row + factor;
+        conCol = this.column + factor * 2 + this.outPt;
+        conRow = this.row + factor;
+        console.log("\nOUTPUT WIRE:");
+        console.log("CONCOL: " + conCol);
+        console.log("CONROW: " + conRow);
+        console.log("FACTOR: " + factor);
+        console.log("OBJ.OUTPT: " + obj.outPt);
+        console.log("OBJ.COLUMN: " + obj.column);
+        console.log("OBJ.ROW: " + obj.row);
         for (var i = 1; i < 4; ++i) {
             if (PH = digsim.placeholder[conRow][conCol][i]) {
                 obj = digsim.components[PH.ref];
-                if ((obj !== this) && ($.inArray(obj, this.nextConnect) === -1)) { // connection is not part of the previous
+                if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                    this.nextConnect.push(obj);
+                    this.connections.push(obj);
                     obj.type < 0 ? obj.prevConnect.push(this) : obj.connections.push(this);
-                    this.junct = 1;
+                    this.juncts.push( {'x': conCol, 'y': conRow} );
                 }
             }
         }
@@ -153,7 +160,7 @@ Drawable.prototype.passState = function(pState) {
                 }
             }
             else if (this.type !== digsim.LED) {
-                console.log("Error! Multiple drivers on 1 wire");
+                console.error("ERROR! Multiple drivers on 1 wire [passState()]");
             }
         }
     }
@@ -261,7 +268,7 @@ Drawable.prototype.traverse = function() {
                     }
                 }
                 if (con.type === digsim.SWITCH) {
-                    console.log("ERROR! Multiple switches driving one wire");
+                    console.error("ERROR! Multiple switches driving one wire [traverse()]");
                     return false;
                 }
                 else if (con.type === digsim.LED) {
@@ -269,24 +276,26 @@ Drawable.prototype.traverse = function() {
                     console.log("CURRObject.setNext(con)");
                 }
                 else if (con.type === digsim.WIRE) {
-                    if (currObject.type >= 0 && typeof con.next[0] === "undefined" && !found) {
+
+                    if (typeof con.next[0] === "undefined" && !found) {
                         currObject.setNext(con);
-                        console.log("NOT A GATE");
-                        conQueue.splice(1, 0, con);
-                        console.log("conQueue.push(con)");
-                    }
-                    else if (typeof con.next[0] === "undefined" && currObject.type < 0) {
                         conQueue.splice(1, 0, con);
                         console.log("conQueue.push(con)");
                     }
                 }
                 else if (con.type < 0) {// Gates have a negative index
                     
-                    console.log(con.next[0].next[0]);
-                    currObject.next.push(con);
-                    if (typeof con.next[0].next[0] === "undefined") {
-                        conQueue.splice(1, 0, con);
-                        console.log("conQueue.push(con):: (NEXT OF GATE NOT SET)");
+                    if ($.inArray(currObject, con.connections) !== -1) {
+                        console.error("ERROR! Driver connected to gate output [traverse()]");
+                        // Need to go back through the circuit and undo any nexts already set. 
+                        return false;
+                    }
+                    else {
+                        currObject.setNext(con);
+                        if (typeof con.next[0] === "undefined") {
+                            conQueue.splice(1, 0, con); // push_font()
+                            console.log("conQueue.push(con):: (NEXT OF GATE NOT SET)");
+                        }
                     }
                 }           
                 else {

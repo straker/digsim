@@ -11,6 +11,7 @@ function Switch() {
     this.type = digsim.SWITCH;
     this.next = [];
     this.connections = [];
+    this.juncts = [];
     this.state = 0;
     this.dimension = {'row': 3, 'col': 1};
     this.visited = 0;
@@ -70,14 +71,14 @@ Switch.prototype.draw = function(context) {
     context.stroke();
     context.restore();
 
-    if (this.junct) {
-        console.log(".onSjunct:…………………………………………");
-        console.log("ROW: " + this.row + " COL: " + this.column);
+    for (var i = 0; i < this.juncts.length; ++i) {
+        // console.log(".onSjunct:…………………………………………");
+        // console.log("ROW: " + this.row + " COL: " + this.column);
 
         context.beginPath();
         context.strokeStyle = '#000000';
         context.fillStyle = '#000000';
-        context.arc((this.column + 1.5) * digsim.GRID_SIZE, (this.row + 1.5) * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
+        context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
         context.fill();
         context.stroke();
     }

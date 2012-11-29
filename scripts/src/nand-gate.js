@@ -13,7 +13,8 @@ function NAND(numInputs) {
     this.prev = [];
     this.state = 0;
     this.prevConnect = [];
-    this.nextConnect = [];
+    this.connections = [];
+    this.juncts = [];
     this.numInputs = numInputs || 2;
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': size};
@@ -73,6 +74,18 @@ NAND.prototype.draw = function(context) {
     context.stroke();
 
     context.restore();
+
+    for (var i = 0; i < this.juncts.length; ++i) {
+        // console.log(".onSjunct:…………………………………………");
+        // console.log("ROW: " + this.row + " COL: " + this.column);
+
+        context.beginPath();
+        context.strokeStyle = '#000000';
+        context.fillStyle = '#000000';
+        context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
+        context.fill();
+        context.stroke();
+    }
 };
 
 // Infallable logic function
@@ -85,7 +98,7 @@ NAND.prototype.computeLogic = function() {
     var computedState = this.prev[0].state; 
     
     for (var i = 1; i < this.numInputs; ++i) {
-        computedState = computedState && this.prev[i].state;
+        computedState = computedState && (this.prev[i] ? this.prev[i].state : 0);
     }
     this.state = !computedState;
 };

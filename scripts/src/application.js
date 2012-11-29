@@ -461,6 +461,10 @@ Digsim.prototype.onButtonClicked = function (event) {
         }
         else if (id == "Run") {
             $("canvas").css('cursor','pointer');
+            for (var j = 0; j < digsim.components.length; ++j) {
+                digsim.components[j].next = [];
+                digsim.components[j].prev = [];
+            }
             for (var i = 0; i < digsim.switches.length; ++i) {
                 var obj = digsim.components[ digsim.switches[i] ];
                 for (var j = 0; j < digsim.components.length; ++j) {
