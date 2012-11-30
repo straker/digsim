@@ -97,18 +97,24 @@ Wire.prototype.checkJunction = function(row, col, pos) {
 
                     // Check for dots
                     if (obj.type !== digsim.WIRE) {
-                        this.juncts.push( { 'x': col, 'y': row } );;
+                        this.juncts.push( { 'x': col, 'y': row } );
+                        dot = 1;
                     }
-                     else if ((obj.connections[0] && obj.connections[0].type < 0) || (obj.prev[0] && obj.prev[0].type < 0)) {
+                     /*else if ((obj.connections[0] && obj.connections[0].type < 0) || (obj.prev[0] && obj.prev[0].type < 0)) {
                          this.juncts.push( { 'x': col, 'y': row } );;
-                     }
+                     }*/
                 }
                 if (wireCnt > 2) {
                     console.log("wireCnt > 1 £££££££££££££££££££££££££££££")
-                    this.juncts.push( { 'x': col, 'y': row } );;
+                    this.juncts.push( { 'x': col, 'y': row } );
+                    dot = 1;
                 }
 
             }
+        }
+        if (dot && pos === 'end') {
+            //digsim.endWire = 1;
+            digsim.dragging = 0;
         }
     }
 }
