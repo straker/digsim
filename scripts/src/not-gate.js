@@ -23,26 +23,7 @@ function NOT() {
     this.visited = 0;
     this.outPt = 0; 
 };
-
 NOT.prototype = new Drawable();
-
-/******************************************************************************
- * INIT
- *  Initiates a drawable object at a given column, row, and rotation
- *****************************************************************************
-NOT.prototype.init = function (col, row, rot, id) {
-    this.column = col;
-    this.row = row;
-    this.rotation = rot;
-    this.id = id;
-    this.drawStatic = true;
-    this.updatePos(); 
-
-    this.prev[0].init(this.column, this.row + 1.5, rot, this.prev[0].id);  
-    this.prev[0].drawStatic = false;
-    this.next[0].init(this.column + 2, this.row + 1.5, rot, this.next[0].id);
-    this.next[0].drawStatic = false;
-};
 
 /*****************************************************************************
  * DRAW

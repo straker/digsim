@@ -20,7 +20,6 @@ function LED() {
     this.conCol = 0;
     this.junct = 0;
 };
-
 LED.prototype = new Drawable();
 
 /****************************************************************************

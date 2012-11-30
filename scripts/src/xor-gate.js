@@ -23,8 +23,16 @@ function XOR(numInputs) {
     this.visited = 0;
     this.outPt = 2;
 };
-
 XOR.prototype = new Drawable();
+
+/*****************************************************************************
+ * CHANGE SIZE
+ *  Changes the size of the gate based on numInputs
+ ****************************************************************************/
+XOR.prototype.changeSize = function() {
+    var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
+    this.dimension = {'row': size, 'col': (size + 1)};
+}
 
 /*****************************************************************************
  * DRAW

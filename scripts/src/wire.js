@@ -29,7 +29,6 @@ function Wire() {
     // Represents the direction that the wire has been drawn. (-1 or 1)
     this.delta = {'x': 0, 'y': 0};
 };
-
 Wire.prototype = new Drawable();
 
 /******************************************************************************

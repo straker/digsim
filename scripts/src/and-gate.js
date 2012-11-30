@@ -24,8 +24,16 @@ function AND(numInputs) {
     this.visitLimit = 2 * this.numInputs;
     this.visited = 0; 
 };
-
 AND.prototype = new Drawable();
+
+/*****************************************************************************
+ * CHANGE SIZE
+ *  Changes the size of the gate based on numInputs
+ ****************************************************************************/
+AND.prototype.changeSize = function() {
+    var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
+    this.dimension = {'row': size, 'col': size};
+}
 
 /*****************************************************************************
  * DRAW

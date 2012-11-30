@@ -20,7 +20,6 @@ function Switch() {
     this.conCol = 1;
     this.junct = 0;
 };
-
 Switch.prototype = new Drawable();
 
 /****************************************************************************
