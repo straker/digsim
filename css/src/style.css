@@ -65,31 +65,31 @@ img {
     width: 100%;
     min-width: 650px;
 }
-    .menu>ul {
-        border-top: 1px solid #96d1f8;
-        background: #65a9d7;
-        background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#65a9d7));
-        background: -webkit-linear-gradient(top, #3e779d, #65a9d7);
-        background: -moz-linear-gradient(top, #3e779d, #65a9d7);
-        background: -ms-linear-gradient(top, #3e779d, #65a9d7);
-        background: -o-linear-gradient(top, #3e779d, #65a9d7);
-        -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
-        -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
-        box-shadow: rgba(0,0,0,1) 0 1px 0;
-        padding: 5px 0px;
-        width: 100%;
-        margin-bottom: 4px;
-    }
 
-.header li {
-    text-shadow: rgba(0,0,0,.4) 0 1px 0;
-    color: white;
-    font-size: 14px;
-    text-decoration: none;
-    vertical-align: middle;
-    text-align: center;
-    cursor: default;
+.header {
+    border-top: 1px solid #96d1f8;
+    background: #65a9d7;
+    background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#65a9d7));
+    background: -webkit-linear-gradient(top, #3e779d, #65a9d7);
+    background: -moz-linear-gradient(top, #3e779d, #65a9d7);
+    background: -ms-linear-gradient(top, #3e779d, #65a9d7);
+    background: -o-linear-gradient(top, #3e779d, #65a9d7);
+    -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
+    -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
+    box-shadow: rgba(0,0,0,1) 0 1px 0;
+    padding: 5px 0px;
+    width: 100%;
+    margin-bottom: 4px;
 }
+    .header li {
+        text-shadow: rgba(0,0,0,.4) 0 1px 0;
+        color: white;
+        font-size: 14px;
+        text-decoration: none;
+        vertical-align: middle;
+        text-align: center;
+        cursor: default;
+    }
 
 .row {
     clear: both;
@@ -116,22 +116,8 @@ img {
     height: 400px;
     width: 212px;
 }
-.messages ul {
-    border-top: 1px solid #96d1f8;
-    background: #65a9d7;
-    background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#65a9d7));
-    background: -webkit-linear-gradient(top, #3e779d, #65a9d7);
-    background: -moz-linear-gradient(top, #3e779d, #65a9d7);
-    background: -ms-linear-gradient(top, #3e779d, #65a9d7);
-    background: -o-linear-gradient(top, #3e779d, #65a9d7);
-    background-size: 100% 23px;
-    background-repeat: no-repeat;
-    padding: 5px 0px;
-    -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
-    -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
-    box-shadow: rgba(0,0,0,1) 0 1px 0;
-}
 #messages {
+    margin-top: -3px;
     padding: 5px;
     background-color: #FFFFFF;
     overflow-y: auto;
@@ -272,7 +258,7 @@ img {
  */
 .canvases {
 	position: absolute;
-	top: 130px;
+	top: 129px;
 	left: 212px;
 }
 canvas {
