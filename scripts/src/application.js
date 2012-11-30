@@ -10,13 +10,13 @@
  *  A (soon-to-be) fully functional circuit simulation program. 
  ****************************************************************************/
 
-var file = $('.file').outerWidth();
-var gates = $('.gates').outerWidth();
-var io = $('.io').outerWidth();
-var modes = $('.modes').outerWidth();
-var controls = $('.controls').outerWidth();
+// var file = $('.file').outerWidth();
+// var gates = $('.gates').outerWidth();
+// var io = $('.io').outerWidth();
+// var modes = $('.modes').outerWidth();
+// var controls = $('.controls').outerWidth();
 
-$('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
+// $('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
 
 /*****************************************************************************
  * DIGSIM
@@ -423,7 +423,7 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
  ****************************************************************************/
 Digsim.prototype.run = function() {
 
-    $('.messages').css('height', digsim.gridHeight - 41);
+    $('.messages').css('height', digsim.gridHeight - 37);
     if(this.init()) {
         // onClick events
         $("canvas").on("mousedown", digsim.onGridMouseDown);
@@ -1044,7 +1044,7 @@ $(window).resize(function() {
     // Resize Canvas
     digsim.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE);
     digsim.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE);
-    $('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
+    //$('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
     digsim.gridWidth = digsim.NUM_COLS * digsim.GRID_SIZE;
     digsim.gridHeight = digsim.NUM_ROWS * digsim.GRID_SIZE;
     $('canvas').width(digsim.gridWidth);
@@ -1054,7 +1054,7 @@ $(window).resize(function() {
     digsim.drawComponents();
 
     // Resize message box
-    $('.messages').css('height', digsim.gridHeight - 41);
+    $('.messages').css('height', digsim.gridHeight - 37);
 
 });
 
