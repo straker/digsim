@@ -1167,7 +1167,8 @@ Digsim.prototype.changeNumInputs = function(event) {
         $('.num-inputs .active').removeClass('active');
         $(this).addClass('active');
         digsim.numGateInputs = $(this).data('inputs');
-        if (digsim.draggingGate) {
+        var type = digsim.draggingGate.type;
+        if (digsim.draggingGate && type !== digsim.NOT && type !== digsim.LED && type !== digsim.SWITCH) {
             digsim.draggingGate.numInputs = digsim.numGateInputs;
             digsim.draggingGate.changeSize();
         }

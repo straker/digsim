@@ -34,6 +34,7 @@ NOT.prototype = new Drawable();
 NOT.prototype.draw = function(context) {
     
     this.drawWires(context);
+    
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
