@@ -117,11 +117,13 @@ img {
     width: 212px;
 }
 #messages {
+    padding: 5px;
     background-color: #FFFFFF;
     overflow-y: auto;
-    width: 212px;
-    height: 400px;
+    width: 202px;
+    height: 100%;
     font-size: 12px;
+    border-bottom: 1px solid black;
 }
 
 .col {

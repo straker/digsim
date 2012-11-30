@@ -422,12 +422,14 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
  *  Starts doing stuff (window.onload)
  ****************************************************************************/
 Digsim.prototype.run = function() {
+
+    $('.messages').css('height', digsim.gridHeight - 41);
     if(this.init()) {
         // onClick events
         $("canvas").on("mousedown", digsim.onGridMouseDown);
         $("canvas").on("mouseup", digsim.onGridMouseUp);
         $(".gates a, .io a, .modes a").on("click", digsim.onButtonClicked);
-        $("#New").on("click", false);
+        $("#New").on("click", digsim.newFile);
         $("#Toggle_Grid").on("click", digsim.toggleGrid);
         $("#Zoom_In").on("click", digsim.zoomIn);
         $("#Zoom_Out").on("click", digsim.zoomOut);
@@ -1039,6 +1041,7 @@ Digsim.prototype.showPlaceholders = function() {
  *  set canvas size
  ****************************************************************************/
 $(window).resize(function() {
+    // Resize Canvas
     digsim.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE);
     digsim.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE);
     $('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
@@ -1049,6 +1052,10 @@ $(window).resize(function() {
     digsim.init();
     digsim.drawGrid(digsim.gridContext);
     digsim.drawComponents();
+
+    // Resize message box
+    $('.messages').css('height', digsim.gridHeight - 41);
+
 });
 
 /*****************************************************************************
@@ -1136,6 +1143,21 @@ Digsim.prototype.toggleGrid = function(event) {
 };
 
 /*****************************************************************************
+ * NEW FILE
+ *  Create a new file
+ ****************************************************************************/
+Digsim.prototype.newFile = function(event) {
+    digsim.components = [];
+    digsim.switches = [];
+    digsim.placeholder = [];
+    for (var i = 0; i < digsim.NUM_COLS; ++i) {
+        digsim.placeholder[i] = [];
+    }
+    digsim.clearCanvas(digsim.staticContext, digsim.gridWidth, digsim.gridHeight);
+    digsim.deactivate();
+};
+
+/*****************************************************************************
  * KEY EVENTS
  *  The keycodes that will be mapped when a user presses a button
  ****************************************************************************/
@@ -1160,7 +1182,7 @@ KEY_CODES = {
     68: 'Delete',
     'c88': 'Cut',
     'c67': 'Copy',
-    'c86': 'Paste'
+    'c86': 'Paste',
 };
 HOT_KEYS = {
     'AND': 'A',
@@ -1203,7 +1225,10 @@ document.onkeydown = function(e) {
     }
     console.log("ID: " + id);
 
-    if (id) {
+    if (id === 'esc') {
+        digsim.deactivate();
+    }
+    else if (id) {
         $("#" + id).click();
     }
 };
