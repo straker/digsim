@@ -428,12 +428,13 @@ Digsim.prototype.run = function() {
         // onClick events
         $("canvas").on("mousedown", digsim.onGridMouseDown);
         $("canvas").on("mouseup", digsim.onGridMouseUp);
+        $("canvas").on("click", digsim.onGridClicked);
         $(".gates a, .io a, .modes a").on("click", digsim.onButtonClicked);
         $("#New").on("click", digsim.newFile);
         $("#Toggle_Grid").on("click", digsim.toggleGrid);
         $("#Zoom_In").on("click", digsim.zoomIn);
         $("#Zoom_Out").on("click", digsim.zoomOut);
-        $("canvas").on("click", digsim.onGridClicked);
+        $('#2-input, #3-input, #4-input').on("click", digsim.changeNumInputs);
 
         // Set hotkey info on buttons
         var curr, hotkey;
@@ -480,7 +481,7 @@ Digsim.prototype.onButtonClicked = function (event) {
     // Activate butotn
     if (!$(this).hasClass('active')) {
         // Remove the active class from all buttons that have it
-        digsim.deactivate($('.active').attr('id'));
+        digsim.deactivate($('ul:not(.num-inputs) .active').attr('id'));
         $(this).addClass('active');
 
         if (id == "Wire") {
@@ -542,7 +543,7 @@ Digsim.prototype.onButtonClicked = function (event) {
  ****************************************************************************/
  Digsim.prototype.deactivate = function(id) {
     $("canvas").css('cursor','default');
-    $('.active').removeClass('active');
+    $('ul:not(.num-inputs) .active').removeClass('active');
     this.mode = this.DEFAULT_MODE;
     this.dragging = false;
     this.draggingGate = {};
@@ -978,6 +979,7 @@ function animate() {
         // Draw gate
         var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
         var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
+        digsim.draggingGate.numInputs = digsim.numGateInputs;
         digsim.draggingGate.column = col - digsim.offsetCol;
         digsim.draggingGate.row = row - digsim.offsetRow;
         digsim.draggingGate.draw(digsim.movingContext);
@@ -1158,6 +1160,19 @@ Digsim.prototype.newFile = function(event) {
 };
 
 /*****************************************************************************
+ * CHANGE NUM INPUTS
+ *  Changes the number of inputs for a gate
+ ****************************************************************************/
+Digsim.prototype.changeNumInputs = function(event) {
+    if (!$(this).hasClass('active')) {
+        $('.num-inputs .active').removeClass('active');
+        $(this).addClass('active');
+        digsim.numGateInputs = $(this).data('inputs');
+        console.log(digsim.numGateInputs);
+    }
+};
+
+/*****************************************************************************
  * KEY EVENTS
  *  The keycodes that will be mapped when a user presses a button
  ****************************************************************************/
@@ -1183,6 +1198,9 @@ KEY_CODES = {
     'c88': 'Cut',
     'c67': 'Copy',
     'c86': 'Paste',
+    50: '2-input',
+    51: '3-input',
+    52: '4-input',
 };
 HOT_KEYS = {
     'AND': 'A',
@@ -1201,7 +1219,10 @@ HOT_KEYS = {
     'Delete': 'D',
     'Cut': 'ctrl+X',
     'Copy': 'ctrl+C',
-    'Paste': 'ctrl+V'
+    'Paste': 'ctrl+V',
+    '2-input': '2',
+    '3-input': '3',
+    '4-input': '4'
 };
 
 document.onkeydown = function(e) {

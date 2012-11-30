@@ -101,7 +101,7 @@ img {
     width: 212px;
 }
 .gates {
-    width: 160px;
+    width: 245px;
 }
 .io {
     width: 54px;
@@ -112,6 +112,46 @@ img {
 .controls {
     width: 160px;
 }
+
+.input-col {
+    position: absolute;
+    top: 30px;
+    left: 374px;
+}
+.num-inputs {
+    width: 76px;
+}
+    .num-inputs li {
+        font-size: 14px;
+        text-decoration: none;
+        vertical-align: middle;
+        text-align: center;
+        cursor: default;
+        padding: 2px 0 2px 0;
+    }
+    .num-inputs li:first-child {
+        text-decoration: underline;
+    }
+    .num-inputs a {
+        display: block;
+        text-decoration: none;
+        padding: 2px 0 2px 0;
+    }
+    .num-inputs a:hover:not(.disabled), a.active {
+        background: -webkit-gradient(linear, left top, left bottom, from(#65a9d7), to(#248ed4));
+        background: -webkit-linear-gradient(top, #65a9d7, #248ed4);
+        background: -moz-linear-gradient(top, #65a9d7, #248ed4);
+        background: -ms-linear-gradient(top, #65a9d7, #248ed4);
+        background: -o-linear-gradient(top, #65a9d7, #248ed4);
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+        text-shadow: rgba(0,0,0,.4) 0 1px 0;
+        color: white;
+        text-decoration: none;
+        background-color: #65a9d7;
+    }
+
 .messages {
     height: 400px;
     width: 212px;
