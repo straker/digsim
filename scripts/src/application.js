@@ -979,7 +979,6 @@ function animate() {
         // Draw gate
         var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
         var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
-        digsim.draggingGate.numInputs = digsim.numGateInputs;
         digsim.draggingGate.column = col - digsim.offsetCol;
         digsim.draggingGate.row = row - digsim.offsetRow;
         digsim.draggingGate.draw(digsim.movingContext);
@@ -1168,6 +1167,7 @@ Digsim.prototype.changeNumInputs = function(event) {
         $('.num-inputs .active').removeClass('active');
         $(this).addClass('active');
         digsim.numGateInputs = $(this).data('inputs');
+        digsim.draggingGate.numInputs = digsim.numGateInputs;
         console.log(digsim.numGateInputs);
     }
 };
