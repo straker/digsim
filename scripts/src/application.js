@@ -1,13 +1,13 @@
 /*****************************************************************************
  * Program: 
- *  application.js
+ *  application.js ORIGINAL
  *
  * Authors:
  *  Steven Lambert
  *  Zack Sheffield
  *
  * Summary:
- *  A (soon-to-be) fully functional circuit simulation program. 
+ *  A fully functional circuit simulation program. 
  ****************************************************************************/
 
 // var file = $('.file').outerWidth();
@@ -30,6 +30,7 @@ function Digsim() {
     this.MIN_GRID_SIZE = 5;
 	this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
 	this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
+    this.CLK_FREQ = 60; 
     
     // Type identifiers
     this.AND = -1;  // Gates are negative because they have a special
@@ -39,6 +40,7 @@ function Digsim() {
     this.XOR = -5;
     this.NOT = -6;
     
+    this.CLOCK = 5;
     this.WIRE = 6;
     this.SWITCH = 7;
     this.LED = 8;
@@ -66,6 +68,7 @@ function Digsim() {
     this.lockH = 0;
     this.lockV = 0;
     this.prevGate = "";
+    this.clkCnt = 0;
 
     
 	// Grid variables
@@ -74,7 +77,7 @@ function Digsim() {
     this.mousePos = { x: -1, y: -1 };
     this.offsetCol = 0;
     this.offsetRow = 0;
-    this.gridToggle = 1;
+    this.gridToggle = 0;
     this.numGateInputs = 2;
 
     // Gate identifier
@@ -145,34 +148,36 @@ Digsim.prototype.clearCanvas = function(context, width, height) {
  *  Draws the underlying blue grid on the screen
  ****************************************************************************/
 Digsim.prototype.drawGrid = function(context) {
-	// Outline the canvas	
+    // Outline the canvas   
     this.clearCanvas(context, this.gridWidth, this.gridHeight);
     context.strokeStyle = '#000000';
-	context.strokeRect(0, 0, this.gridWidth, this.gridHeight);
-	/*
-    if (this.gridToggle) {
-    	context.strokeStyle = '#8DCFF4';
+    context.strokeRect(0, 0, this.gridWidth, this.gridHeight);
+    
+    // Grid grid
+    if (this.gridToggle % 3 === 0) {
+        context.strokeStyle = '#8DCFF4';
         context.lineWidth = 1;
         context.save();
-    	context.translate(0.5, 0.5);
-    	context.beginPath();
-    	
-    	// Draw the columns
-    	for (var col = 1; col < this.NUM_COLS; col++) {
-    		context.moveTo(col * this.GRID_SIZE, 0);
-    		context.lineTo(col * this.GRID_SIZE, this.gridHeight-1);
-    	}
-    	// Draw the rows
-    	for (var row = 1; row < this.NUM_ROWS; row++) {
-    		context.moveTo(1, row * this.GRID_SIZE);
-    		context.lineTo(this.gridWidth-1, row * this.GRID_SIZE);
-    	}
-    	context.stroke();
+        context.translate(0.5, 0.5);
+        context.beginPath();
+        
+        // Draw the columns
+        for (var col = 1; col < this.NUM_COLS; col++) {
+            context.moveTo(col * this.GRID_SIZE, 0);
+            context.lineTo(col * this.GRID_SIZE, this.gridHeight-1);
+        }
+        // Draw the rows
+        for (var row = 1; row < this.NUM_ROWS; row++) {
+            context.moveTo(1, row * this.GRID_SIZE);
+            context.lineTo(this.gridWidth-1, row * this.GRID_SIZE);
+        }
+        context.stroke();
         context.restore();
     }
-    */
-    if (this.gridToggle) {
-        context.fillStyle = 'navy';
+
+    // Dotted Grid
+    else if (this.gridToggle % 3 === 1) {
+        context.fillStyle = '#8DDF99';
         context.lineWidth = 1;
         context.save();
         context.translate(digsim.GRID_SIZE / 2 - 0.5,digsim.GRID_SIZE / 2 - 0.5);
@@ -185,7 +190,6 @@ Digsim.prototype.drawGrid = function(context) {
         }
         context.stroke();
         context.restore();
-
     }
 };
 
@@ -250,6 +254,14 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
         var placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
         this.placeholder[obj.row + 1][obj.column + 1][3] = placeholder;
+    }
+    else if (obj.type === digsim.CLOCK) {
+        if (!(this.placeholder[obj.row + obj.conRow][obj.column + obj.conCol] instanceof Array)) {
+            console.log(obj);
+            this.placeholder[obj.row + obj.conRow][obj.column + obj.conCol] = [];
+        }
+        var placeholder = new Placeholder(obj.id, obj.column + obj.conCol, obj.row + obj.conRow, obj.dimension.col, obj.dimension.row);
+        this.placeholder[obj.row + obj.conRow][obj.column + obj.conCol][3] = placeholder;
     }
     else if (obj.type === digsim.LED) {
         if (!(this.placeholder[obj.row + 2][obj.column] instanceof Array)) {   
@@ -506,6 +518,7 @@ Digsim.prototype.onButtonClicked = function (event) {
                 }
             }
             digsim.mode = digsim.SIM_MODE;
+            cycleClock();
             digsim.drawComponents();
         }
         else {
@@ -519,7 +532,9 @@ Digsim.prototype.onButtonClicked = function (event) {
             
             var gate = new MyClass(numInputs); 
             digsim.prevGate = id;
-            gate.init(2, 2, 0, digsim.iComp);
+            var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
+            var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
+            gate.init(col, row, 0, digsim.iComp);
             digsim.dragging = true;
             digsim.draggingGate = gate;
             digsim.draggingGate.draw(digsim.movingContext);
@@ -868,7 +883,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
     else if (digsim.mode === digsim.PLACE_MODE) {
 
         var id = digsim.prevGate;
-        if (id == "Switch") {
+        if (id === "Switch" || id === "Clock") {
             digsim.switches.push(digsim.iComp);
         }
 
@@ -881,7 +896,9 @@ Digsim.prototype.onGridMouseUp = function(event) {
         // Create new gate for next place
         var MyClass = window[id];
         var gate = new MyClass(digsim.numGateInputs); 
-        gate.init(2, 2, 0, ++digsim.iComp);
+        var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
+        var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
+        gate.init(col, row, 0, ++digsim.iComp);
         digsim.dragging = true;
         digsim.draggingGate = gate;
         digsim.draggingGate.draw(digsim.movingContext);
@@ -982,6 +999,34 @@ function animate() {
         digsim.draggingGate.column = col - digsim.offsetCol;
         digsim.draggingGate.row = row - digsim.offsetRow;
         digsim.draggingGate.draw(digsim.movingContext);
+    }
+};
+
+/*****************************************************************************
+ * CLOCK CYCLE
+ *  Animate function for the clock
+ ****************************************************************************/
+function cycleClock() {
+    
+    if (digsim.mode === digsim.SIM_MODE) {
+        ++digsim.clkCnt;
+        requestAnimFrame(cycleClock);
+        if (digsim.clkCnt > digsim.CLK_FREQ) { // FPS is approximately 60 Hz
+            
+            digsim.clkCnt = 0
+            for (var j = 0; j < digsim.components.length; ++j) {
+                digsim.components[j].visited = 0;
+            }
+
+            for (var i = 0, len = digsim.switches.length; i < len; ++i) {
+                var driver = digsim.components[ digsim.switches[i] ];
+                if (driver.type === digsim.CLOCK) {
+                    console.log("********************BEGIN PASS STATE!********************");
+                    driver.passState(!driver.state);
+                    digsim.drawComponents();
+                }
+            }
+        }
     }
 };
 
@@ -1139,7 +1184,7 @@ Digsim.prototype.enableButton = function(id) {
  *  Toggle grid on/off
  ****************************************************************************/
 Digsim.prototype.toggleGrid = function(event) {
-    digsim.gridToggle = !digsim.gridToggle;
+    digsim.gridToggle++; digsim.gridToggle %= 3;
     digsim.drawGrid(digsim.gridContext);
 };
 
@@ -1155,6 +1200,7 @@ Digsim.prototype.newFile = function(event) {
         digsim.placeholder[i] = [];
     }
     digsim.clearCanvas(digsim.staticContext, digsim.gridWidth, digsim.gridHeight);
+    iComp = 0;
     digsim.deactivate();
 };
 
@@ -1167,10 +1213,12 @@ Digsim.prototype.changeNumInputs = function(event) {
         $('.num-inputs .active').removeClass('active');
         $(this).addClass('active');
         digsim.numGateInputs = $(this).data('inputs');
-        var type = digsim.draggingGate.type;
-        if (digsim.draggingGate && type !== digsim.NOT && type !== digsim.LED && type !== digsim.SWITCH) {
-            digsim.draggingGate.numInputs = digsim.numGateInputs;
-            digsim.draggingGate.changeSize();
+        if (digsim.draggingGate) {
+            var type = digsim.draggingGate.type;
+            if (type !== digsim.NOT && type < 0) {
+                digsim.draggingGate.numInputs = digsim.numGateInputs;
+                digsim.draggingGate.changeSize();
+            }
         }
         console.log(digsim.numGateInputs);
     }
@@ -1205,6 +1253,7 @@ KEY_CODES = {
     50: '2-input',
     51: '3-input',
     52: '4-input',
+    67: 'Clock'
 };
 HOT_KEYS = {
     'AND': 'A',
@@ -1226,7 +1275,8 @@ HOT_KEYS = {
     'Paste': 'ctrl+V',
     '2-input': '2',
     '3-input': '3',
-    '4-input': '4'
+    '4-input': '4',
+    'Clock': 'C'
 };
 
 document.onkeydown = function(e) {

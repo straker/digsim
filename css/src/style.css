@@ -104,7 +104,7 @@ img {
     width: 245px;
 }
 .io {
-    width: 54px;
+    width: 106px;
 }
 .modes {
     width: 54px;
@@ -210,6 +210,10 @@ img {
     opacity: 0.3;
     filter: alpha(opacity=30); /* msie */
     cursor: default;
+}
+
+a {
+    color: #111111;
 }
 
 /**

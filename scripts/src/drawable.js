@@ -61,12 +61,14 @@ Drawable.prototype.checkConnect = function() {
     
     console.log("SETP 0");
     console.log(this);
-    if ((this.type === digsim.LED) || (this.type === digsim.SWITCH)) {
+    if ((this.type === digsim.LED) || (this.type === digsim.SWITCH) || this.type === digsim.CLOCK) {
         console.log("STEP 1");
         var PH;
         // Endpoint contains a wire
         for (var i = 1; i < 4; ++i) {
-            if (PH = digsim.placeholder[this.conRow + this.row][this.conCol + this.column][i]) {
+            console.log("ROW, COL: " + this.row + " " + this.column);
+            console.log("CONROW, CONCOL: " + this.conRow + " " + this.conCol);
+            if (PH = digsim.placeholder[(this.conRow + this.row)][(this.conCol + this.column)][i]) {
                 obj = digsim.components[PH.ref];
                 if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
@@ -143,20 +145,22 @@ Drawable.prototype.checkConnect = function() {
  *****************************************************************************/
 Drawable.prototype.passState = function(pState) {
     if (this.visited++ < this.visitLimit) {
+        console.log(this);
+        console.log("this.next[0]: ");
+        console.log(this.next[0]);
+        console.log("");
         if (this.type < 0) {
             this.computeLogic();
-            this.next[0].passState(this.state);
+            for (var i = 0, len = this.next.length; i < len; ++i) {                
+                this.next[i].passState(this.state);
+            }
         }
         else {
             this.state = pState;
-            console.log(this);
-            console.log("this.next[0]: ");
-            console.log(this.next[0]);
-            console.log("");
             if (typeof this.next[0] !== "undefined") {
                 console.log("this.next.length = " + this.next.length);
-                for (iWire in this.next) {                
-                    this.next[iWire].passState(pState);
+                for (var i = 0, len = this.next.length; i < len; ++i) {                
+                    this.next[i].passState(pState);
                 }
             }
             else if (this.type !== digsim.LED) {
@@ -266,7 +270,7 @@ Drawable.prototype.traverse = function() {
                         break;
                     }
                 }
-                if (con.type === digsim.SWITCH) {
+                if (con.type === digsim.SWITCH || con.type === digsim.CLOCK) {
                     console.error("ERROR! Multiple switches driving one wire [traverse()]");
                     return false;
                 }

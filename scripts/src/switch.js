@@ -27,6 +27,7 @@ Switch.prototype = new Drawable();
  *  Draws a wire on a grid space
  ***************************************************************************/
 Switch.prototype.draw = function(context) {
+
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     
