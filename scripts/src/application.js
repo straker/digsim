@@ -128,6 +128,51 @@ Digsim.prototype.init = function() {
 };
 
 /*****************************************************************************
+ * RUN
+ *  Starts doing stuff (window.onload)
+ ****************************************************************************/
+Digsim.prototype.run = function() {
+
+    $('.messages').css('height', digsim.gridHeight - 37);
+    if(this.init()) {
+        // onClick events
+        $("canvas").on("mousedown", digsim.onGridMouseDown);
+        $("canvas").on("mouseup", digsim.onGridMouseUp);
+        $("canvas").on("click", digsim.onGridClicked);
+        $(".gates a, .io a, .modes a").on("click", digsim.onButtonClicked);
+        $("#New").on("click", digsim.newFile);
+        $("#Toggle_Grid").on("click", digsim.toggleGrid);
+        $("#Zoom_In").on("click", digsim.zoomIn);
+        $("#Zoom_Out").on("click", digsim.zoomOut);
+        $('#2-input, #3-input, #4-input').on("click", digsim.changeNumInputs);
+
+        // Set hotkey info on buttons
+        var curr, hotkey;
+        $("li a").each(function(index) {
+            curr = $(this);
+            hotkey = HOT_KEYS[curr.attr('id')]
+            if (hotkey) {
+                curr.attr('title', curr.attr('title') + " (" + hotkey + ")");
+            }
+        });
+
+        /*** Temporary disable buttons as functionality is being worked out ****/
+        this.disableButton("Open");
+        this.disableButton("Save");
+        this.disableButton("Submit");
+        this.disableButton("Empty");
+        this.disableButton("Delete");
+        this.disableButton("Rotate_Left");
+        this.disableButton("Rotate_Right");
+        this.disableButton("Cut");
+        this.disableButton("Copy");
+        this.disableButton("Paste");
+
+        this.drawGrid(this.gridContext);
+    }
+};
+
+/*****************************************************************************
  * CLEAR CANVAS
  *  Clears the given canvas. 
  ****************************************************************************/
@@ -481,53 +526,6 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
     return true;
 };
 
-
-/*****************************************************************************
- * RUN
- *  Starts doing stuff (window.onload)
- ****************************************************************************/
-Digsim.prototype.run = function() {
-
-    $('.messages').css('height', digsim.gridHeight - 37);
-    if(this.init()) {
-        // onClick events
-        $("canvas").on("mousedown", digsim.onGridMouseDown);
-        $("canvas").on("mouseup", digsim.onGridMouseUp);
-        $("canvas").on("click", digsim.onGridClicked);
-        $(".gates a, .io a, .modes a").on("click", digsim.onButtonClicked);
-        $("#New").on("click", digsim.newFile);
-        $("#Toggle_Grid").on("click", digsim.toggleGrid);
-        $("#Zoom_In").on("click", digsim.zoomIn);
-        $("#Zoom_Out").on("click", digsim.zoomOut);
-        $('#2-input, #3-input, #4-input').on("click", digsim.changeNumInputs);
-
-        // Set hotkey info on buttons
-        var curr, hotkey;
-        $("li a").each(function(index) {
-            curr = $(this);
-            hotkey = HOT_KEYS[curr.attr('id')]
-            if (hotkey) {
-                curr.attr('title', curr.attr('title') + " (" + hotkey + ")");
-            }
-        });
-
-        /*** Temporary disable buttons as functionality is being worked out ****
-        this.disableButton("New");
-        this.disableButton("Open");
-        this.disableButton("Save");
-        this.disableButton("Submit");
-        this.disableButton("Empty");
-        this.disableButton("Delete");
-        this.disableButton("Rotate_Left");
-        this.disableButton("Rotate_Right");
-        this.disableButton("Cut");
-        this.disableButton("Copy");
-        this.disableButton("Paste");*/
-
-        this.drawGrid(this.gridContext);
-    }
-};
-
 /*****************************************************************************
  * DEACTIVATE
  *  Removes the active class from any button, and redraws the components if
@@ -753,6 +751,7 @@ Digsim.prototype.onGridMouseDown = function(event) {
         // If the onMosueUp event didn't get triggered, trigger it here
         if (digsim.dragging) {
             $("canvas").mouseup();
+            return;
         }
         digsim.dragging = false;
         
@@ -862,7 +861,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
         if (digsim.dragging) {
             var validPlacement = digsim.setPlaceholders(digsim.draggingGate);
             if (validPlacement) {
-
+                console.log("valid placement");
                 digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
                 digsim.draggingGate.drawStatic = true;
                 digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
@@ -1346,18 +1345,18 @@ HOT_KEYS = {
     'Clock': 'C'
 };
 
-document.onkeydown = function(e) {
+document.onkeydown = function(event) {
     // return which key was pressed.
-    var keyCode = (e.keyCode) ? e.keyCode : e.charCode; // Firefox and opera use charCode instead of keyCode to
+    var keyCode = (event.keyCode) ? event.keyCode : event.charCode; // Firefox and opera use charCode instead of keyCode to
     var id;
 
     console.log('Pressed: ' + keyCode);
-    console.log(e);
+    console.log(event);
 
-    if(e.shiftKey) {
+    if(event.shiftKey) {
         id = KEY_CODES['s'+keyCode];
     }
-    else if (e.ctrlKey) {
+    else if (event.ctrlKey) {
         console.log("ctrl down");
         id = KEY_CODES['c'+keyCode];
     }
