@@ -18,6 +18,7 @@ function LED() {
     this.visitLimit = 1;
     this.conRow = 2;
     this.conCol = 0;
+    this.conIndex = 0;
     this.junct = 0;
 };
 LED.prototype = new Drawable();

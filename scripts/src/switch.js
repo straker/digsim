@@ -18,6 +18,7 @@ function Switch() {
     this.visitLimit = 1;
     this.conRow = 1;
     this.conCol = 1;
+    this.conIndex = 3;
     this.junct = 0;
 };
 Switch.prototype = new Drawable();

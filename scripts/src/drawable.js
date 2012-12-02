@@ -12,18 +12,11 @@
 
 function Drawable(col, row, rot) {
     this.id = 0;
-
-    this.connectOffset = {'x': -1, 'y': -1};
-    this.connectPoint = {'x': -1, 'y': -1};
-
     this.column = 0;
     this.row = 0;
     this.type = -1;
     this.rotation = 0;
     this.numInputs = 2;
-    this.next = [];
-    this.prev = [];
-    this.connections = [];
     this.state = 0;
     this.drawStatic = true;
     this.outPt = 1;
@@ -39,18 +32,6 @@ Drawable.prototype.init = function (col, row, rot, id) {
     this.rotation = rot;
     this.id = id;
     this.drawStatic = true;
-    this.updatePos(); 
-};
-
-/******************************************************************************
- * UPDATE POSITION
- *  Update the position of the gate when dragged and dropped.
- *****************************************************************************/
-Drawable.prototype.updatePos = function() {
-    
-    this.connectPoint.x = this.column + this.connectOffset.x;
-    this.connectPoint.y = this.row + this.connectOffset.y;
-    console.log("UPDATE: (" + this.connectPoint.x + ", " + this.connectPoint.y + ")");
 };
 
 /*****************************************************************************
@@ -117,13 +98,6 @@ Drawable.prototype.checkConnect = function() {
         // Output wire
         conCol = this.column + factor * 2 + this.outPt;
         conRow = this.row + factor;
-        console.log("\nOUTPUT WIRE:");
-        console.log("CONCOL: " + conCol);
-        console.log("CONROW: " + conRow);
-        console.log("FACTOR: " + factor);
-        console.log("OBJ.OUTPT: " + obj.outPt);
-        console.log("OBJ.COLUMN: " + obj.column);
-        console.log("OBJ.ROW: " + obj.row);
         for (var i = 1; i < 4; ++i) {
             if (PH = digsim.placeholder[conRow][conCol][i]) {
                 obj = digsim.components[PH.ref];

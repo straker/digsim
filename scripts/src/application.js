@@ -86,7 +86,7 @@ function Digsim() {
     
     // Data arrays
     this.components = [];   // Holds all of the objects by their unique ID 
-    this.switches = [];     // Holds the place of the logic drivers in components[].
+    this.drivers = [];      // Holds the place of the logic drivers in components[].
     this.placeholder = [];  // Holds component positions on grid
     for (var i = 0; i < this.NUM_COLS; ++i) {
         this.placeholder[i] = [];
@@ -214,12 +214,25 @@ Digsim.prototype.drawComponents = function() {
  ****************************************************************************/
 Digsim.prototype.setPlaceholders = function(obj) {
 
-    var row, col, cnt = 0, conCol, conRow;
-    var factor = Math.floor(obj.numInputs / 2) || 1; 
-    // Place wire placeholders
-    if (obj.type < 0) { //gate
+    var row, col, cnt, conCol, conRow, placeholder;
+    var factor = Math.floor(obj.numInputs / 2) || 1;
+
+    // Check the object space for collision
+    for (row = 0; row < obj.dimension.row; ++row) {
+        for (col = 0; col < obj.dimension.col; ++col) {
+            if (this.placeholder[obj.row + row][obj.column + col]) {
+                console.error("COLLISION! ERROR!");
+                return false;
+            }
+        }
+    }
+
+    // Check connection points for collision
+    if (obj.type < 0) { // gate
         conCol = obj.column - 1;
-        // Previii
+        cnt = 0;
+
+        // Previous
         for (var i = 0; i < obj.numInputs; ++i) {            
             if (obj.type === digsim.NOT) {
                 conRow = obj.row + 1;
@@ -232,45 +245,83 @@ Digsim.prototype.setPlaceholders = function(obj) {
                     conRow = obj.row + cnt;
                 }
             }
-            if (!(this.placeholder[conRow][conCol] instanceof Array)) {
+
+            if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
+                console.error("Connection point collision error!");
+                return false;
+            }
+            else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
                 this.placeholder[conRow][conCol] = [];
             }
-            var placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
-            this.placeholder[conRow][conCol][1] = placeholder;
+            else if (this.placeholder[conRow][conCol][1]) {
+                console.error("Connection point collision error!");
+                return false;
+            }
         }
+
         // Nexts
         conCol = obj.column + factor * 2 + obj.outPt;
         conRow = obj.row + factor;
-        if (!(this.placeholder[conRow][conCol] instanceof Array)) {
+
+        if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
+            console.error("Connection point collision error!");
+            return false;
+        }
+        else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
             this.placeholder[conRow][conCol] = [];
         }
-        var placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+        else if (this.placeholder[conRow][conCol][3]) {
+            console.error("Connection point collision error!");
+            return false;
+        }
+
+        // Place connection placeholders
+        // Previous
+        conCol = obj.column - 1;
+        cnt = 0;
+        for (var i = 0; i < obj.numInputs; ++i) {            
+            if (obj.type === digsim.NOT) {
+                conRow = obj.row + 1;
+            }
+            else {
+                if (i % 2) { 
+                    conRow = obj.row + (factor * 2) - cnt++;
+                }
+                else {
+                    conRow = obj.row + cnt;
+                }
+            }
+            placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+            this.placeholder[conRow][conCol][1] = placeholder;
+        }
+        
+        // Next
+        conCol = obj.column + factor * 2 + obj.outPt;
+        conRow = obj.row + factor;
+        placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
         this.placeholder[conRow][conCol][3] = placeholder;
     }
-    if (obj.type === digsim.SWITCH) {
-        if (!(this.placeholder[obj.row + 1][obj.column + 1] instanceof Array)) {
-            console.log(obj);
-            this.placeholder[obj.row + 1][obj.column + 1] = [];
+    else {
+        conCol = obj.column + obj.conCol;
+        conRow = obj.row + obj.conRow;
+
+        if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
+            console.error("Connection point collision error!");
+            return false;
         }
-        var placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
-        this.placeholder[obj.row + 1][obj.column + 1][3] = placeholder;
-    }
-    else if (obj.type === digsim.CLOCK) {
-        if (!(this.placeholder[obj.row + obj.conRow][obj.column + obj.conCol] instanceof Array)) {
-            console.log(obj);
-            this.placeholder[obj.row + obj.conRow][obj.column + obj.conCol] = [];
+        else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
+            this.placeholder[conRow][conCol] = [];
         }
-        var placeholder = new Placeholder(obj.id, obj.column + obj.conCol, obj.row + obj.conRow, obj.dimension.col, obj.dimension.row);
-        this.placeholder[obj.row + obj.conRow][obj.column + obj.conCol][3] = placeholder;
-    }
-    else if (obj.type === digsim.LED) {
-        if (!(this.placeholder[obj.row + 2][obj.column] instanceof Array)) {   
-            console.log(obj);
-            this.placeholder[obj.row + 2][obj.column] = [];
+        else if(this.placeholder[conRow][conCol][obj.conIndex]) {
+            console.error("Connection point collision error!");
+            return false;
         }
-        var placeholder = new Placeholder(obj.id, obj.column, obj.row + 2, obj.dimension.col, obj.dimension.row);
-        this.placeholder[obj.row + 2][obj.column][0] = placeholder;
+
+        // Place connection placeholders
+        placeholder = new Placeholder(obj.id, conCol, conRow, obj.dimension.col, obj.dimension.row);
+        this.placeholder[conRow][conCol][obj.conIndex] = placeholder;
     }
+
     // Places the placeholder for the object
     for (row = 0; row < obj.dimension.row; ++row) {
         for (col = 0; col < obj.dimension.col; ++col) {
@@ -279,6 +330,8 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
     }
 
+    console.log("RETURN TRUE:");
+    return true;
 };
 
 /*****************************************************************************
@@ -476,82 +529,6 @@ Digsim.prototype.run = function() {
 };
 
 /*****************************************************************************
- * ON BUTTON CLICKED
- *  When a button is clicked, do this. Creates a gate when button is clicked. 
- *  This only works because of id on the html matches the name of the gate. 
- *  "AND", "OR", etc...
- ****************************************************************************/
-Digsim.prototype.onButtonClicked = function (event) {
-    event.preventDefault();
-    console.log("CLICKED");
-    
-    // Use reflection to dynamically create gate based on id :)
-    var id = $(this).attr("id");
-    var MyClass = window;
-    MyClass = MyClass[id];
-
-    // Activate butotn
-    if (!$(this).hasClass('active')) {
-        // Remove the active class from all buttons that have it
-        digsim.deactivate($('ul:not(.num-inputs) .active').attr('id'));
-        $(this).addClass('active');
-
-        if (id == "Wire") {
-            $("canvas").css('cursor','crosshair');
-            digsim.mode = digsim.WIRE_MODE;
-        }
-        else if (id == "Run") {
-            $("canvas").css('cursor','pointer');
-            for (var j = 0; j < digsim.components.length; ++j) {
-                digsim.components[j].next = [];
-                digsim.components[j].prev = [];
-            }
-            for (var i = 0; i < digsim.switches.length; ++i) {
-                var obj = digsim.components[ digsim.switches[i] ];
-                for (var j = 0; j < digsim.components.length; ++j) {
-                    digsim.components[j].visited = 0;
-                }
-                if (obj.traverse()) {
-                    obj.state = 0;
-                    console.log("********************BEGIN PASS STATE!********************");
-                    obj.passState(obj.state);
-                }
-            }
-            digsim.mode = digsim.SIM_MODE;
-            cycleClock();
-            digsim.drawComponents();
-        }
-        else {
-            $("canvas").css('cursor','default');
-            digsim.mode = digsim.PLACE_MODE;
-            
-            if (id === "AND" || id === "NAND" || id === "OR" || id === "NOR" || id === "XOR")
-                var numInputs = digsim.numGateInputs;
-            else
-                numInputs = 0;
-            
-            var gate = new MyClass(numInputs); 
-            digsim.prevGate = id;
-            var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
-            var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
-            gate.init(col, row, 0, digsim.iComp);
-            digsim.dragging = true;
-            digsim.draggingGate = gate;
-            digsim.draggingGate.draw(digsim.movingContext);
-            animate();
-            // digsim.components[digsim.iComp++] = gate;
-            // digsim.setPlaceholders(gate);
-            // gate.checkConnect();
-            // gate.draw(digsim.staticContext);
-        }
-    }
-    // Deactivate button
-    else {
-        digsim.deactivate(id);
-    }
-};
-
-/*****************************************************************************
  * DEACTIVATE
  *  Removes the active class from any button, and redraws the components if
  *  the active button was Run.
@@ -571,10 +548,84 @@ Digsim.prototype.onButtonClicked = function (event) {
 };
 
 /*****************************************************************************
+ * ON BUTTON CLICKED
+ *  When a button is clicked, do this. Creates a gate when button is clicked. 
+ *  This only works because of id on the html matches the name of the gate. 
+ *  "AND", "OR", etc...
+ ****************************************************************************/
+Digsim.prototype.onButtonClicked = function (event) {
+    event.preventDefault();
+    var id = $(this).attr("id");
+
+    // Activate butotn
+    if (!$(this).hasClass('active')) {
+        // Remove the active class from all buttons that have it
+        digsim.deactivate($('ul:not(.num-inputs) .active').attr('id'));
+        $(this).addClass('active');
+
+        if (id == "Wire") {
+            $("canvas").css('cursor','crosshair');
+            digsim.mode = digsim.WIRE_MODE;
+        }
+        else if (id == "Run") {
+            $("canvas").css('cursor','pointer');
+            digsim.mode = digsim.SIM_MODE;
+
+            // Clear the next/prev list for each item
+            for (var j = 0; j < digsim.components.length; ++j) {
+                digsim.components[j].next = [];
+                digsim.components[j].prev = [];
+            }
+            // Loop through each driver and pass state
+            for (var i = 0; i < digsim.drivers.length; ++i) {
+                var obj = digsim.components[ digsim.drivers[i] ];
+                for (var j = 0; j < digsim.components.length; ++j) {
+                    digsim.components[j].visited = 0;
+                }
+                if (obj.traverse()) {
+                    obj.state = 0;
+                    console.log("********************BEGIN PASS STATE!********************");
+                    obj.passState(obj.state);
+                }
+            }
+
+            cycleClock();
+            digsim.drawComponents();
+        }
+        else {
+            $("canvas").css('cursor','default');
+            digsim.mode = digsim.PLACE_MODE;
+
+            // Use reflection to dynamically create gate based on id :)
+            var Class = window[id];
+            var gate = new Class(digsim.numGateInputs); 
+            digsim.prevGate = id;
+
+            // Initialize the new object at the mouse position
+            var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
+            var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
+            gate.init(col, row, 0, digsim.iComp);
+            digsim.dragging = true;
+            digsim.draggingGate = gate;
+            digsim.draggingGate.draw(digsim.movingContext);
+            animate();
+        }
+    }
+    // Deactivate button
+    else {
+        digsim.deactivate(id);
+    }
+};
+
+/*****************************************************************************
  * ON GRID CLICKED
  *  Called when wire mode is on - for dragging wires. 
  ****************************************************************************/
 Digsim.prototype.onGridClicked = function(event) {
+    // Only handle left click events
+    if (event.button !== 0) {
+        return;
+    }
 
     if (digsim.mode === digsim.WIRE_MODE) {
         event.preventDefault();
@@ -662,7 +713,6 @@ Digsim.prototype.onGridClicked = function(event) {
                         return;                    
                     }
                     // Draws the wire on static context. 
-                    wire.updatePos();
                     wire.checkConnect();
                     wire.draw(digsim.staticContext);
                 }
@@ -684,6 +734,11 @@ Digsim.prototype.onGridClicked = function(event) {
  *  Click and drag gates. Only called in default mode. 
  ****************************************************************************/
 Digsim.prototype.onGridMouseDown = function(event) {
+    // Only handle left click events
+    if (event.button !== 0) {
+        return;
+    }
+
     // Gets mouse position on canvas
     var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
     var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
@@ -793,6 +848,64 @@ Digsim.prototype.onGridMouseDown = function(event) {
 };
 
 /*****************************************************************************
+ * ON GRID MOUSE UP
+ *  When the mouse is realeased while on the canvas, this will take care of all
+ *  the things that change after stuff being dragged around. 
+ ****************************************************************************/
+Digsim.prototype.onGridMouseUp = function(event) {
+    // Only handle left click events
+    if (event.button !== 0) {
+        return;
+    }
+
+    if (digsim.mode === digsim.DEFAULT_MODE) {
+        if (digsim.dragging) {
+            var validPlacement = digsim.setPlaceholders(digsim.draggingGate);
+            if (validPlacement) {
+
+                digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
+                digsim.draggingGate.drawStatic = true;
+                digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
+                digsim.draggingGate.checkConnect();
+                digsim.draggingGate.draw(digsim.staticContext);
+
+                digsim.dragging = false;
+            }
+            else {
+                digsim.dragging = true;
+                // DO NOT PLACE COMPONENT, there's something in the way. 
+            }
+        }
+        
+    }
+    else if (digsim.mode === digsim.PLACE_MODE) {
+        var validPlacement = digsim.setPlaceholders(digsim.draggingGate);
+        if (validPlacement) {
+
+            var id = digsim.prevGate;
+            if (id === "Switch" || id === "Clock") {
+                digsim.drivers.push(digsim.iComp);
+            }
+
+            digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
+            digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
+            digsim.draggingGate.checkConnect();
+            digsim.draggingGate.draw(digsim.staticContext);   
+
+            // Create new gate for next place
+            var Class = window[id];
+            var gate = new Class(digsim.numGateInputs); 
+            var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
+            var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
+            gate.init(col, row, 0, ++digsim.iComp);
+            digsim.draggingGate = gate;
+            digsim.draggingGate.draw(digsim.movingContext);
+        }
+        digsim.dragging = true;
+    }
+};
+
+/*****************************************************************************
  * DELETE PLACEHOLDER
  *  duh.
  ****************************************************************************/
@@ -861,48 +974,6 @@ Digsim.prototype.deleteComponent = function(row, col) {
     }
     digsim.deletePlaceholder(row, col);
 
-};
-
-/*****************************************************************************
- * ON GRID MOUSE UP
- *  When the mouse is realeased while on the canvas, this will take care of all
- *  the things that change after stuff being dragged around. 
- ****************************************************************************/
-Digsim.prototype.onGridMouseUp = function(event) {
-    if (digsim.mode === digsim.DEFAULT_MODE) {
-        if (digsim.dragging) {
-            digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
-            digsim.draggingGate.drawStatic = true;
-            digsim.setPlaceholders(digsim.draggingGate);
-            digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
-            digsim.draggingGate.checkConnect();
-            digsim.draggingGate.draw(digsim.staticContext);
-        }
-        digsim.dragging = false;
-    }
-    else if (digsim.mode === digsim.PLACE_MODE) {
-
-        var id = digsim.prevGate;
-        if (id === "Switch" || id === "Clock") {
-            digsim.switches.push(digsim.iComp);
-        }
-
-        digsim.components[digsim.draggingGate.id] = digsim.draggingGate;
-        digsim.setPlaceholders(digsim.draggingGate);
-        digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
-        digsim.draggingGate.checkConnect();
-        digsim.draggingGate.draw(digsim.staticContext);   
-
-        // Create new gate for next place
-        var MyClass = window[id];
-        var gate = new MyClass(digsim.numGateInputs); 
-        var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
-        var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
-        gate.init(col, row, 0, ++digsim.iComp);
-        digsim.dragging = true;
-        digsim.draggingGate = gate;
-        digsim.draggingGate.draw(digsim.movingContext);
-    }
 };
 
 /*****************************************************************************
@@ -1018,8 +1089,8 @@ function cycleClock() {
                 digsim.components[j].visited = 0;
             }
 
-            for (var i = 0, len = digsim.switches.length; i < len; ++i) {
-                var driver = digsim.components[ digsim.switches[i] ];
+            for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
+                var driver = digsim.components[ digsim.drivers[i] ];
                 if (driver.type === digsim.CLOCK) {
                     console.log("********************BEGIN PASS STATE!********************");
                     driver.passState(!driver.state);
@@ -1066,7 +1137,6 @@ Digsim.prototype.showPlaceholders = function() {
                         //this.gridContext.fillText(this.placeholder[row][col][z].ref, 0 + this.GRID_SIZE / 2 - 10, 0 + this.GRID_SIZE / 2 - 10);
                         
                         this.gridContext.restore();
-                        //break;
                     }
                 }
             }
@@ -1090,7 +1160,6 @@ $(window).resize(function() {
     // Resize Canvas
     digsim.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE);
     digsim.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE);
-    //$('.end').css('width', (window.innerWidth - file - gates - io - modes - controls) - 6);
     digsim.gridWidth = digsim.NUM_COLS * digsim.GRID_SIZE;
     digsim.gridHeight = digsim.NUM_ROWS * digsim.GRID_SIZE;
     $('canvas').width(digsim.gridWidth);
@@ -1112,7 +1181,6 @@ Digsim.prototype.zoomIn = function(event) {
     digsim.GRID_SIZE += digsim.GRID_ZOOM;
     if (digsim.GRID_SIZE > digsim.MAX_GRID_SIZE) {
         digsim.GRID_SIZE = digsim.MAX_GRID_SIZE;
-        digsim.disableButton('Zoom_In');
     }
     else {
         if ($('#Zoom_Out').hasClass('disabled')) {
@@ -1140,7 +1208,6 @@ Digsim.prototype.zoomOut = function(event) {
         digsim.GRID_SIZE = digsim.MIN_GRID_SIZE;
     }
     else {
-        console.log("CLASS: " + $('#Zoom_In').hasClass('disabled'))
         if ($('#Zoom_In').hasClass('disabled')) {
             digsim.enableButton('Zoom_In');
         }
@@ -1193,14 +1260,14 @@ Digsim.prototype.toggleGrid = function(event) {
  *  Create a new file
  ****************************************************************************/
 Digsim.prototype.newFile = function(event) {
+    digsim.iComp = 0;
     digsim.components = [];
-    digsim.switches = [];
+    digsim.drivers = [];
     digsim.placeholder = [];
     for (var i = 0; i < digsim.NUM_COLS; ++i) {
         digsim.placeholder[i] = [];
     }
     digsim.clearCanvas(digsim.staticContext, digsim.gridWidth, digsim.gridHeight);
-    iComp = 0;
     digsim.deactivate();
 };
 
@@ -1280,9 +1347,8 @@ HOT_KEYS = {
 };
 
 document.onkeydown = function(e) {
-    // Firefox and opera use charCode instead of keyCode to
     // return which key was pressed.
-    var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+    var keyCode = (e.keyCode) ? e.keyCode : e.charCode; // Firefox and opera use charCode instead of keyCode to
     var id;
 
     console.log('Pressed: ' + keyCode);

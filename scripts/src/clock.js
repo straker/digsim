@@ -15,12 +15,12 @@ function Clock() {
     this.state = 0;
     this.dimension = {'row': 3, 'col': 2};    
     this.visited = 0;
+    this.visitLimit = 1;
     this.conRow = 1;
     this.conCol = 2;
-    this.visitLimit = 1;
+    this.conIndex = 3;
     this.junct = 0;
 };
-
 Clock.prototype = new Drawable();
 
 /****************************************************************************

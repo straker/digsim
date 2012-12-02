@@ -16,9 +16,6 @@ function Wire() {
     this.juncts = [];
     this.state = 0;
     
-    this.connectOffset = {'x': -1, 'y': -1, 'endX': -1, 'endY': -1};
-    this.connectPoint = {'x': -1, 'y': -1, 'endX': -1, 'endY': -1};
-    
     this.visitLimit = 2;
     this.visited = 0;
     
@@ -30,24 +27,6 @@ function Wire() {
     this.delta = {'x': 0, 'y': 0};
 };
 Wire.prototype = new Drawable();
-
-/******************************************************************************
- * UPDATE POSITION
- *  Update the position of the gate when dragged and dropped.
- *****************************************************************************/
-Wire.prototype.updatePos = function() {
-    
-    this.connectOffset.x = (this.startPos % 2 && this.delta.x == 1 ? -1 : 0);
-    this.connectOffset.y = (!(this.startPos % 2) && this.delta.y == 1 ? -1 : 0);
-    if (this.path.length) {
-        this.connectOffset.endX = this.path[this.path.length - 1].x + (this.endPos % 2 && this.delta.x == -1 ? -1 : 0);
-        this.connectOffset.endY = this.path[this.path.length - 1].y + (!(this.endPos % 2) && this.delta.y == -1 ? -1 : 0);
-    }
-    this.connectPoint.x = this.column + this.connectOffset.x;
-    this.connectPoint.y = this.row + this.connectOffset.y;
-    this.connectPoint.endX = this.column + this.connectOffset.endX;
-    this.connectPoint.endY = this.row + this.connectOffset.endY;
-};
 
 /*****************************************************************************
  * CHECK CONNECTION
