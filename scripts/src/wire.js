@@ -9,22 +9,14 @@
 
 function Wire() {
     this.type = digsim.WIRE;
+    
     this.next = [];
     this.prev = [];
     this.path = [];
     this.connections = [];
     this.juncts = [];
-    this.state = 0;
     
     this.visitLimit = 2;
-    this.visited = 0;
-    
-    // Represents orientation of the wire at start and end.
-    this.startPos = -1; 
-    this.endPos = -1;
-    
-    // Represents the direction that the wire has been drawn. (-1 or 1)
-    this.delta = {'x': 0, 'y': 0};
 };
 Wire.prototype = new Drawable();
 

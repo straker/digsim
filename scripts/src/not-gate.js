@@ -9,17 +9,16 @@
 
 function NOT() {
     this.type = digsim.NOT;
+    
     this.next = [];
     this.prev = [];
     this.prevConnect = [];
     this.connections = [];
     this.juncts = [];
-    this.state = 0;
     this.numInputs = 1;
     this.dimension = {'row': 3, 'col': 2};
-    
+
     this.visitLimit = 2 * this.numInputs;
-    this.visited = 0;
     this.outPt = 0; 
 };
 NOT.prototype = new Drawable();

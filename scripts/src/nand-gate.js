@@ -9,9 +9,9 @@
 
 function NAND(numInputs) {
     this.type = digsim.NAND;
+
     this.next = [];
     this.prev = [];
-    this.state = 0;
     this.prevConnect = [];
     this.connections = [];
     this.juncts = [];
@@ -20,7 +20,7 @@ function NAND(numInputs) {
     this.dimension = {'row': size, 'col': size};
     
     this.visitLimit = 2 * this.numInputs;
-    this.visited = 0;
+    this.outPt = 1;
 };
 NAND.prototype = new Drawable();
 

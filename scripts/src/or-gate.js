@@ -9,18 +9,17 @@
 
 function OR(numInputs) {
     this.type = digsim.OR;
+
     this.next = [];
     this.prev = [];
     this.prevConnect = [];
     this.connections = [];
     this.juncts = [];
-    this.state = 0;
     this.numInputs = numInputs || 2;
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': (size + 1)};
     
     this.visitLimit = 2 * this.numInputs;
-    this.visited = 0;
     this.outPt = 2;
 };
 OR.prototype = new Drawable();

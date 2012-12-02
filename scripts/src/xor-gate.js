@@ -9,9 +9,9 @@
 
 function XOR(numInputs) {
     this.type = digsim.XOR;
+    
     this.next = [];
     this.prev = [];
-    this.state = 0;
     this.prevConnect = [];
     this.connections = [];
     this.juncts = [];
@@ -20,7 +20,6 @@ function XOR(numInputs) {
     this.dimension = {'row': size, 'col': (size + 1)};
 
     this.visitLimit = 2 * this.numInputs;
-    this.visited = 0;
     this.outPt = 2;
 };
 XOR.prototype = new Drawable();

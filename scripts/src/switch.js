@@ -9,17 +9,16 @@
 
 function Switch() {
     this.type = digsim.SWITCH;
+
     this.next = [];
     this.connections = [];
     this.juncts = [];
-    this.state = 0;
     this.dimension = {'row': 3, 'col': 1};
-    this.visited = 0;
+
     this.visitLimit = 1;
     this.conRow = 1;
     this.conCol = 1;
     this.conIndex = 3;
-    this.junct = 0;
 };
 Switch.prototype = new Drawable();
 

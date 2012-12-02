@@ -9,20 +9,18 @@
 
 function AND(numInputs) {
     this.type = digsim.AND;
+
     this.next = [];
     this.prev = [];
     this.prevConnect = [];
     this.connections = [];
     this.juncts = [];
-    this.state = 0;
     this.numInputs = numInputs || 2;
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': size};
-    
-    var factor = Math.floor(this.numInputs / 2); 
 
     this.visitLimit = 2 * this.numInputs;
-    this.visited = 0; 
+    this.outPt = 1;
 };
 AND.prototype = new Drawable();
 

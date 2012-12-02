@@ -10,16 +10,18 @@
  *  Mother class for all objects drawable. 
  *****************************************************************************/
 
-function Drawable(col, row, rot) {
-    this.id = 0;
+function Drawable() {
     this.column = 0;
-    this.row = 0;
-    this.type = -1;
-    this.rotation = 0;
-    this.numInputs = 2;
-    this.state = 0;
     this.drawStatic = true;
-    this.outPt = 1;
+    this.id = 0;
+    this.numInputs = 2;
+    this.outPt = 0;
+    this.rotation = 0;
+    this.row = 0;   
+    this.state = 0;
+    this.state = 0;
+    this.type = 0;
+    this.visited = 0;
 };
 
 /******************************************************************************
@@ -28,10 +30,10 @@ function Drawable(col, row, rot) {
  *****************************************************************************/
 Drawable.prototype.init = function (col, row, rot, id) {
     this.column = col;
-    this.row = row;
-    this.rotation = rot;
-    this.id = id;
     this.drawStatic = true;
+    this.id = id;
+    this.rotation = rot;
+    this.row = row;    
 };
 
 /*****************************************************************************

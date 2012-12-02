@@ -9,17 +9,16 @@
 
 function LED() {
     this.type = digsim.LED;
+
     this.prev = [];
     this.connections = [];
     this.juncts = [];
-    this.state = 0;
     this.dimension = {'row': 2, 'col': 1};
-    this.visited = 0;
+
     this.visitLimit = 1;
     this.conRow = 2;
     this.conCol = 0;
     this.conIndex = 0;
-    this.junct = 0;
 };
 LED.prototype = new Drawable();
 
