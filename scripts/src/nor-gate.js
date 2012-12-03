@@ -19,8 +19,7 @@ function NOR(numInputs) {
     this.numInputs = numInputs || 2;
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': (size + 1)};
-    
-    this.visitLimit = 2 * this.numInputs;
+
     this.outPt = 2;
 };
 NOR.prototype = new Drawable();
@@ -123,6 +122,7 @@ NOR.prototype.computeLogic = function() {
     
     for (var i = 1; i < this.numInputs; ++i) {
         computedState = computedState || (this.prev[i] ? this.prev[i].state : 0);
+        console.log("PREV["+i+"].state: " + (this.prev[i] ? this.prev[i].state : 0));
     }
     this.state = !computedState;
 };

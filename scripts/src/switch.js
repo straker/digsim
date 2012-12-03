@@ -16,7 +16,6 @@ function Switch() {
     this.juncts = [];
     this.dimension = {'row': 3, 'col': 1};
 
-    this.visitLimit = 1;
     this.conRow = 1;
     this.conCol = 1;
     this.conIndex = 3;

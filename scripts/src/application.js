@@ -222,7 +222,7 @@ Digsim.prototype.drawGrid = function(context) {
 
     // Dotted Grid
     else if (this.gridToggle % 3 === 1) {
-        context.fillStyle = '#8DDF99';
+        context.fillStyle = '#0d91db';
         context.lineWidth = 1;
         context.save();
         context.translate(digsim.GRID_SIZE / 2 - 0.5,digsim.GRID_SIZE / 2 - 0.5);
@@ -713,6 +713,7 @@ Digsim.prototype.onButtonClicked = function (event) {
         }
         else if (id == "Run") {
             $("canvas").css('cursor','pointer');
+            $('#messages').html('');
             digsim.mode = digsim.SIM_MODE;
 
             // Clear the next/prev list for each item
@@ -725,13 +726,11 @@ Digsim.prototype.onButtonClicked = function (event) {
             // Loop through each driver and pass state
             for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
                 var obj = digsim.components[ digsim.drivers[i] ];
-                for (var j = 0, length = digsim.components.length; j < length; ++j) {
-                    if (typeof digsim.components[j] !== 'undefined') {
-                        digsim.components[j].visited = 0;
-                    }
-                }
                 if (obj.traverse()) {
                     obj.state = 0;
+                    console.log("");
+                    console.log("");
+                    console.log("");
                     console.log("********************BEGIN PASS STATE!********************");
                     obj.passState(obj.state);
                 }
@@ -955,11 +954,9 @@ Digsim.prototype.onGridMouseDown = function(event) {
         if (digsim.placeholder[row][col]) {
             var obj = digsim.components[ digsim.placeholder[row][col].ref ];
             if (obj.type === digsim.SWITCH) {
-                for (var j = 0; j < digsim.components.length; ++j) {
-                    if (typeof digsim.components[j] !== 'undefined') {
-                        digsim.components[j].visited = 0;
-                    }
-                }
+                console.log("");
+                console.log("");
+                console.log("");
                 console.log("********************BEGIN PASS STATE!********************");
                 obj.passState(!obj.state);
                 digsim.drawComponents();
@@ -1283,7 +1280,7 @@ KEY_CODES = {
     71: 'Toggle_Grid',
     90: 'Zoom_In',
     's90': 'Zoom_Out',
-    68: 'Delete',
+    46: 'Delete',
     'c88': 'Cut',
     'c67': 'Copy',
     'c86': 'Paste',
@@ -1306,7 +1303,7 @@ HOT_KEYS = {
     'Toggle_Grid': 'G',
     'Zoom_In': 'Z',
     'Zoom_Out': 'shift+Z',
-    'Delete': 'D',
+    'Delete': 'del',
     'Cut': 'ctrl+X',
     'Copy': 'ctrl+C',
     'Paste': 'ctrl+V',
@@ -1436,15 +1433,12 @@ function cycleClock() {
         if (digsim.clkCnt > digsim.CLK_FREQ) { // FPS is approximately 60 Hz
             
             digsim.clkCnt = 0
-            for (var j = 0; j < digsim.components.length; ++j) {
-                if (typeof digsim.components[j] !== 'undefined') {
-                    digsim.components[j].visited = 0;
-                }
-            }
-
             for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
                 var driver = digsim.components[ digsim.drivers[i] ];
                 if (driver.type === digsim.CLOCK) {
+                    console.log("");
+                    console.log("");
+                    console.log("");
                     console.log("********************BEGIN PASS STATE!********************");
                     driver.passState(!driver.state);
                     digsim.drawComponents();
@@ -1500,8 +1494,8 @@ Digsim.prototype.showPlaceholders = function() {
     this.drawGrid(this.gridContext);
 
     var row = 0; col = 0;
-    for (row = 0; row < this.gridWidth; row++) {
-        for (col = 0; col < this.gridHeight; col++) {
+    for (row = 0; row < this.NUM_ROWS; row++) {
+        for (col = 0; col < this.NUM_COLS; col++) {
             if (this.placeholder[row][col] instanceof Array) {
                 for (var z = 0; z < 4; z++) {
                     if (this.placeholder[row][col][z]) {
@@ -1521,21 +1515,20 @@ Digsim.prototype.showPlaceholders = function() {
                         this.gridContext.closePath();
                         this.gridContext.stroke();
                         this.gridContext.fill();
-
-                        //this.gridContext.fillStyle = 'white';
-                        //this.gridContext.font = "10pt Calibri";
-                        //this.gridContext.fillText(this.placeholder[row][col][z].ref, 0 + this.GRID_SIZE / 2 - 10, 0 + this.GRID_SIZE / 2 - 10);
-                        
                         this.gridContext.restore();
+
+                        this.movingContext.fillStyle = 'black';
+                        this.movingContext.font = "10pt Calibri";
+                        this.movingContext.fillText(this.placeholder[row][col][z].ref, col * this.GRID_SIZE + this.GRID_SIZE / 2 - (z % 2 * 10), row * this.GRID_SIZE + this.GRID_SIZE / 2 + (z % 2 * 10));
                     }
                 }
             }
             else if (this.placeholder[row][col]) {
                 this.gridContext.fillStyle = 'orange';
-                this.gridContext.fillRect(col * this.GRID_SIZE + 1, row * this.GRID_SIZE + 1, this.GRID_SIZE -2, this.GRID_SIZE - 2);
-                this.gridContext.fillStyle = 'white';
-                this.gridContext.font = "20pt Calibri";
-                this.gridContext.fillText(this.placeholder[row][col].ref, col * this.GRID_SIZE + this.GRID_SIZE / 2 - 10, row * this.GRID_SIZE + this.GRID_SIZE / 2 + 10);
+                this.gridContext.fillRect(col * this.GRID_SIZE + 1, row * this.GRID_SIZE + 1, this.GRID_SIZE - 1, this.GRID_SIZE - 1);
+                this.movingContext.fillStyle = 'black';
+                this.movingContext.font = "18pt Calibri";
+                this.movingContext.fillText(this.placeholder[row][col].ref, col * this.GRID_SIZE + this.GRID_SIZE / 2 - 10, row * this.GRID_SIZE + this.GRID_SIZE / 2 + 10);
             }
         }
     }

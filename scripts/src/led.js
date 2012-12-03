@@ -16,7 +16,6 @@ function LED() {
     this.juncts = [];
     this.dimension = {'row': 2, 'col': 1};
 
-    this.visitLimit = 1;
     this.conRow = 2;
     this.conCol = 0;
     this.conIndex = 0;

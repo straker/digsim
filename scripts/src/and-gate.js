@@ -20,7 +20,6 @@ function AND(numInputs) {
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': size};
 
-    this.visitLimit = 2 * this.numInputs;
     this.outPt = 1;
 };
 AND.prototype = new Drawable();
@@ -97,6 +96,7 @@ AND.prototype.computeLogic = function() {
     
     for (var i = 1; i < this.numInputs; ++i) {
         computedState = computedState && (this.prev[i] ? this.prev[i].state : 0);
+        console.log("PREV["+i+"].state: " + (this.prev[i] ? this.prev[i].state : 0));
     }
     this.state = computedState;
 };

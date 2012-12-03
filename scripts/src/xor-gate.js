@@ -20,7 +20,6 @@ function XOR(numInputs) {
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': (size + 1)};
 
-    this.visitLimit = 2 * this.numInputs;
     this.outPt = 2;
 };
 XOR.prototype = new Drawable();
@@ -123,6 +122,7 @@ XOR.prototype.computeLogic = function() {
     var cnt = 0;
     for (var i = 0; i < this.numInputs; ++i) {
         cnt += (this.prev[i] ? this.prev[i].state : 0);
+        console.log("PREV["+i+"].state: " + (this.prev[i] ? this.prev[i].state : 0));
     }
     this.state = cnt % 2;
 };

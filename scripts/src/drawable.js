@@ -21,7 +21,6 @@ function Drawable() {
     this.state = 0;
     this.state = 0;
     this.type = 0;
-    this.visited = 0;
 };
 
 /******************************************************************************
@@ -120,31 +119,33 @@ Drawable.prototype.checkConnect = function() {
  *  gate, LED, etc). 
  *****************************************************************************/
 Drawable.prototype.passState = function(pState) {
-    if (this.visited++ < this.visitLimit) {
-        console.log(this);
-        console.log("this.next[0]: ");
-        console.log(this.next[0]);
-        console.log("");
-        if (this.type < 0) {
-            this.computeLogic();
-            for (var i = 0, len = this.next.length; i < len; ++i) {                
+    if (this.type < 0) {
+        this.computeLogic();
+    }
+    else {
+        this.state = pState;            
+    }
+
+    if (typeof this.next[0] !== "undefined") {
+        console.log("this.next.length = " + this.next.length);
+        for (var i = 0, len = this.next.length; i < len; ++i) {
+            console.log("");
+            console.log(this);
+            console.log("THIS.ID: " + this.id);
+            console.log("THIS.NEXT[0]:");
+            console.log(this.next[0]);
+            console.log("THIS.NEXT[0].ID: " + this.next[0].id);
+            console.log("PASSES STATE: " + pState);
+            
+            if (this.next[i].type < 0 || this.next[i].state !== this.state) {
                 this.next[i].passState(this.state);
             }
         }
-        else {
-            this.state = pState;
-            if (typeof this.next[0] !== "undefined") {
-                console.log("this.next.length = " + this.next.length);
-                for (var i = 0, len = this.next.length; i < len; ++i) {                
-                    this.next[i].passState(pState);
-                }
-            }
-            else if (this.type !== digsim.LED) {
-                console.error("ERROR! Multiple drivers on 1 wire [passState()]");
-                if (this.type === digsim.WIRE) {
-                    digsim.addMessage(digsim.WARNING, "Warning: Unexpected end of wire.");
-                }
-            }
+    }
+    else if (this.type !== digsim.LED) {
+        console.error("ERROR! Multiple drivers on 1 wire [passState()]");
+        if (this.type === digsim.WIRE) {
+            digsim.addMessage(digsim.WARNING, "Warning: Unexpected end of wire.");
         }
     }
 };
@@ -222,8 +223,7 @@ Drawable.prototype.traverse = function() {
     while (conQueue.length) {
         console.log("\n======START=====");
         console.log(conQueue[0]);
-        var len = conQueue[0].connections.length;
-        for (var i = 0; i < len; ++i) {
+        for (var i = 0, len = conQueue[0].connections.length; i < len; ++i) {
             
             var currObject = conQueue[0];
             var con = currObject.connections[i];
@@ -285,9 +285,6 @@ Drawable.prototype.traverse = function() {
                 else {
                     console.log("UNKNOWN CASE IN TRAVERSE() FUNCTION");
                 }
-                if (currObject.visitLimit > con.visitLimit) {
-                    con.visitLimit = currObject.visitLimit;
-                }
             }
             console.log("");
         }
@@ -297,7 +294,7 @@ Drawable.prototype.traverse = function() {
 
 /*
     // RECURSIVE VERSION OF traverse(), WHICH IS TOO ROBUST FOR JAVASCRIPT
-    // BTW, this works perfectly
+    // BTW, this works perfectly, but I still dont want to use it
     
     
     console.log("\n======START=====");

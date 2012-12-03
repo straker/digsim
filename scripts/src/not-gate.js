@@ -19,7 +19,6 @@ function NOT() {
     this.numInputs = 1;
     this.dimension = {'row': 3, 'col': 2};
 
-    this.visitLimit = 2 * this.numInputs;
     this.outPt = 0; 
 };
 NOT.prototype = new Drawable();
@@ -74,7 +73,7 @@ NOT.prototype.draw = function(context) {
  ****************************************************************************/
 NOT.prototype.computeLogic = function() {
     this.state = !(this.prev[0] ? this.prev[0].state : 0);
-    console.log("PREVIOUS: " + this.prev[0].state);
+    console.log("PREV[0].state: " + (this.prev[0] ? this.prev[0].state : 0));
 };
 
 

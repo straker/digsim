@@ -16,8 +16,6 @@ function Wire() {
     this.path = [];
     this.connections = [];
     this.juncts = [];
-    
-    this.visitLimit = 2;
 };
 Wire.prototype = new Drawable();
 
@@ -44,26 +42,28 @@ Wire.prototype.checkConnect = function() {
 Wire.prototype.checkJunction = function(row, col, pos) {
     var PH, obj, wireCnt = 0, dot = 0;
     // Endpoint contains a wire
-    console.log("CHECK JUNCT");
+    console.log("CHECK JUNCT " + pos);
     if (digsim.placeholder[row][col] instanceof Array) {
         // We want to connect. 
         for (var i = 0; i < 4; ++i) {
             if (PH = digsim.placeholder[row][col][i]) {
                 obj = digsim.components[PH.ref];
                 ++wireCnt;
-                if ((obj !== this)) {//&& ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
-                    console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                    this.connections.push(obj);
-                    if (obj.type < 0) {
-                        if (col < obj.column) {
-                            obj.prevConnect.push(this);
+                if (obj !== this) { // connection is not already in the connections
+                    if ($.inArray(obj, this.connections) === -1) {
+                        console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                        this.connections.push(obj);
+                        if (obj.type < 0) {
+                            if (col < obj.column) {
+                                obj.prevConnect.push(this);
+                            }
+                            else {
+                                obj.connections.push(this);
+                            }
                         }
                         else {
                             obj.connections.push(this);
                         }
-                    }
-                    else {
-                        obj.connections.push(this);
                     }
 
                     // Check for dots
@@ -71,9 +71,6 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                         this.juncts.push( { 'x': col, 'y': row } );
                         dot = 1;
                     }
-                     /*else if ((obj.connections[0] && obj.connections[0].type < 0) || (obj.prev[0] && obj.prev[0].type < 0)) {
-                         this.juncts.push( { 'x': col, 'y': row } );;
-                     }*/
                 }
                 if (wireCnt > 2) {
                     console.log("wireCnt > 1 £££££££££££££££££££££££££££££")
