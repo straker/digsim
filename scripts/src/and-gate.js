@@ -9,6 +9,7 @@
 
 function AND(numInputs) {
     this.type = digsim.AND;
+    this.name = 'AND';
 
     this.next = [];
     this.prev = [];

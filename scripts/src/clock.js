@@ -9,6 +9,7 @@
 
 function Clock() {
     this.type = digsim.CLOCK;
+    this.name = 'Clock';
 
     this.next = [];
     this.connections = [];

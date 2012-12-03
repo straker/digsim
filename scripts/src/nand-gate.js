@@ -9,6 +9,7 @@
 
 function NAND(numInputs) {
     this.type = digsim.NAND;
+    this.name = 'NAND';
 
     this.next = [];
     this.prev = [];

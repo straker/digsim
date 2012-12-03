@@ -9,6 +9,7 @@
 
 function Wire() {
     this.type = digsim.WIRE;
+    this.name = 'Wire';
     
     this.next = [];
     this.prev = [];

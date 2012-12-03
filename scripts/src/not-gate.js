@@ -9,6 +9,7 @@
 
 function NOT() {
     this.type = digsim.NOT;
+    this.name = 'NOT';
     
     this.next = [];
     this.prev = [];

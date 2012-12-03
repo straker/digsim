@@ -9,6 +9,7 @@
 
 function XOR(numInputs) {
     this.type = digsim.XOR;
+    this.name = 'XOR';
     
     this.next = [];
     this.prev = [];

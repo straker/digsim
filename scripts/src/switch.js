@@ -9,6 +9,7 @@
 
 function Switch() {
     this.type = digsim.SWITCH;
+    this.name = 'Switch';
 
     this.next = [];
     this.connections = [];

@@ -9,6 +9,7 @@
 
 function NOR(numInputs) {
     this.type = digsim.NOR;
+    this.name = 'NOR';
 
     this.next = [];
     this.prev = [];

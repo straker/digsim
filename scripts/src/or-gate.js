@@ -9,6 +9,7 @@
 
 function OR(numInputs) {
     this.type = digsim.OR;
+    this.name = 'OR';
 
     this.next = [];
     this.prev = [];
