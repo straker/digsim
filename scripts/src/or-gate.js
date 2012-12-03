@@ -39,7 +39,7 @@ OR.prototype.changeSize = function() {
  *  handle any number of inputs. Props to Steven Lambert for figuring out how
  *  to draw a half circle with the bezierCurveTo method. 
  ****************************************************************************/
-OR.prototype.draw = function(context) {
+OR.prototype.draw = function(context, lineColor) {
     var factor = Math.floor(this.numInputs / 2);
     
     // Draw wires
@@ -49,6 +49,7 @@ OR.prototype.draw = function(context) {
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
     context.fillStyle = '#FFFFFF';
+    context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
     
     // Draw gate

@@ -679,7 +679,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
                 this.components[i].state = 0;
             }
         }
-        this.drawComponents();
+        this.Components();
     }
 };
 
@@ -1366,7 +1366,7 @@ function animate() {
         var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
         digsim.draggingGate.column = col - digsim.offsetCol;
         digsim.draggingGate.row = row - digsim.offsetRow;
-        digsim.draggingGate.draw(digsim.movingContext);
+        digsim.draggingGate.draw(digsim.movingContext, 'red');
     }
 };
 

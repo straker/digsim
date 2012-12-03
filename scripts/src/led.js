@@ -26,10 +26,11 @@ LED.prototype = new Drawable();
  * DRAW
  *  Draws a wire on a grid space
  ***************************************************************************/
-LED.prototype.draw = function(context) {
+LED.prototype.draw = function(context, lineColor) {
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, (this.row + 0.5) * digsim.GRID_SIZE);
     context.fillStyle = '#FFFFFF';
+    context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
 
     // Fill LED light part

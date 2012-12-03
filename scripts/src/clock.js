@@ -26,13 +26,14 @@ Clock.prototype = new Drawable();
  * DRAW
  *  Draws a wire on a grid space
  ***************************************************************************/
-Clock.prototype.draw = function(context) {
+Clock.prototype.draw = function(context, lineColor) {
 
         // SQUARE CLOCK
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     
     context.fillStyle = '#FFFFFF';
+    context.strokeStyle = lineColor || 'black';
     context.lineCap = 'round';
     context.lineWidth = 2;
 
