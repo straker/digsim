@@ -141,6 +141,9 @@ Drawable.prototype.passState = function(pState) {
             }
             else if (this.type !== digsim.LED) {
                 console.error("ERROR! Multiple drivers on 1 wire [passState()]");
+                if (this.type === digsim.WIRE) {
+                    digsim.addMessage(digsim.WARNING, "Warning: Unexpected end of wire.");
+                }
             }
         }
     }
@@ -248,6 +251,7 @@ Drawable.prototype.traverse = function() {
                 }
                 if (con.type === digsim.SWITCH || con.type === digsim.CLOCK) {
                     console.error("ERROR! Multiple switches driving one wire [traverse()]");
+                    digsim.addMessage(digsim.ERROR, "Error: Multiple switches driving one wire.");
                     return false;
                 }
                 else if (con.type === digsim.LED) {
@@ -266,6 +270,7 @@ Drawable.prototype.traverse = function() {
                     
                     if ($.inArray(currObject, con.connections) !== -1) {
                         console.error("ERROR! Driver connected to gate output [traverse()]");
+                        digsim.addMessage(digsim.ERROR, "Error: Switch connected to the output of a gate.");
                         // Need to go back through the circuit and undo any nexts already set. 
                         return false;
                     }

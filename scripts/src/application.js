@@ -39,6 +39,8 @@ function Digsim() {
 	this.WIRE_MODE = 1;
     this.SIM_MODE = 2;
     this.PLACE_MODE = 3;
+    this.WARNING = 0;
+    this.ERROR = 1;
     
     // Wire identifiers
     this.TL = 0;    // top-left
@@ -672,6 +674,11 @@ Digsim.prototype.deletePlaceholder = function(obj) {
 
     if (id == "Run") {
         console.log("done running");
+        for (var i = 0, len = this.components.length; i < len; ++i) {
+            if (typeof this.components[i] !== 'undefined') {
+                this.components[i].state = 0;
+            }
+        }
         this.drawComponents();
     }
 };
@@ -741,6 +748,8 @@ Digsim.prototype.onButtonClicked = function (event) {
             var Class = window[id];
             var gate = new Class(digsim.numGateInputs); 
             digsim.prevGate = id;
+            digsim.offsetRow = 0;
+            digsim.offsetCol = 0;
 
             // Initialize the new object at the mouse position
             var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
@@ -1467,6 +1476,20 @@ window.requestAnimFrame = (function() {
   ============================= HELPER FUNCTIONS =============================
   ============================================================================
   ============================================================================*/
+
+/*****************************************************************************
+ * ADD MESSAGE
+ *  Adds error and warning messages to the message window
+ ****************************************************************************/
+Digsim.prototype.addMessage = function(type, msg) {
+    if (type === digsim.ERROR) {
+        $('#messages').append("<span class='error'>" + msg + "</span><br>");
+    }
+    else if (type === digsim.WARNING) {
+        $('#messages').append("<span class='warning'>" + msg + "</span><br>");
+    }
+    digsim.deactivate();
+}
 
 /*****************************************************************************
  * SHOW PLACEHOLDERS

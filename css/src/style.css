@@ -54,6 +54,16 @@ img {
     background-color: #F0F0F0;
 }
 
+#messages {
+    cursor: default;
+}
+.warning {
+    color: #FCD116;
+}
+.error {
+    color: #FF0000;
+}
+
 /**
  * MENU
  */
