@@ -269,7 +269,7 @@ Digsim.prototype.deleteComponent = function(obj) {
     if (obj.type === this.SWITCH || obj.type === this.CLOCK) {
         this.drivers.splice(this.drivers.indexOf(obj.id), 1);
     }
-    //this.components[obj.id] = undefined;
+    this.components[obj.id] = undefined;
     this.deleteConnections(obj);
     this.deletePlaceholder(obj);
     this.disableControls();
@@ -1063,6 +1063,23 @@ Digsim.prototype.onGridMouseMove = function(event) {
     var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
     var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
     digsim.mousePos = { x: mouseX, y: mouseY };
+
+    // Show movable components
+    if (digsim.mode === digsim.DEFAULT_MODE && !digsim.dragging) {
+        var row = Math.floor(mouseY / digsim.GRID_SIZE);
+        var col = Math.floor(mouseX / digsim.GRID_SIZE);
+        var PH = digsim.placeholder[row][col];
+        if (PH instanceof Array) {
+            /* FIX LATER */
+            $("canvas").css('cursor','default');
+        }
+        else if (PH) {
+            $("canvas").css('cursor','move');
+        }
+        else {
+            $("canvas").css('cursor','default');
+        }
+    }
 };
 
 /*****************************************************************************
