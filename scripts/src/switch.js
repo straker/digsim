@@ -31,12 +31,12 @@ Switch.prototype.draw = function(context, lineColor) {
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     
+    context.beginPath();
     context.fillStyle = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
     
     context.moveTo(0, 0);
-    context.beginPath();
     
     // draw 1 and line thingy
     context.moveTo(digsim.GRID_SIZE / 4, digsim.GRID_SIZE / 4 * 3);

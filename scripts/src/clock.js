@@ -32,6 +32,7 @@ Clock.prototype.draw = function(context, lineColor) {
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     
+    context.beginPath();
     context.fillStyle = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
     context.lineCap = 'round';
@@ -65,6 +66,7 @@ Clock.prototype.draw = function(context, lineColor) {
     context.stroke();
 
     // Connection
+    context.beginPath();
     context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 1.5);
     context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE * 1.5);
     context.stroke();

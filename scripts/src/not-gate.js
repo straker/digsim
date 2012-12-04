@@ -48,6 +48,7 @@ NOT.prototype.draw = function(context, lineColor) {
     context.fill();
     context.stroke();
     
+    context.beginPath();
     context.moveTo(digsim.GRID_SIZE * 1.75, digsim.GRID_SIZE * 1.5);
     context.beginPath();
     context.arc(digsim.GRID_SIZE * 1.8125, digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * 3 / 16, 0, 2 * Math.PI);

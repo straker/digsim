@@ -15,13 +15,13 @@
  *  Holds all the constants, animation, and data variables for the program
  ****************************************************************************/
 function Digsim() {
-	// Constants
-	this.GRID_SIZE = 20;
+    // Constants
+    this.GRID_SIZE = 20;
     this.GRID_ZOOM = 5;
     this.MAX_GRID_SIZE = 100;
     this.MIN_GRID_SIZE = 5;
-	this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
-	this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
+    this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
+    this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
     this.CLK_FREQ = 60; 
     
     // Type identifiers
@@ -36,7 +36,7 @@ function Digsim() {
     this.SWITCH = 7;
     this.LED = 8;
     this.DEFAULT_MODE = 0;
-	this.WIRE_MODE = 1;
+    this.WIRE_MODE = 1;
     this.SIM_MODE = 2;
     this.PLACE_MODE = 3;
     this.WARNING = 0;
@@ -61,9 +61,9 @@ function Digsim() {
     this.lockV = 0;
     this.clkCnt = 0;
 
-	// Grid variables
-	this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
-	this.gridHeight = this.NUM_ROWS * this.GRID_SIZE;
+    // Grid variables
+    this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
+    this.gridHeight = this.NUM_ROWS * this.GRID_SIZE;
     this.mousePos = { x: -1, y: -1 };
     this.offsetCol = 0;
     this.offsetRow = 0;
@@ -93,33 +93,33 @@ function Digsim() {
  *  Tests to see if the canvas is supported, returning true if it is
  ****************************************************************************/
 Digsim.prototype.init = function() {
-	// Get the canvas element
-	this.gridCanvas = document.getElementById('grid');
-	this.staticCanvas = document.getElementById('static');
-	this.movingCanvas = document.getElementById('moving');
-	
-	// Test to see if canvas is supported
-	if (this.gridCanvas.getContext) {
+    // Get the canvas element
+    this.gridCanvas = document.getElementById('grid');
+    this.staticCanvas = document.getElementById('static');
+    this.movingCanvas = document.getElementById('moving');
+    
+    // Test to see if canvas is supported
+    if (this.gridCanvas.getContext) {
 
-		// Canvas variables
-		var canvasWidth = this.gridWidth + 1;
-		var canvasHeight = this.gridHeight + 1;
+        // Canvas variables
+        var canvasWidth = this.gridWidth + 1;
+        var canvasHeight = this.gridHeight + 1;
         
-		this.gridContext = this.gridCanvas.getContext('2d');
-		this.staticContext = this.staticCanvas.getContext('2d');
-		this.movingContext = this.movingCanvas.getContext('2d');
-		
-		this.gridCanvas.width = this.gridWidth;
-		this.gridCanvas.height = this.gridHeight;
+        this.gridContext = this.gridCanvas.getContext('2d');
+        this.staticContext = this.staticCanvas.getContext('2d');
+        this.movingContext = this.movingCanvas.getContext('2d');
+        
+        this.gridCanvas.width = this.gridWidth;
+        this.gridCanvas.height = this.gridHeight;
         this.staticCanvas.width = this.gridWidth;
-		this.staticCanvas.height = this.gridHeight;
+        this.staticCanvas.height = this.gridHeight;
         this.movingCanvas.width = this.gridWidth;
-		this.movingCanvas.height = this.gridHeight;
-		
-		return true;
-	} else {
-		return false;
-	}
+        this.movingCanvas.height = this.gridHeight;
+        
+        return true;
+    } else {
+        return false;
+    }
 };
 
 /*****************************************************************************
@@ -177,15 +177,15 @@ Digsim.prototype.run = function() {
  *  Clears the given canvas. 
  ****************************************************************************/
 Digsim.prototype.clearCanvas = function(context, width, height) {
-	// Store the current transformation matrix
-	context.save();
+    // Store the current transformation matrix
+    context.save();
     
-	// Use the identity matrix while clearing the canvas
-	context.setTransform(1, 0, 0, 1, 0, 0);
-	context.clearRect(0, 0, width, height);
+    // Use the identity matrix while clearing the canvas
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, width, height);
     
-	// Restore the transform
-	context.restore();
+    // Restore the transform
+    context.restore();
 };
 
 /*****************************************************************************
@@ -266,13 +266,10 @@ Digsim.prototype.drawComponents = function() {
  ****************************************************************************/
 Digsim.prototype.deleteComponent = function(obj) {
     // Remove the component from the array
-    var id = this.placeholder[obj.row][obj.column].ref;
-    var comp = this.components[id];
-
-    if (comp.type === this.SWITCH || comp.type === this.CLOCK) {
-        this.drivers.splice(this.drivers.indexOf(id),1);
+    if (obj.type === this.SWITCH || obj.type === this.CLOCK) {
+        this.drivers.splice(this.drivers.indexOf(obj.id), 1);
     }
-    this.components[id] = undefined;
+    //this.components[obj.id] = undefined;
     this.deleteConnections(obj);
     this.deletePlaceholder(obj);
     this.disableControls();
@@ -283,18 +280,35 @@ Digsim.prototype.deleteComponent = function(obj) {
  *  Remove all connections for the component
  ****************************************************************************/
 Digsim.prototype.deleteConnections = function(obj) {
-    for (var i = 0, len = obj.connections.length; i < len; ++i) {
+    console.log("•••••••••••• DELETE CONNECTIONS•••••••••••••••");
+    for (var i = 0; i < obj.connections.length; ++i) {
         var connections = obj.connections[i].connections;
+        console.log("connections.indexOf(obj) = " + connections.indexOf(obj));
         connections.splice(connections.indexOf(obj),1);
     }
 
     // Remove connetions to gates
     if (obj.type < 0) {
-        for (var i = 0, len = obj.prevConnect.length; i < len; ++i) {
+        console.log("OBJ IS GATE");
+        for (var i = 0; i < obj.prevConnect.length; ++i) {
+        //     console.log("I: " + i);
+        //     console.log("obj.prevConnect.length: " + obj.prevConnect.length);
+        //     console.log(obj.prevConnect[i]);
             var connections = obj.prevConnect[i].connections;
-            connections.splice(connections.indexOf(obj),1);
+        //     console.log("CONNECTIONS: ••••••••••••");
+             console.log(connections);
+             var index = connections.indexOf(obj);
+             console.log("INDEX: " + index);
+             if (index >= 0) {
+                 connections.splice(index, 1);
+             }
+        //     console.log("connections.indexOf(obj) = " + connections.indexOf(obj));
+        //     var poo = connections.splice(connections.indexOf(obj),1);
+        //     console.log("POO: "); 
+        //     console.log(poo);
         }
     }
+    
     obj.connections = [];
 };
 
@@ -452,14 +466,14 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
     if (dx) {
         console.log("CHECKING FOR COLLISION(DX)");
         end = Math.max(wire.column, endCol);
-		begin = Math.min(wire.column, endCol);
+        begin = Math.min(wire.column, endCol);
         j = Math.floor(begin);
-		while (j < end) {
+        while (j < end) {
             console.log("J: " + j + "  END: " + (end) + "  INC/2: " + inc/2)
             console.log("J%1: " + (j % 1));
             thisPH = this.placeholder[floorEndRow][Math.floor(j)];
 
-			if (thisPH instanceof Array) {
+            if (thisPH instanceof Array) {
                 if (j >= begin) {
                     
                     if (j % 1) {
@@ -489,13 +503,13 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
     else if (dy) {
         console.log("CHECKING FOR COLLISION(DY)");
         end = Math.max(wire.row, endRow);
-		begin = Math.min(wire.row, endRow);
+        begin = Math.min(wire.row, endRow);
         j = Math.floor(begin);
-		while (j < end) {
+        while (j < end) {
             console.log("J: " + j + "  END: " + (end) + "  INC/2: " + inc/2)
             console.log("J%1: " + (j % 1));
             thisPH = this.placeholder[Math.floor(j)][floorEndCol];
-			if (thisPH instanceof Array) {
+            if (thisPH instanceof Array) {
                 if (j >= begin) {
                     
                     if (j % 1) {
@@ -679,7 +693,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
                 this.components[i].state = 0;
             }
         }
-        this.Components();
+        this.drawComponents();
     }
 };
 
@@ -727,12 +741,11 @@ Digsim.prototype.onButtonClicked = function (event) {
             for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
                 var obj = digsim.components[ digsim.drivers[i] ];
                 if (obj.traverse()) {
-                    obj.state = 0;
                     console.log("");
                     console.log("");
                     console.log("");
                     console.log("********************BEGIN PASS STATE!********************");
-                    obj.passState(obj.state);
+                    obj.passState(0);
                 }
             }
 
@@ -888,6 +901,7 @@ Digsim.prototype.onGridClicked = function(event) {
             digsim.enableButton('Cut');
             digsim.enableButton('Copy');
             digsim.enableButton('Delete');
+            digsim.selectedComponent.draw(digsim.staticContext, 'red');
             /* NEED TO SHOW SOMEHOW THAT COMPONENT IS SELECTED */
         }
     }
@@ -1122,7 +1136,7 @@ Digsim.prototype.disableControls = function() {
         digsim.disableButton('Copy');
         digsim.disableButton('Delete');
     }
-    this.selectedComponent = {};
+    this.selectedComponent = undefined;
 };
 
 /*****************************************************************************

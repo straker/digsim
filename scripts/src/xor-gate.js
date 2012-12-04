@@ -93,11 +93,11 @@ XOR.prototype.draw = function(context, lineColor) {
     context.stroke();
     context.fill();
 
+    // base quadratic curve
     context.beginPath();
     context.moveTo(digsim.GRID_SIZE / -4, y1);
     context.quadraticCurveTo(digsim.GRID_SIZE * baseCurveature - digsim.GRID_SIZE / 4, y1 / 2, digsim.GRID_SIZE / -4, 0);
     context.stroke();
-
     context.restore();
     
     for (var i = 0; i < this.juncts.length; ++i) {
