@@ -255,14 +255,14 @@ Drawable.prototype.traverse = function() {
                 }
                 else if (con.type === digsim.LED) {
                     currObject.setNext(con);
-                    con.state = currObject.state;
+                    //con.state = currObject.state;
                     console.log("CURRObject.setNext(con)");
                 }
                 else if (con.type === digsim.WIRE) {
 
                     if (typeof con.next[0] === "undefined" && !found) {
                         currObject.setNext(con);
-                        con.state = currObject.state;
+                        //con.state = currObject.state;
                         conQueue.splice(1, 0, con);
                         console.log("conQueue.push(con)");
                     }
@@ -277,7 +277,7 @@ Drawable.prototype.traverse = function() {
                     }
                     else {
                         currObject.setNext(con);
-                        con.computeLogic();
+                       // con.computeLogic();
                         if (typeof con.next[0] === "undefined") {
                             conQueue.splice(1, 0, con); // push_font()
                             console.log("conQueue.push(con):: (NEXT OF GATE NOT SET)");

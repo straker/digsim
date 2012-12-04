@@ -253,6 +253,7 @@ Digsim.prototype.drawGrid = function(context) {
  ****************************************************************************/
 Digsim.prototype.drawComponents = function() {
     this.clearCanvas(this.staticContext, this.gridWidth, this.gridHeight);
+    console.log(this.components);
     for (index in this.components) {
         if(typeof this.components[index] !== 'undefined' && this.components[index].drawStatic) {
             this.components[index].draw(this.staticContext);
@@ -269,11 +270,11 @@ Digsim.prototype.deleteComponent = function(obj) {
     if (obj.type === this.SWITCH || obj.type === this.CLOCK) {
         this.drivers.splice(this.drivers.indexOf(obj.id), 1);
     }
+    this.disableControls();
     this.components[obj.id] = undefined;
     this.deleteConnections(obj);
     this.deletePlaceholder(obj);
-    this.disableControls();
-};
+}
 
 /*****************************************************************************
  * DELETE CONNECTIONS
@@ -669,7 +670,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
     }
 
     // Visually remove component from static canvas. 
-    digsim.drawComponents();
+    this.drawComponents();
 };
 
 /*****************************************************************************
@@ -745,6 +746,7 @@ Digsim.prototype.onButtonClicked = function (event) {
                     console.log("");
                     console.log("");
                     console.log("********************BEGIN PASS STATE!********************");
+                    obj.passState(1);
                     obj.passState(0);
                 }
             }
@@ -1152,6 +1154,9 @@ Digsim.prototype.disableControls = function() {
         digsim.disableButton('Cut');
         digsim.disableButton('Copy');
         digsim.disableButton('Delete');
+        if (digsim.selectedComponent) {
+            digsim.selectedComponent.draw(digsim.staticContext);
+        }
     }
     this.selectedComponent = undefined;
 };
