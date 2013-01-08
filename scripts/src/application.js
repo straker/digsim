@@ -8,6 +8,16 @@
  *
  * Summary:
  *  A fully functional circuit simulation program. 
+ *
+ * To-do:
+ * pick up/delete wires
+ * Interface - spell out what the buttons are on controls
+ * Rotations
+ * Panning
+ * auto-route
+ * implement touch controls
+ * save and load schematics/files
+ * 
  ****************************************************************************/
 
 /*****************************************************************************
