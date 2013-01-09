@@ -91,14 +91,14 @@ Wire.prototype.checkJunction = function(row, col, pos) {
  * DRAW
  *  Draws a wire on a grid space
  ***************************************************************************/
-Wire.prototype.draw = function(context) {
+Wire.prototype.draw = function(context, lineColor) {
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
 
     context.beginPath();
-    context.strokeStyle = '#000000';
+    context.strokeStyle = lineColor || 'black';
     context.fillStyle = '#000000';
-    context.lineWidth = 2;
+    context.lineWidth = 12;
     context.lineCap = 'round';
     if (digsim.mode === digsim.SIM_MODE) {
         if (this.state) {

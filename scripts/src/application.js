@@ -809,12 +809,6 @@ Digsim.prototype.onGridClicked = function(event) {
     if (digsim.mode === digsim.WIRE_MODE) {
         event.preventDefault();
         var x, y, dx = 0, dy = 0;
-                
-        // Tells us where on the grid the click is
-        var relX = mouseX % digsim.GRID_SIZE;
-        var relY = mouseY % digsim.GRID_SIZE;
-        var diagSep = digsim.GRID_SIZE - relX;
-        var wirePos = 0;
         
         if (!digsim.dragging) {
             digsim.dragging = true;
@@ -905,6 +899,50 @@ Digsim.prototype.onGridClicked = function(event) {
         if (digsim.placeholder[row][col] instanceof Array) {
             //Selected a wire
             console.log("Wire selected");
+
+            // Tells us where on the grid the click is
+            var relX = mouseX % digsim.GRID_SIZE;
+            var relY = mouseY % digsim.GRID_SIZE;
+            var diagSep = digsim.GRID_SIZE - relX;
+            var wirePos = 0;
+
+            // Determine grid snap for wires not connecting to other wires. 
+            if (relY < relX) {  // top
+                if (relY < diagSep) {  // top-left
+                    x = col + 0.5;
+                    y = row;
+                    wirePos = digsim.TL;
+                }
+                else { // top-right
+                    x = col + 1;
+                    y = row + 0.5;
+                    wirePos = digsim.TR;
+                }
+            }
+            else { // bottom
+                if (relY < diagSep) { // bottom-left
+                    x = col;
+                    y = row + 0.5;
+                    wirePos = digsim.BL;
+                }
+                else { // bottom-right
+                    x = col + 0.5;
+                    y = row + 1;
+                    wirePos = digsim.BR;
+                }
+            }
+
+            console.log(digsim.placeholder[row][col][wirePos]);
+
+            digsim.selectedComponent = digsim.components[digsim.placeholder[row][col][wirePos].ref ];
+            digsim.enableButton('Cut');
+            digsim.enableButton('Copy');
+            digsim.enableButton('Delete');
+            digsim.selectedComponent.draw(digsim.staticContext, 'red');
+
+
+
+
         }
         else if (digsim.placeholder[row][col]) {
             // Selected a component
