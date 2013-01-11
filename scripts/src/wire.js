@@ -98,7 +98,7 @@ Wire.prototype.draw = function(context, lineColor) {
     context.beginPath();
     context.strokeStyle = lineColor || 'black';
     context.fillStyle = '#000000';
-    context.lineWidth = 12;
+    context.lineWidth = 2;
     context.lineCap = 'round';
     if (digsim.mode === digsim.SIM_MODE) {
         if (this.state) {

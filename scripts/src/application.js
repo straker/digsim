@@ -28,8 +28,9 @@ function Digsim() {
     // Constants
     this.GRID_SIZE = 20;
     this.GRID_ZOOM = 5;
-    this.MAX_GRID_SIZE = 100;
+    this.MAX_GRID_SIZE = 50;
     this.MIN_GRID_SIZE = 5;
+    this.HIT_RADIUS = .7333333333;
     this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
     this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
     this.CLK_FREQ = 60; 
@@ -800,6 +801,9 @@ Digsim.prototype.onGridClicked = function(event) {
     if (event.button !== 0) {
         return;
     }
+    if (digsim.selectedComponent) {
+        digsim.selectedComponent.draw(digsim.staticContext);
+    }
 
     var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
     var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
@@ -900,6 +904,7 @@ Digsim.prototype.onGridClicked = function(event) {
             //Selected a wire
             console.log("Wire selected");
 
+            /*
             // Tells us where on the grid the click is
             var relX = mouseX % digsim.GRID_SIZE;
             var relY = mouseY % digsim.GRID_SIZE;
@@ -939,10 +944,74 @@ Digsim.prototype.onGridClicked = function(event) {
             digsim.enableButton('Copy');
             digsim.enableButton('Delete');
             digsim.selectedComponent.draw(digsim.staticContext, 'red');
+            */
 
+            var relX = mouseX % digsim.GRID_SIZE;
+            var relY = mouseY % digsim.GRID_SIZE;
+            var leftVert = topHor = Math.ceil(digsim.GRID_SIZE * (1 - digsim.HIT_RADIUS) / 2);
+            var rightVert = bottomHor = digsim.GRID_SIZE - topHor;
+            var diagSep = digsim.GRID_SIZE - relX;
+            var vert = (relX >= topHor) && (relX <= bottomHor);
+            var hor = (relY >= leftVert) && (relY <= rightVert);
+            var index = -1;
 
+            if ((digsim.placeholder[row][col][0] || digsim.placeholder[row][col][2]) && 
+                (digsim.placeholder[row][col][1] || digsim.placeholder[row][col][3])) {
+                if (hor && !vert) {
+                    // Horizontal index
+                    if (relX < leftVert) {
+                        index = 3;
+                    }
+                    else if (relX > rightVert) {
+                        index = 1;
+                    }
+                    else {
 
-
+                    }
+                }
+                else if (!hor && vert) {
+                    // Vertical Index
+                    if (relY < topHor) {
+                        index = 0;
+                    }
+                    else if (relY > bottomHor) {
+                        index = 2;
+                    }
+                }
+                else if (hor && vert) {
+                    // Determine grid snap for wires not connecting to other wires. 
+                    if (relY < relX) {  // top
+                        if (relY < diagSep) {  // top-left
+                            index = digsim.TL;
+                        }
+                        else { // top-right
+                            index = digsim.TR;
+                        }
+                    }
+                    else { // bottom
+                        if (relY < diagSep) { // bottom-left
+                            index = digsim.BL;
+                        }
+                        else { // bottom-right
+                            index = digsim.BR;
+                        }
+                    }
+                }
+                else {
+                    console.log("empty grid\n");
+                }
+            }
+            else if (digsim.placeholder[row][col][0] || digsim.placeholder[row][col][2]) {
+                // to do stuff here.
+            }
+            console.log("index: " + index);
+            if (index != -1 && digsim.placeholder[row][col][index]) {
+                digsim.selectedComponent = digsim.components[ digsim.placeholder[row][col][index].ref ];
+                digsim.enableButton('Cut');
+                digsim.enableButton('Copy');
+                digsim.enableButton('Delete');
+                digsim.selectedComponent.draw(digsim.staticContext, 'red'); 
+            }
         }
         else if (digsim.placeholder[row][col]) {
             // Selected a component
@@ -1283,6 +1352,7 @@ Digsim.prototype.zoomIn = function(event) {
         if ($('#Zoom_Out').hasClass('disabled')) {
             digsim.enableButton('Zoom_Out');
         }
+        digsim.changeHitRadius();
         digsim.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE;
         digsim.NUM_ROWS = (window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE;
         digsim.init();
@@ -1308,7 +1378,7 @@ Digsim.prototype.zoomOut = function(event) {
         if ($('#Zoom_In').hasClass('disabled')) {
             digsim.enableButton('Zoom_In');
         }
-        
+        digsim.changeHitRadius();
         digsim.NUM_COLS = (window.innerWidth - $('.canvases').position().left) / digsim.GRID_SIZE;
         digsim.NUM_ROWS = (window.innerHeight - $('.canvases').position().top) / digsim.GRID_SIZE;
         digsim.init();
@@ -1319,6 +1389,16 @@ Digsim.prototype.zoomOut = function(event) {
         }
     }
 };
+
+/*****************************************************************************
+ * CHANGE HIT RADIUS
+ *  When zooming, changes the hit radius so that wires will be easier to 
+ *  select.
+ ****************************************************************************/
+Digsim.prototype.changeHitRadius = function() {
+    this.HIT_RADIUS = .80 / (digsim.MIN_GRID_SIZE - digsim.MAX_GRID_SIZE) *
+    (digsim.GRID_SIZE - digsim.MIN_GRID_SIZE) + 1; 
+}
 
 /*****************************************************************************
  * WINDOW RESIZE
