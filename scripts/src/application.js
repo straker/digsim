@@ -68,6 +68,7 @@ function Digsim() {
     };
     this.dragging = false;
     this.draggingGate;
+    this.autoroute = false;
     this.lockH = 0;
     this.lockV = 0;
     this.clkCnt = 0;
@@ -90,12 +91,20 @@ function Digsim() {
     this.selectedComponent;
     this.mode = 0;
 
+    // Autorouting
+    this.neighbors = [];
+    this.Q = [];
+    this.dist = [];
+    this.prev = [];
+
     // Data arrays
     this.components = [];   // Holds all of the objects by their unique ID 
     this.drivers = [];      // Holds the place of the logic drivers in components[].
     this.placeholder = [];  // Holds component positions on grid
     for (var i = 0; i < this.NUM_COLS; ++i) {
         this.placeholder[i] = [];
+        this.Q[i] = [];
+        this.dist[i] = [];
     }
 };
 
@@ -822,129 +831,201 @@ Digsim.prototype.onGridClicked = function(event) {
             animateWire();
         }
         else {
-            digsim.dragging = false;
-            
-
-            // Check wire path for other components.
-            if (digsim.lockV) {
-                dy = (row < Math.floor(digsim.wirePos.startY)) ? -1 : ((row === Math.floor(digsim.wirePos.startY)) ? 0 : 1);
-            }
-            else if (digsim.lockH) {
-                dx = (col < Math.floor(digsim.wirePos.startX)) ? -1 : ((col === Math.floor(digsim.wirePos.startX)) ? 0 : 1);
-            }
-            
-            if (dx == 0 && dy == 0) {
-                // Stop wire placing
-                return;
-            }
-            
-            // Valid mouse clickage
-            if ((digsim.lockV && dy) || (digsim.lockH && dx)) {
-                var wire = new Wire(); 
-                wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
-
-                if (digsim.lockH) {
-                    wire.path.push( {'x': col + 0.5 - digsim.wirePos.startX, 'y': 0 } );
+            if (digsim.autoroute) {
+                //Dijkstra pathfinding algorithm - www.zsheffield.net/dijkstra-pathfinding        
+                var start = {'r': 0, 'c': 0};
+                var target = {'r': 0, 'c': 0};
+                var neighbors = [];
+                var BIGNUM = ~(1 << 31) - 10;
+                var shortest;
+                var u;
+                var pathfound;
+                var alt;
+                var S = [];
+                for (var r = 0; r < digsim.NUM_ROWS; ++r) {
+                    for (var c = 0; c < digsim.NUM_COLS; ++c) {
+                        dist[r][c] = BIGNUM; 
+                        Q[r][c] = digsim.placeholder[r][c]; // placeholders go here
+                        prev[r][c] = undefined;
+                    }
                 }
-                else if (digsim.lockV) {
-                    //console.log(Math.floor(mouseY / digsim.GRID_SIZE) - digsim.wirePos.startY);
-                    wire.path.push( {'x': 0, 'y': row + 0.5 - digsim.wirePos.startY } );
+
+                dist[start.r][start.c] = 0;
+                while (function isempty() {
+                    for (var r = 1; r < digsim.NUM_ROWS; ++r) { 
+                        for (var c = 1; c < digsim.NUM_COLS; ++c) {
+                            if (Q[r][c] != undefined) { return true; } } } } )
+                {   
+                    // Find smallest distance from u
+                    shortest = BIGNUM; 
+                    u = {'r': undefined, 'c': undefined };
+                    for (var r = 1, sQ = true; r < digsim.NUM_ROWS && sQ; ++r) {
+                        for (var c = 1; c < digsim.NUM_COLS && sQ; ++c) {
+                            if (Q[r][c] != undefined) {
+                                u = {'r': r, 'c': c};
+                                shortest = dist[u.r][u.c];
+                                sQ = false;
+                            }
+                        }
+                    }
+                    for (var r = 1; r < digsim.NUM_ROWS; ++r) {
+                        for (var c = 1; c < digsim.NUM_COLS; ++c) {
+                            if (Q[r][c] != undefined) {
+                                if (dist[r][c] < shortest) {
+                                    shortest = dist[r][c];
+                                    u = {'r': r, 'c': c};
+                                }
+                            }
+                        }
+                    }
+                    // u now contains the coordinate in Q with the
+                    // smallest distance in dist[]
+
+                    // If we've reached our target, then we're done
+                    Q[u.r][u.c] = undefined;
+                    if (u.r == target.r && u.c == target.c) {
+                        pathfound = true;
+                        break;
+                    }
+                    // If the shortest distance from u is BIGNUM, there is no path
+                    if (dist[u.r][u.c] == BIGNUM) {
+                        pathfound = false;
+                        break;
+                    }
+
+                    // FIND NEIGHBORS
+                    // Neighbor above
+                    if (dist[u.r - 1][u.c] != undefined && 
+                        Q[u.r - 1][u.c] != undefined && 
+                        grid[u.r - 1][u.c] != 1) {
+                        neighbors.push( {'r': u.r - 1, 'c': u.c} );
+                    }
+                    // Neighbor below
+                    if (dist[u.r + 1][u.c] != undefined && 
+                        Q[u.r + 1][u.c] != undefined && 
+                        grid[u.r + 1][u.c] != 1) {
+                        neighbors.push( {'r': u.r + 1, 'c': u.c} );
+                    }
+                    // Neighbor left
+                    if (dist[u.r][u.c - 1] != undefined && 
+                        Q[u.r][u.c - 1] != undefined && 
+                        grid[u.r][u.c - 1] != 1) {
+                        neighbors.push( {'r': u.r, 'c': u.c - 1} );
+                    }
+                    // Neighbor right
+                    if (dist[u.r][u.c + 1] != undefined && 
+                        Q[u.r][u.c + 1] != undefined && 
+                        grid[u.r][u.c + 1] != 1) {
+                        neighbors.push( {'r': u.r, 'c': u.c + 1} );
+                    }        
+
+                    // Add the right neighbor to the path
+                    for (var i = 0; i < neighbors.length; ++i) {
+                        alt = dist[u.r][u.c] + 1;
+                        if (alt < dist[ neighbors[i].r ][ neighbors[i].c ]) {
+                            dist[ neighbors[i].r ][ neighbors[i].c ] = alt;
+                            prev[neighbors[i].r][neighbors[i].c] = u;
+                        }
+                    }
+                    neighbors = [];
                 }
-                else {
-                    return;                    
+                u = target;
+                while (prev[u.r][u.c] != undefined) {
+                    S.splice(0, 0, u);
+                    u = prev[u.r][u.c];
+                }
+                // Now S is an array (from start to target) that contains  
+                // {row, column} objects of the path
+
+                // There might be an error here because wires crossing each other 
+                // perpendicularly is ok, but this algorithm does not yet take that 
+                // into account
+
+            } // End of autoroute
+
+            else { 
+                digsim.dragging = false;
+                
+
+                // Check wire path for other components.
+                if (digsim.lockV) {
+                    dy = (row < Math.floor(digsim.wirePos.startY)) ? -1 : ((row === Math.floor(digsim.wirePos.startY)) ? 0 : 1);
+                }
+                else if (digsim.lockH) {
+                    dx = (col < Math.floor(digsim.wirePos.startX)) ? -1 : ((col === Math.floor(digsim.wirePos.startX)) ? 0 : 1);
                 }
                 
-                var validPlacement = digsim.setWirePlaceholder(wire, dx, dy);
+                if (dx == 0 && dy == 0) {
+                    // Stop wire placing
+                    return;
+                }
                 
-                if (validPlacement) {
-                    console.log("WE HAVE A VALID PLACEMENT!");
-                    
-                    // Create the wire in components array
-                    
-                    digsim.components[digsim.iComp++] = wire;
-                    // Going up/down and left/right?       
-
+                // Valid mouse clickage
+                if ((digsim.lockV && dy) || (digsim.lockH && dx)) {
+                    var wire = new Wire(); 
+                    wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
+                    wire.dx = dx; 
+                    wire.dy = dy;
                     if (digsim.lockH) {
-                        //console.log(Math.floor(mouseX / digsim.GRID_SIZE) - digsim.wirePos.startX);
-                        
-                        console.log("LOCKH!");
-                        digsim.dragging = true;
-                        digsim.lockH = false;
-                        digsim.lockV = true;
-                        digsim.wirePos.startX = col + 0.5;
+                        wire.path.push( {'x': col + 0.5 - digsim.wirePos.startX, 'y': 0 } );
                     }
                     else if (digsim.lockV) {
-                        console.log("LOCKV!");
-                        digsim.dragging = true;
-                        digsim.lockH = true;
-                        digsim.lockV = false;
-                        digsim.wirePos.startY = row + 0.5;
-                        // Now we need to move the startXY position to the current position
+                        //console.log(Math.floor(mouseY / digsim.GRID_SIZE) - digsim.wirePos.startY);
+                        wire.path.push( {'x': 0, 'y': row + 0.5 - digsim.wirePos.startY } );
                     }
                     else {
                         return;                    
                     }
-                    // Draws the wire on static context. 
-                    wire.checkConnect();
-                    wire.draw(digsim.staticContext);
+                    
+                    var validPlacement = digsim.setWirePlaceholder(wire, dx, dy);
+                    
+                    if (validPlacement) {
+                        console.log("WE HAVE A VALID PLACEMENT!");
+                        
+                        // Create the wire in components array
+                        
+                        digsim.components[digsim.iComp++] = wire;
+                        // Going up/down and left/right?       
+
+                        if (digsim.lockH) {
+                            //console.log(Math.floor(mouseX / digsim.GRID_SIZE) - digsim.wirePos.startX);
+                            
+                            console.log("LOCKH!");
+                            digsim.dragging = true;
+                            digsim.lockH = false;
+                            digsim.lockV = true;
+                            digsim.wirePos.startX = col + 0.5;
+                        }
+                        else if (digsim.lockV) {
+                            console.log("LOCKV!");
+                            digsim.dragging = true;
+                            digsim.lockH = true;
+                            digsim.lockV = false;
+                            digsim.wirePos.startY = row + 0.5;
+                            // Now we need to move the startXY position to the current position
+                        }
+                        else {
+                            return;                    
+                        }
+                        // Draws the wire on static context. 
+                        wire.checkConnect();
+                        wire.draw(digsim.staticContext);
+                    }
+                    else {
+                        wire.path.pop();
+                        digsim.dragging = true;
+                        // DO NOT PLACE WIRE, there's something in the way. 
+                    }
                 }
                 else {
-                    wire.path.pop();
                     digsim.dragging = true;
-                    // DO NOT PLACE WIRE, there's something in the way. 
                 }
             }
-            else {
-                digsim.dragging = true;
-            }
-        }
     }
     else if (digsim.mode === digsim.DEFAULT_MODE) {
         if (digsim.placeholder[row][col] instanceof Array) {
             //Selected a wire
             console.log("Wire selected");
-
-            /*
-            // Tells us where on the grid the click is
-            var relX = mouseX % digsim.GRID_SIZE;
-            var relY = mouseY % digsim.GRID_SIZE;
-            var diagSep = digsim.GRID_SIZE - relX;
-            var wirePos = 0;
-
-            // Determine grid snap for wires not connecting to other wires. 
-            if (relY < relX) {  // top
-                if (relY < diagSep) {  // top-left
-                    x = col + 0.5;
-                    y = row;
-                    wirePos = digsim.TL;
-                }
-                else { // top-right
-                    x = col + 1;
-                    y = row + 0.5;
-                    wirePos = digsim.TR;
-                }
-            }
-            else { // bottom
-                if (relY < diagSep) { // bottom-left
-                    x = col;
-                    y = row + 0.5;
-                    wirePos = digsim.BL;
-                }
-                else { // bottom-right
-                    x = col + 0.5;
-                    y = row + 1;
-                    wirePos = digsim.BR;
-                }
-            }
-
-            console.log(digsim.placeholder[row][col][wirePos]);
-
-            digsim.selectedComponent = digsim.components[digsim.placeholder[row][col][wirePos].ref ];
-            digsim.enableButton('Cut');
-            digsim.enableButton('Copy');
-            digsim.enableButton('Delete');
-            digsim.selectedComponent.draw(digsim.staticContext, 'red');
-            */
 
             var relX = mouseX % digsim.GRID_SIZE;
             var relY = mouseY % digsim.GRID_SIZE;
@@ -954,56 +1035,49 @@ Digsim.prototype.onGridClicked = function(event) {
             var vert = (relX >= topHor) && (relX <= bottomHor);
             var hor = (relY >= leftVert) && (relY <= rightVert);
             var index = -1;
+            var array = digsim.placeholder[row][col];
 
-            if ((digsim.placeholder[row][col][0] || digsim.placeholder[row][col][2]) && 
-                (digsim.placeholder[row][col][1] || digsim.placeholder[row][col][3])) {
-                if (hor && !vert) {
-                    // Horizontal index
-                    if (relX < leftVert) {
-                        index = 3;
+            if (vert && hor && (array[0] || array[2]) && (array[1] || array[3])) {
+                // mid click and multiple wires
+                // Determine grid snap for wires not connecting to other wires. 
+                if (relY < relX) {  // top
+                    if (relY < diagSep) {  // top-left
+                        index = digsim.TL;
                     }
-                    else if (relX > rightVert) {
-                        index = 1;
-                    }
-                    else {
-
+                    else { // top-right
+                        index = digsim.TR;
                     }
                 }
-                else if (!hor && vert) {
-                    // Vertical Index
-                    if (relY < topHor) {
-                        index = 0;
+                else { // bottom
+                    if (relY < diagSep) { // bottom-left
+                        index = digsim.BL;
                     }
-                    else if (relY > bottomHor) {
-                        index = 2;
+                    else { // bottom-right
+                        index = digsim.BR;
                     }
-                }
-                else if (hor && vert) {
-                    // Determine grid snap for wires not connecting to other wires. 
-                    if (relY < relX) {  // top
-                        if (relY < diagSep) {  // top-left
-                            index = digsim.TL;
-                        }
-                        else { // top-right
-                            index = digsim.TR;
-                        }
-                    }
-                    else { // bottom
-                        if (relY < diagSep) { // bottom-left
-                            index = digsim.BL;
-                        }
-                        else { // bottom-right
-                            index = digsim.BR;
-                        }
-                    }
+                }                
+            }
+            else if (hor && relY >= topHor && relY <= bottomHor) {
+                if (relX <= digsim.GRID_SIZE / 2) {
+                    index = 3;
                 }
                 else {
-                    console.log("empty grid\n");
+                    index = 1;
                 }
             }
-            else if (digsim.placeholder[row][col][0] || digsim.placeholder[row][col][2]) {
-                // to do stuff here.
+            else if (vert && relX >= leftVert && relX <= rightVert) {
+                if (relY <= digsim.GRID_SIZE / 2) {
+                    index = 0;
+                }
+                else {
+                    index = 2;
+                }
             }
+
+            if (index === -1) {
+                console.log("§§§ no wire §§§");
+            }
+
             console.log("index: " + index);
             if (index != -1 && digsim.placeholder[row][col][index]) {
                 digsim.selectedComponent = digsim.components[ digsim.placeholder[row][col][index].ref ];
@@ -1056,8 +1130,8 @@ Digsim.prototype.onGridMouseDown = function(event) {
         
         // Here's where the magic happens
         console.log("ROW: " + row + ", COL: " + col);
-        if (digsim.placeholder[row][col] instanceof Array) {
-            // Deal with this later. 
+        if (digsim.placeholder[row][col] instanceof Array) { // wire 
+            // deal with this later
         }
         else if (digsim.placeholder[row][col]) {
             digsim.dragging = true;
@@ -1596,7 +1670,7 @@ function cycleClock() {
         requestAnimFrame(cycleClock);
         if (digsim.clkCnt > digsim.CLK_FREQ) { // FPS is approximately 60 Hz
             
-            digsim.clkCnt = 0
+            digsim.clkCnt = 0;
             for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
                 var driver = digsim.components[ digsim.drivers[i] ];
                 if (driver.type === digsim.CLOCK) {

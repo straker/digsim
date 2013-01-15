@@ -16,6 +16,8 @@ function Wire() {
     this.path = [];
     this.connections = [];
     this.juncts = [];
+    this.dy = 0;
+    this.dx = 0;
 };
 Wire.prototype = new Drawable();
 
