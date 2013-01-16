@@ -11,7 +11,6 @@
  *
  * To-do:
  * pick up/delete wires
- * Interface - spell out what the buttons are on controls
  * Rotations
  * Panning
  * auto-route
@@ -68,7 +67,6 @@ function Digsim() {
     };
     this.dragging = false;
     this.draggingGate;
-    this.autoroute = false;
     this.lockH = 0;
     this.lockV = 0;
     this.clkCnt = 0;
@@ -92,6 +90,7 @@ function Digsim() {
     this.mode = 0;
 
     // Autorouting
+    this.autoroute = false;    
     this.neighbors = [];
     this.Q = [];
     this.dist = [];
@@ -830,7 +829,9 @@ Digsim.prototype.onGridClicked = function(event) {
             digsim.lockH = digsim.lockV = 0;
             animateWire();
         }
-        else {
+        /*
+        else { 
+
             if (digsim.autoroute) {
                 //Dijkstra pathfinding algorithm - www.zsheffield.net/dijkstra-pathfinding        
                 var start = {'r': 0, 'c': 0};
@@ -942,7 +943,7 @@ Digsim.prototype.onGridClicked = function(event) {
                 // into account
 
             } // End of autoroute
-
+*/
             else { 
                 digsim.dragging = false;
                 
@@ -1778,3 +1779,8 @@ Digsim.prototype.showPlaceholders = function() {
  *  override it, otherwise create an empty object.
  ****************************************************************************/
 var digsim = digsim || new Digsim();
+
+
+
+
+
