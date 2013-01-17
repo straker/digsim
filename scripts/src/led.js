@@ -33,6 +33,14 @@ LED.prototype.draw = function(context, lineColor) {
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
 
+    var center = {'row': Math.floor(this.dimension.row / 2) * digsim.GRID_SIZE, 
+                  'col': digsim.GRID_SIZE / 2};
+    console.log("CENTER:");
+    console.log(center);
+    context.translate(center.col, center.row);
+    context.rotate(this.rotation * Math.PI / 180);
+    context.translate(-center.col, -center.row);
+
     // Fill LED light part
     context.beginPath();
     var P0x = digsim.GRID_SIZE / 8;
