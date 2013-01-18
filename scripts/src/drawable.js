@@ -153,10 +153,11 @@ Drawable.prototype.passState = function(pState) {
  * DRAW WIRES
  *  Draws..... wires?
  *****************************************************************************/
-Drawable.prototype.drawWires = function(context) {
+Drawable.prototype.drawWires = function(context, lineColor) {
      // Draw wires
     context.beginPath();
     context.fillStyle = '#FFFFFF';
+    context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
 
     var factor = Math.floor(this.numInputs / 2) || 1; 

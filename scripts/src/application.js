@@ -347,6 +347,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         for (col = 0; col < obj.dimension.col; ++col) {
             if (this.placeholder[obj.row + row][obj.column + col]) {
                 console.error("COLLISION! ERROR!");
+                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
                 return false;
             }
         }
@@ -373,6 +374,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
             if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
                 console.error("Connection point collision error!");
+                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
                 return false;
             }
             else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
@@ -380,6 +382,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             }
             else if (this.placeholder[conRow][conCol][1]) {
                 console.error("Connection point collision error!");
+                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
                 return false;
             }
         }
@@ -390,6 +393,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
             console.error("Connection point collision error!");
+            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
             return false;
         }
         else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
@@ -397,6 +401,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
         else if (this.placeholder[conRow][conCol][3]) {
             console.error("Connection point collision error!");
+            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
             return false;
         }
 
@@ -432,6 +437,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
             console.error("Connection point collision error!");
+            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
             return false;
         }
         else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
@@ -439,6 +445,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
         else if(this.placeholder[conRow][conCol][obj.conIndex]) {
             console.error("Connection point collision error!");
+            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
             return false;
         }
 
@@ -500,11 +507,13 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
                         console.log("placed at index " + 1);
                         if (thisPH[1]) {
                             console.error("wire collision error!");
+                            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
                             return false;
                         }
                     }
                     else if (thisPH[3]) {
                         console.error("wire collision error!");
+                        digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
                         return false;
                     }
                 }
@@ -512,6 +521,7 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
             }
             else if (thisPH) {
                 console.error("COLLISION! ERROR!");
+                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
                 return false;
             }
             else {
@@ -536,11 +546,13 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
                         console.log("placed at index " + 1);
                         if (thisPH[2]) {
                             console.error("wire collision error!");
+                            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
                             return false;
                         }
                     }
                     else if (thisPH[0]) {
                         console.error("wire collision error!");
+                        digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
                         return false;
                     }
                 }
@@ -548,6 +560,7 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
             }
             else if (thisPH) {
                 console.error("COLLISION! ERROR!");
+                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
                 return false;
             }
             else {
@@ -1287,7 +1300,7 @@ Digsim.prototype.changeNumInputs = function(event) {
         digsim.numGateInputs = $(this).data('inputs');
         if (digsim.draggingGate) {
             var type = digsim.draggingGate.type;
-            if (type !== digsim.NOT && type < 0) {
+            if (type !== digsim.NOT && type < 0 && !digsim.selectedComponent) {
                 digsim.draggingGate.numInputs = digsim.numGateInputs;
                 digsim.draggingGate.changeSize();
             }
@@ -1625,24 +1638,27 @@ function animateWire() {
         
         requestAnimFrame(animateWire);
         
-        // This will lock either horizontal or vertical wire placement
-        if (!digsim.lockH && !digsim.lockV) {
-            if (Math.abs(digsim.wirePos.startX * digsim.GRID_SIZE - digsim.mousePos.x) > digsim.GRID_SIZE / 2) {
-                digsim.lockH = 1;
-            }
-            else if (Math.abs(digsim.wirePos.startY * digsim.GRID_SIZE - digsim.mousePos.y) > digsim.GRID_SIZE / 2) {
-                digsim.lockV = 1;
-            }
-        }   
-        
         // Draw wire
         context.beginPath();
         context.fillStyle = '#000000';
         context.lineWidth = 2;
+        context.strokeStyle = '#3399FF';
         context.lineCap = 'round';
         context.arc(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
         context.moveTo(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE);
         var x, y;
+        // Chooses which direction to lock to, based on which component is furthest from
+        // the start point.
+        if (Math.abs(digsim.wirePos.startY * digsim.GRID_SIZE - digsim.mousePos.y) >
+            Math.abs(digsim.wirePos.startX * digsim.GRID_SIZE - digsim.mousePos.x)) {
+            digsim.lockV = true;
+            digsim.lockH = false;
+        }
+        else {
+            digsim.lockV = false;
+            digsim.lockH = true;
+        }
+        
         if (digsim.lockH) {
             x = digsim.mousePos.x;
             y = digsim.wirePos.startY * digsim.GRID_SIZE;
@@ -1717,11 +1733,12 @@ window.requestAnimFrame = (function() {
 Digsim.prototype.addMessage = function(type, msg) {
     if (type === digsim.ERROR) {
         $('#messages').append("<span class='error'>" + msg + "</span><br>");
+        digsim.deactivate();
     }
     else if (type === digsim.WARNING) {
         $('#messages').append("<span class='warning'>" + msg + "</span><br>");
     }
-    digsim.deactivate();
+    
 }
 
 /*****************************************************************************

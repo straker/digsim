@@ -31,7 +31,7 @@ NOT.prototype = new Drawable();
  ****************************************************************************/
 NOT.prototype.draw = function(context, lineColor) {
     
-    this.drawWires(context);
+    this.drawWires(context, lineColor);
     
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);

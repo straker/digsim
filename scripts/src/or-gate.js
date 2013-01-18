@@ -43,7 +43,7 @@ OR.prototype.draw = function(context, lineColor) {
     var factor = Math.floor(this.numInputs / 2);
     
     // Draw wires
-    this.drawWires(context);
+    this.drawWires(context, lineColor);
     
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
