@@ -10,7 +10,7 @@
  *  A fully functional circuit simulation program. 
  *
  * To-do:
- * pick up/delete wires
+ * pick up wires
  * Rotations
  * Panning
  * auto-route
@@ -284,7 +284,8 @@ Digsim.prototype.drawComponents = function() {
  * DELETE COMPONENT
  *  duh.
  ****************************************************************************/
-Digsim.prototype.deleteComponent = function(obj) {
+Digsim.prototype.deleteComponent = function() {
+    obj = this.selectedComponent;
     // Remove the component from the array
     if (obj.type === this.SWITCH || obj.type === this.CLOCK) {
         this.drivers.splice(this.drivers.indexOf(obj.id), 1);
@@ -602,7 +603,6 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
             console.log("J: " + j + "  END: " + (endRow) + "  INC/2: " + inc/2)
             console.log("J%1: " + (j % 1));
             row = Math.floor(j);
-            this.placeholder[row][floorEndCol];
             if (typeof this.placeholder[row][floorEndCol] == 'undefined') {
                 this.placeholder[row][floorEndCol] = [];
             }
@@ -625,6 +625,53 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
  *  Delete component placehoders
  ****************************************************************************/
 Digsim.prototype.deletePlaceholder = function(obj) {
+    
+    if (obj.type === digsim.WIRE) {
+        console.log(obj);
+        var endRow = obj.row + obj.path[0].y;
+        var endCol = obj.column + obj.path[0].x;
+        var floorEndRow = Math.floor(endRow);
+        var floorEndCol = Math.floor(endCol);
+        var row, col;
+        console.log("endRow: " + endRow);
+        console.log("endCol: " + endCol);
+        console.log("floorEndRow: " + floorEndRow);
+        console.log("floorEndCol: " + floorEndCol);
+        
+        if (obj.dx) {
+            var end = Math.max(obj.column, endCol);
+            for (var j = Math.min(obj.column, endCol); j !== end; j += 0.5) {
+                console.log("J%1: " + (j % 1));
+                col = Math.floor(j);
+                console.log("col: " + col);
+                console.log(this.placeholder[floorEndRow][col]);
+                if (j % 1) {
+                    console.log("placed at index " + 1);
+                    this.placeholder[floorEndRow][col][1] = undefined;
+                }
+                else {
+                    console.log("placed at index " + 3);
+                    this.placeholder[floorEndRow][col][3] = undefined;
+                }
+                console.log("");
+            }
+        }
+        else if (obj.dy) {
+            var end = Math.max(obj.row, endRow);
+            for (var j = Math.min(obj.row, endRow); j !== end; j += 0.5) {
+                console.log("J%1: " + (j % 1));
+                row = Math.floor(j);
+                if (j % 1) {
+                    this.placeholder[row][floorEndCol][2] = undefined;
+                }
+                else {
+                    this.placeholder[row][floorEndCol][0] = undefined;
+                }
+            }
+        }
+        this.drawComponents();
+        return;
+    }
     // Remove the component from the array
     for (var row = 0; row < obj.dimension.row; ++row) {
         for (var col = 0; col < obj.dimension.col; ++col) {
@@ -1036,6 +1083,10 @@ Digsim.prototype.onGridClicked = function(event) {
                 }
             }
     }
+    else if (digsim.dragging) {
+        // Prevent selection of gates when placed on top of each other. 
+        return;
+    }
     else if (digsim.mode === digsim.DEFAULT_MODE) {
         if (digsim.placeholder[row][col] instanceof Array) {
             //Selected a wire
@@ -1051,7 +1102,11 @@ Digsim.prototype.onGridClicked = function(event) {
             var index = -1;
             var array = digsim.placeholder[row][col];
 
+            
+            console.log("hor: " + hor);
+            console.log("vert: " + vert);
             if (vert && hor && (array[0] || array[2]) && (array[1] || array[3])) {
+                console.log("fatal error:");
                 // mid click and multiple wires
                 // Determine grid snap for wires not connecting to other wires. 
                 if (relY < relX) {  // top
@@ -1071,7 +1126,8 @@ Digsim.prototype.onGridClicked = function(event) {
                     }
                 }                
             }
-            else if (hor && relY >= topHor && relY <= bottomHor) {
+            else if (hor && (array[1] || array[3]) && relY >= topHor && relY <= bottomHor) {
+                console.log("non-fatal error");
                 if (relX <= digsim.GRID_SIZE / 2) {
                     index = 3;
                 }
@@ -1080,6 +1136,7 @@ Digsim.prototype.onGridClicked = function(event) {
                 }
             }
             else if (vert && relX >= leftVert && relX <= rightVert) {
+                console.log("this is hello world");
                 if (relY <= digsim.GRID_SIZE / 2) {
                     index = 0;
                 }
@@ -1093,7 +1150,11 @@ Digsim.prototype.onGridClicked = function(event) {
             }
 
             console.log("index: " + index);
+            console.log("Selected ");
+            console.log(digsim.placeholder[row][col][index]);
+            
             if (index != -1 && digsim.placeholder[row][col][index]) {
+                
                 digsim.selectedComponent = digsim.components[ digsim.placeholder[row][col][index].ref ];
                 digsim.enableButton('Cut');
                 digsim.enableButton('Copy');
@@ -1337,7 +1398,8 @@ Digsim.prototype.cut = function(event) {
  *  Delete a component
  ****************************************************************************/
 Digsim.prototype.delete = function(event) {
-    digsim.deleteComponent(digsim.selectedComponent);
+    digsim.deleteComponent();
+
 };
 
 /*****************************************************************************
