@@ -164,6 +164,8 @@ Digsim.prototype.run = function() {
         $('#Copy').on("click", this.copy);
         $('#Paste').on("click", this.paste);
         $('#Delete').on("click", this.delete);
+        $('#Rotate_CCW').on("click", this.rotateCCW);
+        $('#Rotate_CW').on("click", this.rotateCW);
 
         // Set hotkey info on buttons
         var curr, hotkey;
@@ -181,8 +183,8 @@ Digsim.prototype.run = function() {
         this.disableButton("Submit");
         this.disableButton("Empty");
         this.disableButton("Delete");
-        this.disableButton("Rotate_Left");
-        this.disableButton("Rotate_Right");
+        this.disableButton("Rotate_CW");
+        this.disableButton("Rotate_CCW");
         this.disableButton("Cut");
         this.disableButton("Copy");
         this.disableButton("Paste");
@@ -806,6 +808,10 @@ Digsim.prototype.onButtonClicked = function (event) {
             digsim.mode = digsim.WIRE_MODE;
         }
         else if (id == "Run") {
+            if (digsim.drivers.length === 0) {
+                digsim.addMessage(digsim.ERROR, "Error: No drivers in schematic!");
+                return;
+            }
             $("canvas").css('cursor','pointer');
             $('#messages').html('');
             digsim.mode = digsim.SIM_MODE;
@@ -889,209 +895,206 @@ Digsim.prototype.onGridClicked = function(event) {
             digsim.lockH = digsim.lockV = 0;
             animateWire();
         }
-        /*
-        else { 
-
-            if (digsim.autoroute) {
-                //Dijkstra pathfinding algorithm - www.zsheffield.net/dijkstra-pathfinding        
-                var start = {'r': 0, 'c': 0};
-                var target = {'r': 0, 'c': 0};
-                var neighbors = [];
-                var BIGNUM = ~(1 << 31) - 10;
-                var shortest;
-                var u;
-                var pathfound;
-                var alt;
-                var S = [];
-                for (var r = 0; r < digsim.NUM_ROWS; ++r) {
-                    for (var c = 0; c < digsim.NUM_COLS; ++c) {
-                        dist[r][c] = BIGNUM; 
-                        Q[r][c] = digsim.placeholder[r][c]; // placeholders go here
-                        prev[r][c] = undefined;
+        /* */
+        else if (digsim.autoroute) {
+            //Dijkstra pathfinding algorithm - www.zsheffield.net/dijkstra-pathfinding
+            var start = {'r': 0, 'c': 0};
+            var target = {'r': 0, 'c': 0};
+            var neighbors = [];
+            var BIGNUM = ~(1 << 31) - 10;
+            var shortest;
+            var u;
+            var pathfound;
+            var alt;
+            var S = [];
+            for (var r = 0; r < digsim.NUM_ROWS; ++r) {
+                for (var c = 0; c < digsim.NUM_COLS; ++c) {
+                    dist[r][c] = BIGNUM;
+                    Q[r][c] = digsim.placeholder[r][c]; // placeholders go here
+                    prev[r][c] = undefined;
+                }
+            }
+            
+            dist[start.r][start.c] = 0;
+            while (function isempty() {
+                   for (var r = 1; r < digsim.NUM_ROWS; ++r) {
+                   for (var c = 1; c < digsim.NUM_COLS; ++c) {
+                   if (Q[r][c] != undefined) { return true; } } } } )
+            {
+                // Find smallest distance from u
+                shortest = BIGNUM;
+                u = {'r': undefined, 'c': undefined };
+                for (var r = 1, sQ = true; r < digsim.NUM_ROWS && sQ; ++r) {
+                    for (var c = 1; c < digsim.NUM_COLS && sQ; ++c) {
+                        if (Q[r][c] != undefined) {
+                            u = {'r': r, 'c': c};
+                            shortest = dist[u.r][u.c];
+                            sQ = false;
+                        }
                     }
                 }
-
-                dist[start.r][start.c] = 0;
-                while (function isempty() {
-                    for (var r = 1; r < digsim.NUM_ROWS; ++r) { 
-                        for (var c = 1; c < digsim.NUM_COLS; ++c) {
-                            if (Q[r][c] != undefined) { return true; } } } } )
-                {   
-                    // Find smallest distance from u
-                    shortest = BIGNUM; 
-                    u = {'r': undefined, 'c': undefined };
-                    for (var r = 1, sQ = true; r < digsim.NUM_ROWS && sQ; ++r) {
-                        for (var c = 1; c < digsim.NUM_COLS && sQ; ++c) {
-                            if (Q[r][c] != undefined) {
+                for (var r = 1; r < digsim.NUM_ROWS; ++r) {
+                    for (var c = 1; c < digsim.NUM_COLS; ++c) {
+                        if (Q[r][c] != undefined) {
+                            if (dist[r][c] < shortest) {
+                                shortest = dist[r][c];
                                 u = {'r': r, 'c': c};
-                                shortest = dist[u.r][u.c];
-                                sQ = false;
                             }
                         }
                     }
-                    for (var r = 1; r < digsim.NUM_ROWS; ++r) {
-                        for (var c = 1; c < digsim.NUM_COLS; ++c) {
-                            if (Q[r][c] != undefined) {
-                                if (dist[r][c] < shortest) {
-                                    shortest = dist[r][c];
-                                    u = {'r': r, 'c': c};
-                                }
-                            }
-                        }
-                    }
-                    // u now contains the coordinate in Q with the
-                    // smallest distance in dist[]
-
-                    // If we've reached our target, then we're done
-                    Q[u.r][u.c] = undefined;
-                    if (u.r == target.r && u.c == target.c) {
-                        pathfound = true;
-                        break;
-                    }
-                    // If the shortest distance from u is BIGNUM, there is no path
-                    if (dist[u.r][u.c] == BIGNUM) {
-                        pathfound = false;
-                        break;
-                    }
-
-                    // FIND NEIGHBORS
-                    // Neighbor above
-                    if (dist[u.r - 1][u.c] != undefined && 
-                        Q[u.r - 1][u.c] != undefined && 
-                        grid[u.r - 1][u.c] != 1) {
-                        neighbors.push( {'r': u.r - 1, 'c': u.c} );
-                    }
-                    // Neighbor below
-                    if (dist[u.r + 1][u.c] != undefined && 
-                        Q[u.r + 1][u.c] != undefined && 
-                        grid[u.r + 1][u.c] != 1) {
-                        neighbors.push( {'r': u.r + 1, 'c': u.c} );
-                    }
-                    // Neighbor left
-                    if (dist[u.r][u.c - 1] != undefined && 
-                        Q[u.r][u.c - 1] != undefined && 
-                        grid[u.r][u.c - 1] != 1) {
-                        neighbors.push( {'r': u.r, 'c': u.c - 1} );
-                    }
-                    // Neighbor right
-                    if (dist[u.r][u.c + 1] != undefined && 
-                        Q[u.r][u.c + 1] != undefined && 
-                        grid[u.r][u.c + 1] != 1) {
-                        neighbors.push( {'r': u.r, 'c': u.c + 1} );
-                    }        
-
-                    // Add the right neighbor to the path
-                    for (var i = 0; i < neighbors.length; ++i) {
-                        alt = dist[u.r][u.c] + 1;
-                        if (alt < dist[ neighbors[i].r ][ neighbors[i].c ]) {
-                            dist[ neighbors[i].r ][ neighbors[i].c ] = alt;
-                            prev[neighbors[i].r][neighbors[i].c] = u;
-                        }
-                    }
-                    neighbors = [];
                 }
-                u = target;
-                while (prev[u.r][u.c] != undefined) {
-                    S.splice(0, 0, u);
-                    u = prev[u.r][u.c];
-                }
-                // Now S is an array (from start to target) that contains  
-                // {row, column} objects of the path
-
-                // There might be an error here because wires crossing each other 
-                // perpendicularly is ok, but this algorithm does not yet take that 
-                // into account
-
-            } // End of autoroute
-*/
-            else { 
-                digsim.dragging = false;
+                // u now contains the coordinate in Q with the
+                // smallest distance in dist[]
                 
-
-                // Check wire path for other components.
-                if (digsim.lockV) {
-                    dy = (row < Math.floor(digsim.wirePos.startY)) ? -1 : ((row === Math.floor(digsim.wirePos.startY)) ? 0 : 1);
+                // If we've reached our target, then we're done
+                Q[u.r][u.c] = undefined;
+                if (u.r == target.r && u.c == target.c) {
+                    pathfound = true;
+                    break;
                 }
-                else if (digsim.lockH) {
-                    dx = (col < Math.floor(digsim.wirePos.startX)) ? -1 : ((col === Math.floor(digsim.wirePos.startX)) ? 0 : 1);
+                // If the shortest distance from u is BIGNUM, there is no path
+                if (dist[u.r][u.c] == BIGNUM) {
+                    pathfound = false;
+                    break;
                 }
                 
-                if (dx == 0 && dy == 0) {
-                    // Stop wire placing
+                // FIND NEIGHBORS
+                // Neighbor above
+                if (dist[u.r - 1][u.c] != undefined &&
+                    Q[u.r - 1][u.c] != undefined &&
+                    grid[u.r - 1][u.c] != 1) {
+                    neighbors.push( {'r': u.r - 1, 'c': u.c} );
+                }
+                // Neighbor below
+                if (dist[u.r + 1][u.c] != undefined &&
+                    Q[u.r + 1][u.c] != undefined &&
+                    grid[u.r + 1][u.c] != 1) {
+                    neighbors.push( {'r': u.r + 1, 'c': u.c} );
+                }
+                // Neighbor left
+                if (dist[u.r][u.c - 1] != undefined &&
+                    Q[u.r][u.c - 1] != undefined &&
+                    grid[u.r][u.c - 1] != 1) {
+                    neighbors.push( {'r': u.r, 'c': u.c - 1} );
+                }
+                // Neighbor right
+                if (dist[u.r][u.c + 1] != undefined &&
+                    Q[u.r][u.c + 1] != undefined &&
+                    grid[u.r][u.c + 1] != 1) {
+                    neighbors.push( {'r': u.r, 'c': u.c + 1} );
+                }
+                
+                // Add the right neighbor to the path
+                for (var i = 0; i < neighbors.length; ++i) {
+                    alt = dist[u.r][u.c] + 1;
+                    if (alt < dist[ neighbors[i].r ][ neighbors[i].c ]) {
+                        dist[ neighbors[i].r ][ neighbors[i].c ] = alt;
+                        prev[neighbors[i].r][neighbors[i].c] = u;
+                    }
+                }
+                neighbors = [];
+            }
+            u = target;
+            while (prev[u.r][u.c] != undefined) {
+                S.splice(0, 0, u);
+                u = prev[u.r][u.c];
+            }
+            // Now S is an array (from start to target) that contains
+            // {row, column} objects of the path
+            
+            // There might be an error here because wires crossing each other
+            // perpendicularly is ok, but this algorithm does not yet take that
+            // into account
+            
+        } // End of autoroute
+        else {
+            digsim.dragging = false;
+            
+            
+            // Check wire path for other components.
+            if (digsim.lockV) {
+                dy = (row < Math.floor(digsim.wirePos.startY)) ? -1 : ((row === Math.floor(digsim.wirePos.startY)) ? 0 : 1);
+            }
+            else if (digsim.lockH) {
+                dx = (col < Math.floor(digsim.wirePos.startX)) ? -1 : ((col === Math.floor(digsim.wirePos.startX)) ? 0 : 1);
+            }
+            
+            if (dx == 0 && dy == 0) {
+                // Stop wire placing
+                return;
+            }
+            
+            // Valid mouse clickage
+            if ((digsim.lockV && dy) || (digsim.lockH && dx)) {
+                var wire = new Wire();
+                wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
+                wire.dx = dx;
+                wire.dy = dy;
+                if (digsim.lockH) {
+                    wire.path.push( {'x': col + 0.5 - digsim.wirePos.startX, 'y': 0 } );
+                }
+                else if (digsim.lockV) {
+                    //console.log(Math.floor(mouseY / digsim.GRID_SIZE) - digsim.wirePos.startY);
+                    wire.path.push( {'x': 0, 'y': row + 0.5 - digsim.wirePos.startY } );
+                }
+                else {
                     return;
                 }
                 
-                // Valid mouse clickage
-                if ((digsim.lockV && dy) || (digsim.lockH && dx)) {
-                    var wire = new Wire(); 
-                    wire.init(digsim.wirePos.startX, digsim.wirePos.startY, 0, digsim.iComp);
-                    wire.dx = dx; 
-                    wire.dy = dy;
+                var validPlacement = digsim.setWirePlaceholder(wire, dx, dy);
+                
+                if (validPlacement) {
+                    console.log("WE HAVE A VALID PLACEMENT!");
+                    
+                    // Create the wire in components array
+                    
+                    digsim.components[digsim.iComp++] = wire;
+                    // Going up/down and left/right?
+                    
                     if (digsim.lockH) {
-                        wire.path.push( {'x': col + 0.5 - digsim.wirePos.startX, 'y': 0 } );
+                        //console.log(Math.floor(mouseX / digsim.GRID_SIZE) - digsim.wirePos.startX);
+                        
+                        console.log("LOCKH!");
+                        digsim.dragging = true;
+                        digsim.lockH = false;
+                        digsim.lockV = true;
+                        digsim.wirePos.startX = col + 0.5;
                     }
                     else if (digsim.lockV) {
-                        //console.log(Math.floor(mouseY / digsim.GRID_SIZE) - digsim.wirePos.startY);
-                        wire.path.push( {'x': 0, 'y': row + 0.5 - digsim.wirePos.startY } );
-                    }
-                    else {
-                        return;                    
-                    }
-                    
-                    var validPlacement = digsim.setWirePlaceholder(wire, dx, dy);
-                    
-                    if (validPlacement) {
-                        console.log("WE HAVE A VALID PLACEMENT!");
-                        
-                        // Create the wire in components array
-                        
-                        digsim.components[digsim.iComp++] = wire;
-                        // Going up/down and left/right?       
-
-                        if (digsim.lockH) {
-                            //console.log(Math.floor(mouseX / digsim.GRID_SIZE) - digsim.wirePos.startX);
-                            
-                            console.log("LOCKH!");
-                            digsim.dragging = true;
-                            digsim.lockH = false;
-                            digsim.lockV = true;
-                            digsim.wirePos.startX = col + 0.5;
-                        }
-                        else if (digsim.lockV) {
-                            console.log("LOCKV!");
-                            digsim.dragging = true;
-                            digsim.lockH = true;
-                            digsim.lockV = false;
-                            digsim.wirePos.startY = row + 0.5;
-                            // Now we need to move the startXY position to the current position
-                        }
-                        else {
-                            return;                    
-                        }
-                        // Draws the wire on static context. 
-                        wire.checkConnect();
-                        wire.draw(digsim.staticContext);
-                    }
-                    else {
-                        wire.path.pop();
+                        console.log("LOCKV!");
                         digsim.dragging = true;
-                        // DO NOT PLACE WIRE, there's something in the way. 
+                        digsim.lockH = true;
+                        digsim.lockV = false;
+                        digsim.wirePos.startY = row + 0.5;
+                        // Now we need to move the startXY position to the current position
                     }
+                    else {
+                        return;
+                    }
+                    // Draws the wire on static context.
+                    wire.checkConnect();
+                    wire.draw(digsim.staticContext);
                 }
                 else {
+                    wire.path.pop();
                     digsim.dragging = true;
+                    // DO NOT PLACE WIRE, there's something in the way.
                 }
             }
+            else {
+                digsim.dragging = true;
+            }
+        }
     }
     else if (digsim.dragging) {
-        // Prevent selection of gates when placed on top of each other. 
+        // Prevent selection of gates when placed on top of each other.
         return;
     }
     else if (digsim.mode === digsim.DEFAULT_MODE) {
         if (digsim.placeholder[row][col] instanceof Array) {
             //Selected a wire
             console.log("Wire selected");
-
+            
             var relX = mouseX % digsim.GRID_SIZE;
             var relY = mouseY % digsim.GRID_SIZE;
             var leftVert = topHor = Math.ceil(digsim.GRID_SIZE * (1 - digsim.HIT_RADIUS) / 2);
@@ -1156,10 +1159,14 @@ Digsim.prototype.onGridClicked = function(event) {
             if (index != -1 && digsim.placeholder[row][col][index]) {
                 
                 digsim.selectedComponent = digsim.components[ digsim.placeholder[row][col][index].ref ];
-                digsim.enableButton('Cut');
-                digsim.enableButton('Copy');
+                if (!$('#Cut').hasClass('disabled')) {
+                    digsim.disableButton('Cut');
+                    digsim.disableButton('Copy');
+                    digsim.disableButton('Rotate_CCW');
+                    digsim.disableButton('Rotate_CW');
+                }
                 digsim.enableButton('Delete');
-                digsim.selectedComponent.draw(digsim.staticContext, 'red'); 
+                digsim.selectedComponent.draw(digsim.staticContext, 'red');
             }
         }
         else if (digsim.placeholder[row][col]) {
@@ -1169,6 +1176,8 @@ Digsim.prototype.onGridClicked = function(event) {
             digsim.enableButton('Cut');
             digsim.enableButton('Copy');
             digsim.enableButton('Delete');
+            digsim.enableButton('Rotate_CCW');
+            digsim.enableButton('Rotate_CW');
             digsim.selectedComponent.draw(digsim.staticContext, 'red');
             /* NEED TO SHOW SOMEHOW THAT COMPONENT IS SELECTED */
         }
@@ -1375,9 +1384,11 @@ Digsim.prototype.changeNumInputs = function(event) {
  *  Copy a component into the clipboard
  ****************************************************************************/
 Digsim.prototype.copy = function(event) {
-    digsim.clipboard = digsim.selectedComponent;
-    if ($('#Paste').hasClass('disabled')) {
-        digsim.enableButton('Paste');
+    if (!$('#Copy').hasClass('disabled')) {
+        digsim.clipboard = digsim.selectedComponent;
+        if ($('#Paste').hasClass('disabled')) {
+            digsim.enableButton('Paste');
+        }
     }
  };
 
@@ -1386,10 +1397,37 @@ Digsim.prototype.copy = function(event) {
  *  Cut a component into the clipboard
  ****************************************************************************/
 Digsim.prototype.cut = function(event) {
-    digsim.clipboard = digsim.selectedComponent;
-    digsim.deleteComponent(digsim.selectedComponent);
-    if ($('#Paste').hasClass('disabled')) {
-        digsim.enableButton('Paste');
+    if (!$('#Cut').hasClass('disabled')) {
+        digsim.clipboard = digsim.selectedComponent;
+        digsim.deleteComponent(digsim.selectedComponent);
+        if ($('#Paste').hasClass('disabled')) {
+            digsim.enableButton('Paste');
+        }
+    }
+};
+
+/*****************************************************************************
+ * PASTE
+ *  Paste a component from the clipboard to the cavans
+ ****************************************************************************/
+Digsim.prototype.paste = function(event) {
+    if (!$('#Paste').hasClass('disabled')) {
+        $("canvas").css('cursor','default');
+        digsim.mode = digsim.PLACE_MODE;
+        
+        // Use reflection to dynamically create gate based on id
+        var id = digsim.clipboard.name;
+        var Class = window[id];
+        var gate = new Class(digsim.clipboard.numInputs);
+        
+        // Initialize the new object at the mouse position
+        var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
+        var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
+        gate.init(col, row, 0, digsim.iComp);
+        digsim.dragging = true;
+        digsim.draggingGate = gate;
+        digsim.draggingGate.draw(digsim.movingContext);
+        animate();
     }
 };
 
@@ -1398,8 +1436,33 @@ Digsim.prototype.cut = function(event) {
  *  Delete a component
  ****************************************************************************/
 Digsim.prototype.delete = function(event) {
-    digsim.deleteComponent();
+    if (!$('#Delete').hasClass('disabled')) {
+        digsim.deleteComponent();
+    }
+};
 
+/*****************************************************************************
+ * ROTATE CLOCKWISE
+ *  تدور باتجاه الساعة
+ ****************************************************************************/
+Digsim.prototype.rotateCW = function(event) {
+    if (!$('#Rotate_CW').hasClass('disabled')) {
+        digsim.selectedComponent.rotation = (digsim.selectedComponent.rotation + 90) % 360;
+        digsim.drawComponents();
+        digsim.selectedComponent.draw(digsim.staticContext, 'red');
+    }
+};
+
+/*****************************************************************************
+ * ROTATE COUNTER-CLOCKWISE
+ *  逆時針旋轉
+ ****************************************************************************/
+Digsim.prototype.rotateCCW = function(event) {
+    if (!$('#Rotate_CCW').hasClass('disabled')) {
+        digsim.selectedComponent.rotation = (digsim.selectedComponent.rotation - 90) % 360;
+        digsim.drawComponents();
+        digsim.selectedComponent.draw(digsim.staticContext, 'red');
+    }
 };
 
 /*****************************************************************************
@@ -1421,6 +1484,9 @@ Digsim.prototype.disableControls = function() {
         digsim.disableButton('Cut');
         digsim.disableButton('Copy');
         digsim.disableButton('Delete');
+        digsim.disableButton('Rotate_CCW');
+        digsim.disableButton('Rotate_CW');
+        
         if (digsim.selectedComponent) {
             digsim.selectedComponent.draw(digsim.staticContext);
         }
@@ -1456,29 +1522,6 @@ Digsim.prototype.newFile = function(event) {
     digsim.clearCanvas(digsim.staticContext, digsim.gridWidth, digsim.gridHeight);
     digsim.deactivate();
 };
-
-/*****************************************************************************
- * PASTE
- *  Paste a component from the clipboard to the cavans
- ****************************************************************************/
- Digsim.prototype.paste = function(event) {
-    $("canvas").css('cursor','default');
-    digsim.mode = digsim.PLACE_MODE;
-
-    // Use reflection to dynamically create gate based on id
-    var id = digsim.clipboard.name;
-    var Class = window[id];
-    var gate = new Class(digsim.clipboard.numInputs);
-
-    // Initialize the new object at the mouse position
-    var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
-    var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
-    gate.init(col, row, 0, digsim.iComp);
-    digsim.dragging = true;
-    digsim.draggingGate = gate;
-    digsim.draggingGate.draw(digsim.movingContext);
-    animate();
-}
 
 /*****************************************************************************
  * TOGGLE GRID
@@ -1601,7 +1644,9 @@ KEY_CODES = {
     50: '2-input',
     51: '3-input',
     52: '4-input',
-    67: 'Clock'
+    67: 'Clock',
+    9: 'Rotate_CW',
+    's9': 'Rotate_CCW'
 };
 HOT_KEYS = {
     'AND': 'A',
@@ -1624,7 +1669,9 @@ HOT_KEYS = {
     '2-input': '2',
     '3-input': '3',
     '4-input': '4',
-    'Clock': 'C'
+    'Clock': 'C',
+    'Rotate_CW': 'Tab',
+    'Rotate_CCW': 'shift+Tab'
 };
 document.onkeydown = function(event) {
     // return which key was pressed.
@@ -1634,24 +1681,31 @@ document.onkeydown = function(event) {
     console.log('Pressed: ' + keyCode);
     console.log(event);
 
-    if(event.shiftKey) {
-        id = KEY_CODES['s'+keyCode];
-    }
-    else if (event.ctrlKey) {
-        console.log("ctrl down");
-        id = KEY_CODES['c'+keyCode];
-    }
-    else {
-        id = KEY_CODES[keyCode];
-    }
-    console.log("ID: " + id);
+    // Don't do anything when mac user refresh
+    if (!(keyCode === 82 && event.metaKey)) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+    
+        if(event.shiftKey) {
+            id = KEY_CODES['s'+keyCode];
+        }
+        else if (event.ctrlKey) {
+            console.log("ctrl down");
+            id = KEY_CODES['c'+keyCode];
+        }
+        else {
+            id = KEY_CODES[keyCode];
+        }
+        console.log("ID: " + id);
 
-    if (id === 'esc') {
-        digsim.deactivate();
-    }
-    else if (id) {
-        if(!$('#'+id).hasClass('disabled')) {
-            $("#" + id).click();
+        if (id === 'esc') {
+            digsim.deactivate();
+        }
+        else if (id) {
+            if(!$('#'+id).hasClass('disabled')) {
+                $("#" + id).click();
+            }
         }
     }
 };

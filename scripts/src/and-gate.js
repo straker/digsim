@@ -42,13 +42,19 @@ AND.prototype.changeSize = function() {
 AND.prototype.draw = function(context, lineColor) {
      
     this.drawWires(context, lineColor);
-
+    
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
     context.fillStyle = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
+
+    var center = {'row': (this.dimension.row / 2) * digsim.GRID_SIZE,
+                  'col': (this.dimension.col / 2) * digsim.GRID_SIZE };
+    context.translate(center.col, center.row);
+    context.rotate(this.rotation * Math.PI / 180);
+    context.translate(-center.col, -center.row);
 
     // Draw gate
     var factor = Math.floor(this.numInputs / 2); 

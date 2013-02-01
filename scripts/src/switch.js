@@ -36,6 +36,12 @@ Switch.prototype.draw = function(context, lineColor) {
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
     
+    var center = {'row': (this.dimension.row / 2) * digsim.GRID_SIZE,
+        'col': (this.dimension.col / 2) * digsim.GRID_SIZE };
+    context.translate(center.col, center.row);
+    context.rotate(this.rotation * Math.PI / 180);
+    context.translate(-center.col, -center.row);
+    
     context.moveTo(0, 0);
     
     // draw 1 and line thingy

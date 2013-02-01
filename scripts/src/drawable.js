@@ -179,8 +179,7 @@ Drawable.prototype.drawWires = function(context, lineColor) {
         context.lineTo((this.column - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));     
     }
 
-    var pt = this.type === NOR || this.type 
-    context.moveTo((this.column + (factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));   
+    context.moveTo((this.column + (factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));
     context.lineTo((this.column + (factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));   
 
     context.stroke();
