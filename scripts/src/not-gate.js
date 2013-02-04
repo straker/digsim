@@ -31,8 +31,6 @@ NOT.prototype = new Drawable();
  ****************************************************************************/
 NOT.prototype.draw = function(context, lineColor) {
     
-    this.drawWires(context, lineColor);
-    
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
@@ -45,6 +43,8 @@ NOT.prototype.draw = function(context, lineColor) {
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
+    
+    this.drawWires(context, lineColor);
     
     // Draw gate  
     context.moveTo(0, digsim.GRID_SIZE * 2 / 3);

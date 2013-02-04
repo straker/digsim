@@ -29,7 +29,6 @@ Clock.prototype = new Drawable();
  ***************************************************************************/
 Clock.prototype.draw = function(context, lineColor) {
 
-        // SQUARE CLOCK
     context.save();
     context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     
@@ -65,10 +64,6 @@ Clock.prototype.draw = function(context, lineColor) {
     context.lineTo(digsim.GRID_SIZE        , digsim.GRID_SIZE);
     context.lineTo(digsim.GRID_SIZE / 3    , digsim.GRID_SIZE);
     context.lineTo(digsim.GRID_SIZE / 3, digsim.GRID_SIZE * 2);
-    // context.lineTo(digsim.GRID_SIZE * 9 / 16, digsim.GRID_SIZE * 2);
-    // context.lineTo(digsim.GRID_SIZE * 9 / 16, digsim.GRID_SIZE);
-    // context.lineTo(digsim.GRID_SIZE * 0.25, digsim.GRID_SIZE);
-    // context.lineTo(digsim.GRID_SIZE * 0.25, digsim.GRID_SIZE * 2);
     context.fill();
     context.stroke();
 

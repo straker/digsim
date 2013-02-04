@@ -154,6 +154,42 @@ Drawable.prototype.passState = function(pState) {
  *  Draws..... wires?
  *****************************************************************************/
 Drawable.prototype.drawWires = function(context, lineColor) {
+    // Draw wires
+    context.beginPath();
+    context.fillStyle = '#FFFFFF';
+    context.strokeStyle = lineColor || 'black';
+    context.lineWidth = 2;
+    
+    var factor = Math.floor(this.numInputs / 2) || 1;
+    var cnt = 0;
+    if (this.type != digsim.NOT) {
+        for (var i = 0; i < this.numInputs; ++i) {
+            if (i % 2) {
+                context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * ((factor * 2) + .5 - cnt));
+                context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * ((factor * 2) + .5 - cnt++));
+            }
+            else {
+                context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * (cnt + .5));
+                context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + .5));
+            }
+        }
+    }
+    else {
+        context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * (cnt + 1.5));
+        context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + 1.5));
+    }
+    
+    context.moveTo(((factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
+    context.lineTo(((factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
+    
+    context.stroke();
+}
+
+/******************************************************************************
+ * DRAW WIRES
+ *  Draws..... wires?
+ *****************************************************************************
+Drawable.prototype.drawWires = function(context, lineColor) {
      // Draw wires
     context.beginPath();
     context.fillStyle = '#FFFFFF';

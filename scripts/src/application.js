@@ -344,6 +344,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
     var row, col, cnt, conCol, conRow, placeholder;
     var factor = Math.floor(obj.numInputs / 2) || 1;
+    var index, rot = obj.rotation; // rotation variables
 
     // Check the object space for collision
     for (row = 0; row < obj.dimension.row; ++row) {
@@ -358,8 +359,33 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
     // Check connection points for collision
     if (obj.type < 0) { // gate
-        conCol = obj.column - 1;
+        
+        switch (rot / 90)
+        {
+            case 0:
+                conCol = obj.column - 1;
+                index = 1;
+                break;
+            case 1:
+                conRow = obj.row - 1;
+                index = 0;
+                break;
+            case 2:
+                conCol = obj.dimension.col + 1 + obj.col;
+                index = 3;
+                break;
+            case 3:
+                conRow = obj.dimension.row + 1 + obj.row;
+                index = 2;
+                break;
+            default:
+                console.error("ROTATION CALCULATION ERROR!");
+                return false;
+        }
+        
+//        conCol = obj.column - 1;
         cnt = 0;
+        
 
         // Previous
         for (var i = 0; i < obj.numInputs; ++i) {            
@@ -367,14 +393,24 @@ Digsim.prototype.setPlaceholders = function(obj) {
                 conRow = obj.row + 1;
             }
             else {
-                if (i % 2) { 
-                    conRow = obj.row + (factor * 2) - cnt++;
+                if (i % 2) {
+                    if (rot === 0 || rot === 180) {
+                        conRow = obj.row + (factor * 2) - cnt++;
+                    }
+                    else {
+                        conCol = obj.column + (factor * 2) - cnt++;
+                    }
                 }
                 else {
-                    conRow = obj.row + cnt;
+                    if (rot === 0 || rot === 180) {
+                        conRow = obj.row + cnt;
+                    }
+                    else {
+                        conCol = obj.column + cnt;
+                    }
                 }
             }
-
+            
             if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
                 console.error("Connection point collision error!");
                 digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
@@ -383,7 +419,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
                 this.placeholder[conRow][conCol] = [];
             }
-            else if (this.placeholder[conRow][conCol][1]) {
+            else if (this.placeholder[conRow][conCol][index]) {
                 console.error("Connection point collision error!");
                 digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
                 return false;
@@ -391,7 +427,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
 
         // Nexts
-        conCol = obj.column + factor * 2 + obj.outPt;
+        conCol = obj.column + obj.dimension.col + 1; // obj.column = 2 * factor + onj.outPt;
         conRow = obj.row + factor;
 
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
@@ -1459,9 +1495,15 @@ Digsim.prototype.rotateCW = function(event) {
  ****************************************************************************/
 Digsim.prototype.rotateCCW = function(event) {
     if (!$('#Rotate_CCW').hasClass('disabled')) {
-        digsim.selectedComponent.rotation = (digsim.selectedComponent.rotation - 90) % 360;
+        digsim.selectedComponent.rotation = 360 + ((digsim.selectedComponent.rotation - 90) % 360);
+        digsim.deletePlaceholder(digsim.selectedComponent);
         digsim.drawComponents();
-        digsim.selectedComponent.draw(digsim.staticContext, 'red');
+        if (digsim.setPlaceholders(digsim.selectedComponent)) {
+            digsim.selectedComponent.draw(digsim.staticContext, 'red');
+        }
+        else {
+            digsim.selectedComponent.draw(digsim.movingContext, 'red');
+        }
     }
 };
 
