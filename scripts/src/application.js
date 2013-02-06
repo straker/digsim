@@ -798,6 +798,8 @@ Digsim.prototype.deletePlaceholder = function(obj) {
  Digsim.prototype.deactivate = function(id) {
     $("canvas").css('cursor','default');
     $('ul:not(.num-inputs) .active').removeClass('active');
+    this.disableControls();
+    console.log("disable controls");
     this.mode = this.DEFAULT_MODE;
     this.dragging = false;
     this.draggingGate = {};
@@ -878,6 +880,8 @@ Digsim.prototype.onButtonClicked = function (event) {
         else {
             $("canvas").css('cursor','default');
             digsim.mode = digsim.PLACE_MODE;
+            digsim.enableButton('Rotate_CW');
+            digsim.enableButton('Rotate_CCW');
 
             // Use reflection to dynamically create gate based on id :)
             var Class = window[id];
@@ -1483,9 +1487,15 @@ Digsim.prototype.delete = function(event) {
  ****************************************************************************/
 Digsim.prototype.rotateCW = function(event) {
     if (!$('#Rotate_CW').hasClass('disabled')) {
-        digsim.selectedComponent.rotation = (digsim.selectedComponent.rotation + 90) % 360;
+        var obj = digsim.selectedComponent || digsim.draggingGate;
+        obj.rotation = (obj.rotation + 90) % 360;
         digsim.drawComponents();
-        digsim.selectedComponent.draw(digsim.staticContext, 'red');
+        if (digsim.dragging) {
+            obj.draw(digsim.movingContext, 'red');
+        }
+        else {
+            obj.draw(digsim.staticContext, 'red');
+        }
     }
 };
 
@@ -1495,14 +1505,20 @@ Digsim.prototype.rotateCW = function(event) {
  ****************************************************************************/
 Digsim.prototype.rotateCCW = function(event) {
     if (!$('#Rotate_CCW').hasClass('disabled')) {
-        digsim.selectedComponent.rotation = 360 + ((digsim.selectedComponent.rotation - 90) % 360);
-        digsim.deletePlaceholder(digsim.selectedComponent);
+        var obj = digsim.selectedComponent || digsim.draggingGate;
+        obj.rotation = 360 + ((obj.rotation - 90) % 360);
+        digsim.deletePlaceholder(obj);
         digsim.drawComponents();
-        if (digsim.setPlaceholders(digsim.selectedComponent)) {
-            digsim.selectedComponent.draw(digsim.staticContext, 'red');
+        if (digsim.dragging) {
+            obj.draw(digsim.movingContext, 'red');
         }
         else {
-            digsim.selectedComponent.draw(digsim.movingContext, 'red');
+            if (digsim.setPlaceholders(obj)) {
+                obj.draw(digsim.staticContext, 'red');
+            }
+            else {
+                obj.draw(digsim.movingContext, 'red');
+            }
         }
     }
 };
@@ -1522,16 +1538,14 @@ Digsim.prototype.disableButton = function(id) {
  *  Disable all Controls
  ****************************************************************************/
 Digsim.prototype.disableControls = function() {
-    if (!$('#Cut').hasClass('disabled')) {
-        digsim.disableButton('Cut');
-        digsim.disableButton('Copy');
-        digsim.disableButton('Delete');
-        digsim.disableButton('Rotate_CCW');
-        digsim.disableButton('Rotate_CW');
-        
-        if (digsim.selectedComponent) {
-            digsim.selectedComponent.draw(digsim.staticContext);
-        }
+    digsim.disableButton('Cut');
+    digsim.disableButton('Copy');
+    digsim.disableButton('Delete');
+    digsim.disableButton('Rotate_CCW');
+    digsim.disableButton('Rotate_CW');
+    
+    if (digsim.selectedComponent) {
+        digsim.selectedComponent.draw(digsim.staticContext);
     }
     this.selectedComponent = undefined;
 };
@@ -1743,6 +1757,7 @@ document.onkeydown = function(event) {
 
         if (id === 'esc') {
             digsim.deactivate();
+            console.log("deactivate");
         }
         else if (id) {
             if(!$('#'+id).hasClass('disabled')) {
