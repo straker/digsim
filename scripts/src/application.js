@@ -12,9 +12,11 @@
  * To-do:
  * pick up wires
  * Rotations
+ * Reformat row/col of UI to handle adding new buttons better
  * Panning
  * auto-route
  * implement touch controls
+ * D flip flop, JK flip flop, 2/4 to 1 MUX
  * save and load schematics/files
  * 
  ****************************************************************************/
@@ -762,7 +764,7 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
 /*****************************************************************************
  * UTILITY: ROTATION MATH
  *  Delete component placehoders
- ****************************************************************************/
+ ****************************************************************************
 Digsim.prototype.util.rotationMath = function(obj) {
     
     return {"conRow": conRow, "conCol": conCol };
