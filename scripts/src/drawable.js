@@ -98,6 +98,11 @@ Drawable.prototype.checkConnect = function() {
         // Output wire
         conCol = this.column + factor * 2 + this.outPt;
         conRow = this.row + factor;
+        
+        console.log("conCol:" + conCol);
+        console.log("conRow:" + conRow);
+        console.log("outPt:" + this.outPt);
+        
         for (var i = 1; i < 4; ++i) {
             if (PH = digsim.placeholder[conRow][conCol][i]) {
                 obj = digsim.components[PH.ref];
