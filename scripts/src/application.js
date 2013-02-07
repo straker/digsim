@@ -21,12 +21,6 @@
  * 
  ****************************************************************************/
 
-function swap(x, y) {
-    x = x ^ y;
-    y = x ^ y;
-    x = x ^ y;
-}
-
 /*****************************************************************************
  * DIGSIM
  *  Holds all the constants, animation, and data variables for the program
@@ -37,7 +31,7 @@ function Digsim() {
     this.GRID_ZOOM = 5;
     this.MAX_GRID_SIZE = 50;
     this.MIN_GRID_SIZE = 5;
-    this.HIT_RADIUS = .7333333333;
+    this.HIT_RADIUS = .73333333;
     this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
     this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
     this.CLK_FREQ = 60; 
@@ -350,17 +344,10 @@ Digsim.prototype.deleteConnections = function(obj) {
  ****************************************************************************/
 Digsim.prototype.setPlaceholders = function(obj) {
 
-    var row, col, cnt, conCol, conRow, placeholder;
+    var row, col, cnt, conCol, conRow, placeholder, utilMath;
     var factor = Math.floor(obj.numInputs / 2) || 1;
     var index, rot = obj.rotation; // rotation variables
 
-    var isOr = (obj.type === digsim.NOR) || (obj.type === digsim.OR) || (obj.type === digsim.XOR);
-    var endRow = isOr && ((rot /90) %2) ? obj.dimension.col : obj.dimension.row;
-    var endCol = isOr && ((rot /90) %2) ? obj.dimension.row : obj.dimension.col;
-    
-    console.log("endRow = " + endRow);
-    console.log("endCol = " + endCol);
-    console.log("isOR = " + isOr);
     // Check the object space for collision
     console.log(obj.row + ", " + obj.column);
     for (row = 0; row < obj.dimension.row; ++row) {
@@ -377,55 +364,16 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
     // Check connection points for collision
     if (obj.type < 0) { // gate
-        
-        switch (rot / 90)
-        {
-            case 0:
-                conCol = obj.column - 1;
-                index = 1;
-                break;
-            case 1:
-                conRow = obj.row - 1;
-                index = 2;
-                break;
-            case 2:
-                conCol = obj.dimension.col + obj.column;
-                index = 3;
-                break;
-            case 3:
-                conRow = obj.dimension.row + obj.row;
-                index = 0;
-                break;
-            default:
-                console.error("ROTATION CALCULATION ERROR!");
-                return false;
-        }
-        cnt = 0;
-        
+        cnt = 0;        
 
         // Previous
-        for (var i = 0; i < obj.numInputs; ++i) {            
-            if (obj.type === digsim.NOT) {
-                conRow = obj.row + 1;
-            }
-            else {
-                if (i % 2) {
-                    if (rot === 0 || rot === 180) {
-                        conRow = obj.row + (factor * 2) - cnt++;
-                    }
-                    else {
-                        conCol = obj.column + (factor * 2) - cnt++;
-                    }
-                }
-                else {
-                    if (rot === 0 || rot === 180) {
-                        conRow = obj.row + cnt;
-                    }
-                    else {
-                        conCol = obj.column + cnt;
-                    }
-                }
-            }
+        for (var i = 0; i < obj.numInputs; ++i) {
+            
+            utilMath = this.rotationMath(obj, "prev", i, cnt);
+            conRow = utilMath.conRow;
+            conCol = utilMath.conCol;
+            cnt = utilMath.cnt;
+            index = utilMath.index;
             
             if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
                 console.error("Connection point collision error!");
@@ -443,32 +391,11 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
 
         // Nexts
-        switch (rot / 90)
-        {
-            case 0:
-                conCol = obj.column + obj.dimension.col; // obj.column = 2 * factor + onj.outPt;
-                conRow = obj.row + factor;
-                index = 3;
-                console.log("case 0");
-                break;
-            case 1:
-                index = 0;
-                conCol = obj.column + factor;
-                conRow = obj.row + obj.dimension.row;
-                console.log("case 1");
-                break;
-            case 2:
-                index = 1;
-                conCol = obj.column  - 1;
-                conRow = obj.row + factor;
-                console.log("case 2");
-                break;
-            default:
-                index = 2;
-                conCol = obj.column + factor;
-                conRow = obj.row - 1;
-                console.log("case doody");
-        }
+        utilMath = this.rotationMath(obj, "next", i, cnt);
+        conRow = utilMath.conRow;
+        conCol = utilMath.conCol;
+        cnt = utilMath.cnt;
+        index = utilMath.index;
         console.log("ROW: " + conRow);
         
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
@@ -488,55 +415,18 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
         // Place connection placeholders
         // Previous
-        
-        switch (rot / 90)
-        {
-            case 0:
-                conCol = obj.column - 1;
-                index = 1;
-                break;
-            case 1:
-                conRow = obj.row - 1;
-                index = 2;
-                break;
-            case 2:
-                conCol = obj.dimension.col + obj.column;
-                index = 3;
-                break;
-            case 3:
-                conRow = obj.dimension.row + obj.row;
-                index = 0;
-                break;
-            default:
-                console.error("ROTATION CALCULATION ERROR!");
-                return false;
-        }
         cnt = 0;
         
         
         // Previous
         for (var i = 0; i < obj.numInputs; ++i) {
-            if (obj.type === digsim.NOT) {
-                conRow = obj.row + 1;
-            }
-            else {
-                if (i % 2) {
-                    if (rot === 0 || rot === 180) {
-                        conRow = obj.row + (factor * 2) - cnt++;
-                    }
-                    else {
-                        conCol = obj.column + (factor * 2) - cnt++;
-                    }
-                }
-                else {
-                    if (rot === 0 || rot === 180) {
-                        conRow = obj.row + cnt;
-                    }
-                    else {
-                        conCol = obj.column + cnt;
-                    }
-                }
-            }
+            
+            utilMath = this.rotationMath(obj, "prev", i, cnt);
+            conRow = utilMath.conRow;
+            conCol = utilMath.conCol;
+            cnt = utilMath.cnt;
+            index = utilMath.index;
+            
             console.log("••••••••••••• " + conRow + ", " + conCol + " •••••••••••••");
             placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
             this.placeholder[conRow][conCol][index] = placeholder;
@@ -544,32 +434,12 @@ Digsim.prototype.setPlaceholders = function(obj) {
             
         
         // Next
-        switch (rot / 90)
-        {
-            case 0:
-                conCol = obj.column + obj.dimension.col; // obj.column = 2 * factor + onj.outPt;
-                conRow = obj.row + factor;
-                index = 3;
-                console.log("case 0");
-                break;
-            case 1:
-                index = 0;
-                conCol = obj.column + factor;
-                conRow = obj.row + obj.dimension.row;
-                console.log("case 1");
-                break;
-            case 2:
-                index = 1;
-                conCol = obj.column  - 1;
-                conRow = obj.row + factor;
-                console.log("case 2");
-                break;
-            default:
-                index = 2;
-                conCol = obj.column + factor;
-                conRow = obj.row - 1;
-                console.log("case doody");
-        }
+        utilMath = this.rotationMath(obj, "next", i, cnt);
+        conRow = utilMath.conRow;
+        conCol = utilMath.conCol;
+        cnt = utilMath.cnt;
+        index = utilMath.index;
+        
         console.log("ROW: " + conRow);
         placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
         this.placeholder[conRow][conCol][index] = placeholder;
@@ -607,6 +477,97 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
     console.log("RETURN TRUE:");
     return true;
+};
+
+
+/*****************************************************************************
+ * UTILITY: ROTATION MATH
+ *  To get rid of redundant code, this will take care of all the rotation math
+ *  that must be computed.
+ ****************************************************************************/
+Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
+    
+    var conCol, conRow;
+    var factor = Math.floor(obj.numInputs / 2) || 1;
+    var index, rot = obj.rotation; // rotation variables
+    
+    if (con === "prev") {
+        // Previous
+        switch (rot / 90)
+        {
+            case 0:
+                conCol = obj.column - 1;
+                index = 1;
+                break;
+            case 1:
+                conRow = obj.row - 1;
+                index = 2;
+                break;
+            case 2:
+                conCol = obj.dimension.col + obj.column;
+                index = 3;
+                break;
+            default:
+                conRow = obj.dimension.row + obj.row;
+                index = 0;
+                break;
+        }
+        
+        if (obj.type === digsim.NOT) {
+            conRow = obj.row + 1;
+        }
+        else {
+            if (i % 2) {
+                if (rot === 0 || rot === 180) {
+                    conRow = obj.row + (factor * 2) - cnt++;
+                }
+                else {
+                    conCol = obj.column + (factor * 2) - cnt++;
+                }
+            }
+            else {
+                if (rot === 0 || rot === 180) {
+                    conRow = obj.row + cnt;
+                }
+                else {
+                    conCol = obj.column + cnt;
+                }
+            }
+        }
+    }
+    
+    else {
+        // Next
+        switch (rot / 90)
+        {
+            case 0:
+                conCol = obj.column + obj.dimension.col;
+                conRow = obj.row + factor;
+                index = 3;
+                console.log("case 0");
+                break;
+            case 1:
+                index = 0;
+                conCol = obj.column + factor;
+                conRow = obj.row + obj.dimension.row;
+                console.log("case 1");
+                break;
+            case 2:
+                index = 1;
+                conCol = obj.column  - 1;
+                conRow = obj.row + factor;
+                console.log("case 2");
+                break;
+            default:
+                index = 2;
+                conCol = obj.column + factor;
+                conRow = obj.row - 1;
+                console.log("case doody");
+        }
+        console.log("ROW: " + conRow);
+    }
+    
+    return {"conRow": conRow, "conCol": conCol, "cnt": cnt, "index": index};
 };
 
 /*****************************************************************************
@@ -762,15 +723,6 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
 };
 
 /*****************************************************************************
- * UTILITY: ROTATION MATH
- *  Delete component placehoders
- ****************************************************************************
-Digsim.prototype.util.rotationMath = function(obj) {
-    
-    return {"conRow": conRow, "conCol": conCol };
-};
-
-/*****************************************************************************
  * DELETE PLACEHOLDER
  *  Delete component placehoders
  ****************************************************************************/
@@ -822,6 +774,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         this.drawComponents();
         return;
     }
+    
     // Remove the component from the array
     for (var row = 0; row < obj.dimension.row; ++row) {
         for (var col = 0; col < obj.dimension.col; ++col) {
@@ -829,30 +782,26 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         }
     }
     
-    var row, col, cnt, conCol, conRow;
+    var row, col, cnt, conCol, conRow, index;
     var factor = Math.floor(obj.numInputs / 2) || 1;
 
     if (obj.type < 0) { // gate
-        conCol = obj.column - 1;
         cnt = 0;
 
         // Previous
         for (var i = 0; i < obj.numInputs; ++i) {            
-            if (obj.type === digsim.NOT) {
-                conRow = obj.row + 1;
-            }
-            else {
-                if (i % 2) { 
-                    conRow = obj.row + (factor * 2) - cnt++;
-                }
-                else {
-                    conRow = obj.row + cnt;
-                }
-            }
-
+            utilMath = this.rotationMath(obj, "prev", i, cnt);
+            conRow = utilMath.conRow;
+            conCol = utilMath.conCol;
+            cnt = utilMath.cnt;
+            index = utilMath.index;
+            
             var noneFound = true;
             for (var j = 0; j < 4; ++j) {
-                if (j != 1 && this.placeholder[conRow][conCol][j]) {
+                console.log(conRow);
+                console.log(conCol);
+                console.log("¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥¥");
+                if (j != index && this.placeholder[conRow][conCol][j]) {
                     noneFound = false;
                 }
             }
@@ -860,14 +809,17 @@ Digsim.prototype.deletePlaceholder = function(obj) {
                 this.placeholder[conRow][conCol] = undefined;
             }
             else {
-                this.placeholder[conRow][conCol][1] = undefined;
+                this.placeholder[conRow][conCol][index] = undefined;
             }
         }
 
         // Next
-        conCol = obj.column + factor * 2 + obj.outPt;
-        conRow = obj.row + factor;
-
+        utilMath = this.rotationMath(obj, "next", i, cnt);
+        conRow = utilMath.conRow;
+        conCol = utilMath.conCol;
+        cnt = utilMath.cnt;
+        index = utilMath.index;
+        
         var noneFound = true;
         for (var j = 0; j < 4; ++j) {
             if (j != 3 && this.placeholder[conRow][conCol][j]) {
@@ -878,7 +830,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
             this.placeholder[conRow][conCol] = undefined;
         }
         else {
-            this.placeholder[conRow][conCol][3] = undefined;
+            this.placeholder[conRow][conCol][index] = undefined;
         }
     }
     else {
@@ -1601,11 +1553,12 @@ Digsim.prototype.rotate = function(event) {
     
     if (!$('#Rotate_CW').hasClass('disabled')) {
         var obj = digsim.selectedComponent || digsim.draggingGate;
-        obj.rotation = (obj.rotation + event.data.dir) % 360;
         
         if (!digsim.dragging) {
             digsim.deletePlaceholder(obj);
         }
+        
+        obj.rotation = (obj.rotation + event.data.dir) % 360;
         
         // Swap row/col
         obj.dimension.row = obj.dimension.row ^ obj.dimension.col;
@@ -1620,6 +1573,7 @@ Digsim.prototype.rotate = function(event) {
         else {
             if (digsim.setPlaceholders(obj)) {
                 obj.draw(digsim.staticContext, 'red');
+                obj.checkConnect();
             }
             else {
                 obj.draw(digsim.movingContext, 'red');

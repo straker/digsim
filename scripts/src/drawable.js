@@ -68,18 +68,12 @@ Drawable.prototype.checkConnect = function() {
         console.log("THIS.NUMINPUTS: " + this.numInputs);
         // Endpoint contains a wire
         for (var j = 0; j < this.numInputs; ++j) {
-            conCol = this.column - 1;
-            if (this.type === digsim.NOT) {
-                conRow = this.row + 1;
-            }
-            else {
-                if (j % 2) { 
-                    conRow = this.row + (factor * 2) - cnt++;
-                }
-                else {
-                    conRow = this.row + cnt;
-                }
-            }
+
+            utilMath = digsim.rotationMath(this, "prev", i, cnt);
+            conRow = utilMath.conRow;
+            conCol = utilMath.conCol;
+            cnt = utilMath.cnt;
+
             console.log("conRow: " + conRow);
             console.log("conCol: " + conCol);
             for (var i = 1; i < 4; ++i) {
@@ -96,9 +90,11 @@ Drawable.prototype.checkConnect = function() {
         }
 
         // Output wire
-        conCol = this.column + factor * 2 + this.outPt;
-        conRow = this.row + factor;
-        
+        utilMath = digsim.rotationMath(this, "next", i, cnt);
+        conRow = utilMath.conRow;
+        conCol = utilMath.conCol;
+        cnt = utilMath.cnt;
+
         console.log("conCol:" + conCol);
         console.log("conRow:" + conRow);
         console.log("outPt:" + this.outPt);
