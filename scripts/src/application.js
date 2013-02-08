@@ -465,6 +465,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         // Place connection placeholders
         placeholder = new Placeholder(obj.id, conCol, conRow, obj.dimension.col, obj.dimension.row);
         this.placeholder[conRow][conCol][obj.conIndex] = placeholder;
+
     }
 
     // Places the placeholder for the object

@@ -16,7 +16,7 @@ function Clock() {
     this.juncts = [];
     this.dimension = {'row': 3, 'col': 2};
 
-    this.conRow = 1;
+    this.conRow = 0;
     this.conCol = 2;
     this.conIndex = 3;
 };
