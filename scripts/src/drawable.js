@@ -145,7 +145,7 @@ Drawable.prototype.passState = function(pState) {
     else if (this.type !== digsim.LED) {
         console.error("ERROR! Multiple drivers on 1 wire [passState()]");
         if (this.type === digsim.WIRE) {
-            digsim.addMessage(digsim.WARNING, "Warning: Unexpected end of wire.");
+            digsim.addMessage(digsim.WARNING, "[14]Warning: Unexpected end of wire.");
         }
     }
 };
@@ -287,7 +287,7 @@ Drawable.prototype.traverse = function() {
                 }
                 if (con.type === digsim.SWITCH || con.type === digsim.CLOCK) {
                     console.error("ERROR! Multiple switches driving one wire [traverse()]");
-                    digsim.addMessage(digsim.ERROR, "Error: Multiple switches driving one wire.");
+                    digsim.addMessage(digsim.ERROR, "[16]Error: Multiple switches driving one wire.");
                     return false;
                 }
                 else if (con.type === digsim.LED) {
@@ -308,7 +308,7 @@ Drawable.prototype.traverse = function() {
                     
                     if ($.inArray(currObject, con.connections) !== -1) {
                         console.error("ERROR! Driver connected to gate output [traverse()]");
-                        digsim.addMessage(digsim.ERROR, "Error: Switch connected to the output of a gate.");
+                        digsim.addMessage(digsim.ERROR, "[17]Error: Switch connected to the output of a gate.");
                         // Need to go back through the circuit and undo any nexts already set. 
                         return false;
                     }
@@ -329,62 +329,5 @@ Drawable.prototype.traverse = function() {
         }
         conQueue.shift();
     }
-    return true;
-
-/*
-    // RECURSIVE VERSION OF traverse(), WHICH IS TOO ROBUST FOR JAVASCRIPT
-    // BTW, this works perfectly, but I still dont want to use it
-    
-    
-    console.log("\n======START=====");
-    console.log(this);
-
-    for (var i = 0; i < this.connections.length; ++i) {
-        var con = this.connections[i];
-        
-        console.log("THIS.CONNECTIONS[" + i + "]: ");
-        console.log(this.connections[i]);
-        
-        console.log("THIS.PREV:");
-        console.log(this.prev);
-        
-        console.log("$.inArray(con, this.prev) = " + ($.inArray(con, this.prev)));
-        //  $ <- jquery stuff
-        if ($.inArray(con, this.prev) === -1) { // connection is not part of the previous
-                                                // don't set its next to its previous
-            console.log("CON.TYPE: " + con.type);
-            console.log(con);
-            
-            if (con.type === digsim.SWITCH) {
-                alert("ERROR! Multiple switches driving one wire");
-                console.log("ERROR! Multiple switches driving one wire");
-                return;
-            }
-            else if (con.type === digsim.LED) {
-                this.setNext(con);
-            }
-            else if (con.type === digsim.WIRE) {
-                if (this.type > 0) {
-                    this.setNext(con);
-                    console.log("NOT A GATE");
-                }
-                con.traverse();
-            }
-            else if (con.type < 0) {// Gates have a negative index
-                
-                console.log(con.next[0].next[0]);
-                if (typeof con.next[0].next[0] === "undefined") {
-                    con.traverse();
-                }
-            }           
-            else {
-                console.log("UNKNOWN CASE IN TRAVERSE() FUNCTION");
-            }
-        }
-    }
-    
-    return;
-     */
-    
-    
+    return true;    
 };

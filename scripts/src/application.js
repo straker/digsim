@@ -354,7 +354,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         for (col = 0; col < obj.dimension.col; ++col) {
             if (this.placeholder[obj.row + row][obj.column + col]) {
                 console.error("COLLISION! ERROR!");
-                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
+                digsim.addMessage(digsim.WARNING, "[1]Collision detected! Unable to place component. ");
                 return false;
             }
         }
@@ -377,7 +377,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             
             if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
                 console.error("Connection point collision error!");
-                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
+                digsim.addMessage(digsim.WARNING, "[2]Collision detected! Unable to place component.");
                 return false;
             }
             else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
@@ -385,7 +385,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             }
             else if (this.placeholder[conRow][conCol][index]) {
                 console.error("Connection point collision error!");
-                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
+                digsim.addMessage(digsim.WARNING, "[3]Collision detected! Unable to place component.");
                 return false;
             }
         }
@@ -400,7 +400,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
             console.error("Connection point collision error!");
-            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
+            digsim.addMessage(digsim.WARNING, "[4]Collision detected! Unable to place component.");
             return false;
         }
         else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
@@ -408,7 +408,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
         else if (this.placeholder[conRow][conCol][index]) {
             console.error("Connection point collision error!");
-            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
+            digsim.addMessage(digsim.WARNING, "[5]Collision detected! Unable to place component.");
             return false;
         }
         console.log("NO COLLISION! :)");
@@ -450,7 +450,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
             console.error("Connection point collision error!");
-            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
+            digsim.addMessage(digsim.WARNING, "[6]Collision detected! Unable to place component.");
             return false;
         }
         else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
@@ -458,7 +458,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
         else if(this.placeholder[conRow][conCol][obj.conIndex]) {
             console.error("Connection point collision error!");
-            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place component.");
+            digsim.addMessage(digsim.WARNING, "[7]Collision detected! Unable to place component.");
             return false;
         }
 
@@ -612,13 +612,13 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
                         console.log("placed at index " + 1);
                         if (thisPH[1]) {
                             console.error("wire collision error!");
-                            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
+                            digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place wire.");
                             return false;
                         }
                     }
                     else if (thisPH[3]) {
                         console.error("wire collision error!");
-                        digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
+                        digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place wire.");
                         return false;
                     }
                 }
@@ -626,7 +626,7 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
             }
             else if (thisPH) {
                 console.error("COLLISION! ERROR!");
-                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
+                digsim.addMessage(digsim.WARNING, "[10]Collision detected! Unable to place wire.");
                 return false;
             }
             else {
@@ -651,13 +651,13 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
                         console.log("placed at index " + 1);
                         if (thisPH[2]) {
                             console.error("wire collision error!");
-                            digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
+                            digsim.addMessage(digsim.WARNING, "[11]Collision detected! Unable to place wire.");
                             return false;
                         }
                     }
                     else if (thisPH[0]) {
                         console.error("wire collision error!");
-                        digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
+                        digsim.addMessage(digsim.WARNING, "[12]Collision detected! Unable to place wire.");
                         return false;
                     }
                 }
@@ -665,7 +665,7 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
             }
             else if (thisPH) {
                 console.error("COLLISION! ERROR!");
-                digsim.addMessage(digsim.WARNING, "Collision detected! Unable to place wire.");
+                digsim.addMessage(digsim.WARNING, "[13]Collision detected! Unable to place wire.");
                 return false;
             }
             else {
@@ -912,7 +912,7 @@ Digsim.prototype.onButtonClicked = function (event) {
         }
         else if (id == "Run") {
             if (digsim.drivers.length === 0) {
-                digsim.addMessage(digsim.ERROR, "Error: No drivers in schematic!");
+                digsim.addMessage(digsim.ERROR, "[15]Error: No drivers in schematic!");
                 return;
             }
             $("canvas").css('cursor','pointer');
