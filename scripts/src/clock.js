@@ -14,7 +14,7 @@ function Clock() {
     this.next = [];
     this.connections = [];
     this.juncts = [];
-    this.dimension = {'row': 3, 'col': 2};
+    this.dimension = {'row': 1, 'col': 2};
 
     this.conRow = 0;
     this.conCol = 2;
@@ -38,39 +38,42 @@ Clock.prototype.draw = function(context, lineColor) {
     context.lineCap = 'round';
     context.lineWidth = 2;
     
+    // Rotatation
     var center = {'row': (this.dimension.row / 2) * digsim.GRID_SIZE,
         'col': digsim.GRID_SIZE / 2 * (this.dimension.col - 1)};
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
 
+    context.moveTo(0, 0);
+
     // Outside rectangle
-    context.rect(0, digsim.GRID_SIZE * 0.75, digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 1.5);
+    context.rect(0, digsim.GRID_SIZE * -0.25, digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 1.5);
     context.fill();
     context.stroke();
 
     // Inside triangle
     context.beginPath();
-    context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 1.25);
-    context.lineTo(digsim.GRID_SIZE * 1.75, digsim.GRID_SIZE * 1.5);
-    context.lineTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 1.75);
+    context.moveTo(digsim.GRID_SIZE * 2    , digsim.GRID_SIZE * 0.25);
+    context.lineTo(digsim.GRID_SIZE * 1.75 , digsim.GRID_SIZE * 0.5);
+    context.lineTo(digsim.GRID_SIZE * 2    , digsim.GRID_SIZE * 0.75);
     context.stroke();
 
     // Clock signal
     context.beginPath();
-    context.moveTo(digsim.GRID_SIZE * 5 / 3, digsim.GRID_SIZE );
-    context.lineTo(digsim.GRID_SIZE * 5 / 3, digsim.GRID_SIZE * 2);
-    context.lineTo(digsim.GRID_SIZE        , digsim.GRID_SIZE * 2);
+    context.moveTo(digsim.GRID_SIZE * 5 / 3, 0);
+    context.lineTo(digsim.GRID_SIZE * 5 / 3, digsim.GRID_SIZE);
     context.lineTo(digsim.GRID_SIZE        , digsim.GRID_SIZE);
+    context.lineTo(digsim.GRID_SIZE        , 0);
+    context.lineTo(digsim.GRID_SIZE / 3    , 0);
     context.lineTo(digsim.GRID_SIZE / 3    , digsim.GRID_SIZE);
-    context.lineTo(digsim.GRID_SIZE / 3, digsim.GRID_SIZE * 2);
     context.fill();
     context.stroke();
 
     // Connection
     context.beginPath();
-    context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 1.5);
-    context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE * 1.5);
+    context.moveTo(digsim.GRID_SIZE * 2    , digsim.GRID_SIZE * 0.5);
+    context.lineTo(digsim.GRID_SIZE * 2.5  , digsim.GRID_SIZE * 0.5);
     context.stroke();
     context.restore();
 

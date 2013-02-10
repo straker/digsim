@@ -358,9 +358,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
                 return false;
             }
         }
-    }
-    
-    
+    } 
 
     // Check connection points for collision
     if (obj.type < 0) { // gate
@@ -445,6 +443,45 @@ Digsim.prototype.setPlaceholders = function(obj) {
         this.placeholder[conRow][conCol][index] = placeholder;
     }
     else {
+        // Draw top and bottom small placeholders for switches and clocks
+        if (obj.type !== digsim.LED) {
+            // Check for collision top
+            if (!(this.placeholder[obj.row - 1][obj.column] instanceof Array) && this.placeholder[obj.row - 1][obj.column]) {
+                console.error("Connection point collision error!");
+                digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
+                return false;
+            }
+            else if (!(this.placeholder[obj.row - 1][obj.column] instanceof Array)) {
+                this.placeholder[obj.row - 1][obj.column] = [];
+            }
+            else if(this.placeholder[obj.row - 1][obj.column][2]) {
+                console.error("Connection point collision error!");
+                digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
+                return false;
+            }
+
+            // Check for collision bottom
+            if (!(this.placeholder[obj.row + 1][obj.column] instanceof Array) && this.placeholder[obj.row + 1][obj.column]) {
+                console.error("Connection point collision error!");
+                digsim.addMessage(digsim.WARNING, "[10]Collision detected! Unable to place component.");
+                return false;
+            }
+            else if (!(this.placeholder[obj.row + 1][obj.column] instanceof Array)) {
+                this.placeholder[obj.row + 1][obj.column] = [];
+            }
+            else if(this.placeholder[obj.row + 1][obj.column][0]) {
+                console.error("Connection point collision error!");
+                digsim.addMessage(digsim.WARNING, "[11]Collision detected! Unable to place component.");
+                return false;
+            }
+
+            // Place placeholders
+            placeholder = new Placeholder(obj.id, obj.column, obj.row - 1, obj.dimension.col, obj.dimension.row);
+            this.placeholder[obj.row - 1][obj.column][2] = placeholder;
+            placeholder = new Placeholder(obj.id, obj.column, obj.row + 1, obj.dimension.col, obj.dimension.row);
+            this.placeholder[obj.row + 1][obj.column][0] = placeholder;
+        }
+
         conCol = obj.column + obj.conCol;
         conRow = obj.row + obj.conRow;
 
@@ -1797,11 +1834,13 @@ document.onkeydown = function(event) {
     console.log('Pressed: ' + keyCode);
     console.log(event);
 
+    // Stop tabbing of buttons
+    if (keyCode === 9) {
+        event.preventDefault();
+    }
+
     // Don't do anything when mac user refresh
     if (!(keyCode === 82 && event.metaKey)) {
-        
-        event.preventDefault();
-        event.stopPropagation();
     
         if(event.shiftKey) {
             id = KEY_CODES['s'+keyCode];
