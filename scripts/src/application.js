@@ -219,7 +219,7 @@ Digsim.prototype.drawGrid = function(context) {
     // Outline the canvas   
     this.clearCanvas(context, this.gridWidth, this.gridHeight);
     context.strokeStyle = '#000000';
-    context.strokeRect(0, 0, this.gridWidth, this.gridHeight);
+    context.strokeRect(.5, .5, this.gridWidth-1, this.gridHeight-1);
     
     // Grid grid
     if (this.gridToggle % 3 === 0) {

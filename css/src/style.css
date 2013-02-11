@@ -70,11 +70,13 @@ img {
 .menu {
     position: relative;
     display: block;
-    background-color: #F0F0F0;
     overflow: hidden;
     width: 100%;
     min-width: 800px;
 }
+    .menu .ul:not(:first-child) {
+        border-left: 1px solid black;
+    }
 
 .header {
     border-top: 1px solid #96d1f8;
@@ -84,9 +86,6 @@ img {
     background: -moz-linear-gradient(top, #3e779d, #65a9d7);
     background: -ms-linear-gradient(top, #3e779d, #65a9d7);
     background: -o-linear-gradient(top, #3e779d, #65a9d7);
-    -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
-    -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
-    box-shadow: rgba(0,0,0,1) 0 1px 0;
     padding: 5px 0px;
     width: 100%;
     margin-bottom: 4px;
@@ -100,27 +99,19 @@ img {
         text-align: center;
         cursor: default;
     }
+    .header.main {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
+        -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
+        box-shadow: rgba(0,0,0,1) 0 1px 0;
+    }
 
 .row {
     clear: both;
     overflow: hidden;
     padding-bottom: 4px;
-}
-
-.file {
-    width: 212px;
-}
-.gates {
-    width: 245px;
-}
-.io {
-    width: 107px;
-}
-.modes {
-    width: 54px;
-}
-.controls {
-    width: 160px;
 }
 
 .input-col {
@@ -165,7 +156,15 @@ img {
 .messages {
     height: 400px;
     width: 212px;
+    position: relative;
+    top: 2px;
+    border-top: 1px solid black;
 }
+    .messages .header {
+        -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
+        -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
+        box-shadow: rgba(0,0,0,1) 0 1px 0;
+    }
 #messages {
     margin-top: -3px;
     padding: 5px;
@@ -183,10 +182,10 @@ img {
     margin: 0;
     padding: 0;
 }
-.row:not(.header) .col:not(:first-child) {
+.col:not(:first-child) .row:not(.header) {
     border-left: 1px solid black;
 }
-    .col li {
+    .col ul:not(.header) li {
         height: 40px;
         float: left;
         padding: 0px 5px 5px 5px;
@@ -315,7 +314,7 @@ a {
  */
 .canvases {
 	position: absolute;
-	top: 129px;
+	top: 131px;
 	left: 212px;
 }
 canvas {

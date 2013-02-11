@@ -14,16 +14,13 @@
   </script>
 </head>
 <body onload="digsim.run()">
+	<div class="row header main">&nbsp;</div>
 	<div class="menu">
-		<ul class="row header">
-			<li class="col file">File</li>
-			<li class="col gates">Gates</li>
-			<li class="col io">I/O</li>
-			<li class="col modes">Modes</li>
-			<li class="col controls">Controls</li>
-		</ul>
-		<div class="row">
-			<ul class="col file">
+		<div class="col">
+			<ul class="row header">
+				<li>File</li>
+			</ul>
+			<ul class="row">
 				<li>
 					<a href="#" id="New" title="New File"><div class="button New"></div>New</a>
 				</li>
@@ -37,7 +34,26 @@
 					<a href="#" id="Submit" title="Submit"><div class="button Submit"></div>Submit</a>
 				</li>
 			</ul>
-			<ul class="col gates">
+			<ul class="row">
+				<li>
+					<a href="#" class="disabled"><div class="button"></div>&nbsp;</a>
+				</li>
+				<li>
+					<a href="#" id="Toggle_Grid" title="Toggle Grid"><div class="button Toggle_Grid"></div>Grid</a>
+				</li>
+				<li>
+					<a href="#" id="Zoom_Out" title="Zoom Out"><div class="button Zoom_Out"></div>Zoom</a>
+				</li>
+				<li>
+					<a href="#" id="Zoom_In" title="Zoom In"><div class="button Zoom_In"></div>Zoom</a>
+				</li>
+			</ul>
+		</div>
+		<div class="col">
+			<ul class="row header">
+				<li>Gates</li>
+			</ul>
+			<ul class="row">
 				<li>
 					<a href="#" id="AND" title="AND"><div class="button AND"></div>AND</a>
 				</li>
@@ -51,48 +67,7 @@
                     <a href="#" class="disabled"><div class="button"></div></a>
                 </li>
 			</ul>
-			<ul class="col io">
-				<li>
-					<a href="#" id="Switch" title="Switch"><div class="button Switch"></div>Switch</a>
-				</li>
-				<li>
-					<a href="#" id="Clock" title="Clock"><div class="button Clock"></div>Clock</a>
-				</li>
-
-			</ul>
-			<ul class="col modes">
-				<li>
-					<a href="#" id="Wire" title="Wire"><div class="button Wire"></div>Wire</a>
-				</li>
-			</ul>
-			<ul class="col controls">
-				<li>
-					<a href="#" id="Delete" title="Delete"><div class="button Delete"></div>Delete</a>
-				</li>
-				<li>
-					<a href="#" id="Rotate_CCW" title="Rotate CCW"><div class="button Rotate_Left"></div>Rotate</a>
-				</li>
-				<li>
-					<a href="#" id="Rotate_CW" title="Rotate CW"><div class="button Rotate_Right"></div>Rotate</a>
-				</li>
-			</ul>
-		</div>
-		<div class="row">
-			<ul class="col file">
-				<li>
-					<a href="#" class="disabled"><div class="button"></div>&nbsp;</a>
-				</li>
-				<li>
-					<a href="#" id="Toggle_Grid" title="Toggle Grid"><div class="button Toggle_Grid"></div>Grid</a>
-				</li>
-				<li>
-					<a href="#" id="Zoom_Out" title="Zoom Out"><div class="button Zoom_Out"></div>Zoom</a>
-				</li>
-				<li>
-					<a href="#" id="Zoom_In" title="Zoom In"><div class="button Zoom_In"></div>Zoom</a>
-				</li>		
-			</ul>
-			<ul class="col gates">
+			<ul class="row">
 				<li>
 					<a href="#" id="NAND" title="NAND"><div class="button NAND"></div>NAND</a>
 				</li>
@@ -106,17 +81,56 @@
                     <a href="#" class="disabled"><div class="button"></div></a>
                 </li>
 			</ul>
-			<ul class="col io">
+		</div>
+		<div class="col">
+			<ul class="row header">
+				<li>I/O</li>
+			</ul>
+			<ul class="row">
+				<li>
+					<a href="#" id="Switch" title="Switch"><div class="button Switch"></div>Switch</a>
+				</li>
+				<li>
+					<a href="#" id="Clock" title="Clock"><div class="button Clock"></div>Clock</a>
+				</li>
+			</ul>
+			<ul class="row">
 				<li>
 					<a href="#" id="LED" title="LED"><div class="button LED"></div>LED</a>
 				</li>
 			</ul>
-			<ul class="col modes">
+		</div>
+		<div class="col">
+			<ul class="row header">
+				<li>Modes</li>
+			</ul>
+			<ul class="row">
+				<li>
+					<a href="#" id="Wire" title="Wire"><div class="button Wire"></div>Wire</a>
+				</li>
+			</ul>
+			<ul class="row">
 				<li>
 					<a href="#" id="Run" title="Run"><div class="button Run"></div>Run</a>
 				</li>
 			</ul>
-			<ul class="col controls">
+		</div>
+		<div class="col">
+			<ul class="row header">
+				<li>Controls</li>
+			</ul>
+			<ul class="row">
+				<li>
+					<a href="#" id="Delete" title="Delete"><div class="button Delete"></div>Delete</a>
+				</li>
+				<li>
+					<a href="#" id="Rotate_CCW" title="Rotate CCW"><div class="button Rotate_Left"></div>Rotate</a>
+				</li>
+				<li>
+					<a href="#" id="Rotate_CW" title="Rotate CW"><div class="button Rotate_Right"></div>Rotate</a>
+				</li>
+			</ul>
+			<ul class="row">
 				<li>
 					<a href="#" id="Cut" title="Cut"><div class="button Cut"></div>Cut</a>
 				</li>
@@ -138,8 +152,8 @@
         <ul>
     </div>
 	<div class="messages">
-		<ul class="row header">
-			<li class="col file">Messages</li>
+		<ul class="col header">
+			<li class="row">Messages</li>
 		</ul>
 		<div id="messages"></div>
 	</div>
