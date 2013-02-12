@@ -1,0 +1,40 @@
+default:
+	g++ download.cpp -o poop;
+	./poop;
+	cd; 
+	rm poop;
+
+zip:
+	mkdir DigSimApp
+	mkdir DigSimApp/css
+	mkdir DigSimApp/css/src
+	mkdir DigSimApp/scripts
+	mkdir DigSimApp/scripts/src
+	cp css/src/style.css DigSimApp/css/src/.
+	cp scripts/src/* DigSimApp/scripts/src/.
+	cp DigSim.html DigSimApp/.
+	zip -r digsim DigSimApp
+	rm -r DigSimApp
+	say -v junior -r300 "zip successful"
+
+push: 
+	g++ download.cpp -o poop;
+	./poop push;
+	cd;
+	rm poop;
+	make zip;
+	say -v fred -r300 "push successful";
+	make lineCnt;
+
+pull:
+	g++ download.cpp -o poop;
+	./poop pull;
+	cd; 
+	rm poop;
+	say -v alex -r300 "pull successful";
+
+lineCnt: 
+	g++ count.cpp -o count;
+	./count;
+	rm count;
+	rm cnt.txt;
