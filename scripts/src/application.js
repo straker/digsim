@@ -12,7 +12,6 @@
  * To-do:
  * pick up wires
  * Rotations
- * Reformat row/col of UI to handle adding new buttons better
  * Panning
  * auto-route
  * implement touch controls
@@ -53,6 +52,8 @@ function Digsim() {
     this.PLACE_MODE = 3;
     this.WARNING = 0;
     this.ERROR = 1;
+    this.PREV = 0;
+    this.NEXT = 1;
     
     // Wire identifiers
     this.TL = 0;    // top-left
@@ -72,6 +73,7 @@ function Digsim() {
     this.lockH = 0;
     this.lockV = 0;
     this.clkCnt = 0;
+    this.rotation = 0;
 
     // Grid variables
     this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
@@ -481,9 +483,13 @@ Digsim.prototype.setPlaceholders = function(obj) {
             placeholder = new Placeholder(obj.id, obj.column, obj.row + 1, obj.dimension.col, obj.dimension.row);
             this.placeholder[obj.row + 1][obj.column][0] = placeholder;
         }
-
-        conCol = obj.column + obj.conCol;
-        conRow = obj.row + obj.conRow;
+        // Nexts
+        utilMath = this.rotationMath(obj, "next", 0, 0);
+        conRow = utilMath.conRow;
+        conCol = utilMath.conCol;
+        cnt = utilMath.cnt;
+        index = utilMath.index;
+        console.log("INDEX: " + index);
 
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
             console.error("Connection point collision error!");
@@ -493,7 +499,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
             this.placeholder[conRow][conCol] = [];
         }
-        else if(this.placeholder[conRow][conCol][obj.conIndex]) {
+        else if(this.placeholder[conRow][conCol][index]) {
             console.error("Connection point collision error!");
             digsim.addMessage(digsim.WARNING, "[7]Collision detected! Unable to place component.");
             return false;
@@ -501,7 +507,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
         // Place connection placeholders
         placeholder = new Placeholder(obj.id, conCol, conRow, obj.dimension.col, obj.dimension.row);
-        this.placeholder[conRow][conCol][obj.conIndex] = placeholder;
+        this.placeholder[conRow][conCol][index] = placeholder;
 
     }
 
@@ -525,8 +531,14 @@ Digsim.prototype.setPlaceholders = function(obj) {
  ****************************************************************************/
 Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
     
-    var conCol, conRow;
-    var factor = Math.floor(obj.numInputs / 2) || 1;
+    var conCol, conRow, factor = 1;
+    if (obj.type < 0) {
+        factor = Math.floor(obj.numInputs / 2) || 1;
+    }
+    else if (obj.type === digsim.SWITCH || obj.type === digsim.CLOCK) {
+        factor = 0;
+    }
+
     var index, rot = obj.rotation; // rotation variables
     
     if (con === "prev") {
@@ -576,33 +588,65 @@ Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
     
     else {
         // Next
-        switch (rot / 90)
-        {
-            case 0:
-                conCol = obj.column + obj.dimension.col;
-                conRow = obj.row + factor;
-                index = 3;
-                console.log("case 0");
-                break;
-            case 1:
-                index = 0;
-                conCol = obj.column + factor;
-                conRow = obj.row + obj.dimension.row;
-                console.log("case 1");
-                break;
-            case 2:
-                index = 1;
-                conCol = obj.column  - 1;
-                conRow = obj.row + factor;
-                console.log("case 2");
-                break;
-            default:
-                index = 2;
-                conCol = obj.column + factor;
-                conRow = obj.row - 1;
-                console.log("case doody");
+        if (obj.type === digsim.LED) {
+            switch (rot / 90)
+            {
+                case 0:
+                    conCol = obj.column;
+                    conRow = obj.row + 2;
+                    index = 0;
+                    console.log("case 0");
+                    break;
+                case 1:
+                    index = 1;
+                    conCol = obj.column - 1;
+                    conRow = obj.row;
+                    console.log("case 1");
+                    break;
+                case 2:
+                    index = 2;
+                    conCol = obj.column;
+                    conRow = obj.row - 1;
+                    console.log("case 2");
+                    break;
+                default:
+                    index = 3;
+                    conCol = obj.column + 2;
+                    conRow = obj.row;
+                    console.log("case default");
+            }
+        }
+        else {
+
+            switch (rot / 90)
+            {
+                case 0:
+                    conCol = obj.column + obj.dimension.col;
+                    conRow = obj.row + factor;
+                    index = 3;
+                    console.log("case 0");
+                    break;
+                case 1:
+                    index = 0;
+                    conCol = obj.column + factor;
+                    conRow = obj.row + obj.dimension.row;
+                    console.log("case 1");
+                    break;
+                case 2:
+                    index = 1;
+                    conCol = obj.column  - 1;
+                    conRow = obj.row + factor;
+                    console.log("case 2");
+                    break;
+                default:
+                    index = 2;
+                    conCol = obj.column + factor;
+                    conRow = obj.row - 1;
+                    console.log("case default");
+            }
         }
         console.log("ROW: " + conRow);
+
     }
     
     return {"conRow": conRow, "conCol": conCol, "cnt": cnt, "index": index};
@@ -872,11 +916,15 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         }
     }
     else {
-        conCol = obj.column + obj.conCol;
-        conRow = obj.row + obj.conRow;
+        // Next
+        utilMath = this.rotationMath(obj, "next", 0, 0);
+        conRow = utilMath.conRow;
+        conCol = utilMath.conCol;
+        cnt = utilMath.cnt;
+        index = utilMath.index;
 
         for (var j = 0; j < 4; ++j) {
-            if (j != obj.conIndex && this.placeholder[conRow][conCol][j]) {
+            if (j != index && this.placeholder[conRow][conCol][j]) {
                 noneFound = false;
             }
         }
@@ -884,7 +932,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
             this.placeholder[conRow][conCol] = undefined;
         }
         else {
-            this.placeholder[conRow][conCol][obj.conIndex] = undefined;
+            this.placeholder[conRow][conCol][index] = undefined;
         }
     }
 
@@ -986,6 +1034,7 @@ Digsim.prototype.onButtonClicked = function (event) {
             digsim.enableButton('Rotate_CCW');
 
             // Use reflection to dynamically create gate based on id :)
+            digsim.rotation = 0;
             var Class = window[id];
             var gate = new Class(digsim.numGateInputs); 
             digsim.prevGate = id;
@@ -1449,7 +1498,8 @@ Digsim.prototype.onGridMouseUp = function(event) {
                 var gate = new Class(digsim.numGateInputs); 
                 var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE) || 2;
                 var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE) || 2;
-                gate.init(col, row, 0, ++digsim.iComp);
+                console.log("ROTATION: " + digsim.rotation);
+                gate.init(col, row, digsim.rotation, ++digsim.iComp);
                 digsim.draggingGate = gate;
                 digsim.draggingGate.draw(digsim.movingContext);
                 digsim.dragging = true;
@@ -1596,7 +1646,7 @@ Digsim.prototype.rotate = function(event) {
             digsim.deletePlaceholder(obj);
         }
         
-        obj.rotation = (obj.rotation + event.data.dir) % 360;
+        obj.rotation = digsim.rotation = (obj.rotation + event.data.dir) % 360;
         
         // Swap row/col
         obj.dimension.row = obj.dimension.row ^ obj.dimension.col;

@@ -31,6 +31,12 @@ Drawable.prototype.init = function (col, row, rot, id) {
     this.drawStatic = true;
     this.id = id;
     this.rotation = rot;
+    if (rot === 90 || rot === 270) {
+        // Swap row/col
+        this.dimension.row = this.dimension.row ^ this.dimension.col;
+        this.dimension.col = this.dimension.row ^ this.dimension.col;
+        this.dimension.row = this.dimension.row ^ this.dimension.col;
+    }
     this.row = row;    
 };
 
@@ -47,16 +53,21 @@ Drawable.prototype.checkConnect = function() {
         var PH;
         // Endpoint contains a wire
         for (var i = 1; i < 4; ++i) {
+            // Output wire
+            utilMath = digsim.rotationMath(this, "next", 0, 0);
+            conRow = utilMath.conRow;
+            conCol = utilMath.conCol;
+
             console.log("ROW, COL: " + this.row + " " + this.column);
             console.log("CONROW, CONCOL: " + this.conRow + " " + this.conCol);
-            if (PH = digsim.placeholder[(this.conRow + this.row)][(this.conCol + this.column)][i]) {
+            if (PH = digsim.placeholder[conRow][conCol][i]) {
                 obj = digsim.components[PH.ref];
                 if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                     this.connections.push(obj);
                     obj.connections.push(this);
 
-                    this.juncts.push( { 'x': (this.conCol + this.column), 'y': (this.conRow + this.row) } );
+                    this.juncts.push( { 'x': conCol, 'y': conRow } );
                 }
             }
         }

@@ -33,8 +33,17 @@ LED.prototype.draw = function(context, lineColor) {
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
 
-    var center = {'row': Math.floor(this.dimension.row / 2) * digsim.GRID_SIZE, 
-                  'col': digsim.GRID_SIZE / 2};
+    var offsetH = 0, offsetV = 0;
+    if (this.rotation == 90) {
+        offsetV = 0.5;
+    }
+    else if (this.rotation === 270) {
+        offsetH = -0.5;
+    }
+    
+    var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.GRID_SIZE,
+        'col': (this.dimension.col / 2 + offsetH) * digsim.GRID_SIZE};
+
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
