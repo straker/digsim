@@ -10,6 +10,7 @@
  *  A fully functional circuit simulation program. 
  *
  * To-do:
+ * select switch with wire click thingy yeah
  * pick up wires
  * Rotations
  * Panning
