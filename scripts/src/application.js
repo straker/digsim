@@ -370,7 +370,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         // Previous
         for (var i = 0; i < obj.numInputs; ++i) {
             
-            utilMath = this.rotationMath(obj, "prev", i, cnt);
+            utilMath = this.rotationMath(obj, this.PREV, i, cnt);
             conRow = utilMath.conRow;
             conCol = utilMath.conCol;
             cnt = utilMath.cnt;
@@ -392,7 +392,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
 
         // Nexts
-        utilMath = this.rotationMath(obj, "next", i, cnt);
+        utilMath = this.rotationMath(obj, this.NEXT, i, cnt);
         conRow = utilMath.conRow;
         conCol = utilMath.conCol;
         cnt = utilMath.cnt;
@@ -422,7 +422,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         // Previous
         for (var i = 0; i < obj.numInputs; ++i) {
             
-            utilMath = this.rotationMath(obj, "prev", i, cnt);
+            utilMath = this.rotationMath(obj, this.PREV, i, cnt);
             conRow = utilMath.conRow;
             conCol = utilMath.conCol;
             cnt = utilMath.cnt;
@@ -435,7 +435,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             
         
         // Next
-        utilMath = this.rotationMath(obj, "next", i, cnt);
+        utilMath = this.rotationMath(obj, this.NEXT, i, cnt);
         conRow = utilMath.conRow;
         conCol = utilMath.conCol;
         cnt = utilMath.cnt;
@@ -448,44 +448,54 @@ Digsim.prototype.setPlaceholders = function(obj) {
     else {
         // Draw top and bottom small placeholders for switches and clocks
         if (obj.type !== digsim.LED) {
-            // Check for collision top
-            if (!(this.placeholder[obj.row - 1][obj.column] instanceof Array) && this.placeholder[obj.row - 1][obj.column]) {
-                console.error("Connection point collision error!");
-                digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
-                return false;
+            var col = obj.column, row = obj.row, index;
+            for (var x = 0, len = Math.max(obj.dimension.row, obj.dimension.col); x < len; ++x) {
+                for (var y = 0; y < 2; ++y) {
+                    if (((obj.rotation) / 90) % 2) {
+                        if (y) {
+                            col = obj.column + obj.dimension.col;
+                            index = 3;
+                        }
+                        else {
+                            index = 1;
+                            col = obj.column - 1;    
+                        }
+                    }
+                    else {
+                        if (y) {
+                            row = obj.row + obj.dimension.row;
+                            index = 0;
+                        }
+                        else {
+                            index = 2;
+                            row = obj.row - 1;
+                        }
+                    }
+                    // Check for collision top
+                    if (!(this.placeholder[row][col] instanceof Array) && this.placeholder[row][col]) {
+                        console.error("Connection point collision error!");
+                        digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
+                        return false;
+                    }
+                    else if (!(this.placeholder[row][col] instanceof Array)) {
+                        this.placeholder[row][col] = [];
+                    }
+                    else if(this.placeholder[row][col][index]) {
+                        console.error("Connection point collision error!");
+                        digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
+                        return false;
+                    }
+                }
+                if (((obj.rotation) / 90) % 2) { 
+                    ++row;
+                }
+                else {
+                    ++col;
+                }
             }
-            else if (!(this.placeholder[obj.row - 1][obj.column] instanceof Array)) {
-                this.placeholder[obj.row - 1][obj.column] = [];
-            }
-            else if(this.placeholder[obj.row - 1][obj.column][2]) {
-                console.error("Connection point collision error!");
-                digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
-                return false;
-            }
-
-            // Check for collision bottom
-            if (!(this.placeholder[obj.row + 1][obj.column] instanceof Array) && this.placeholder[obj.row + 1][obj.column]) {
-                console.error("Connection point collision error!");
-                digsim.addMessage(digsim.WARNING, "[10]Collision detected! Unable to place component.");
-                return false;
-            }
-            else if (!(this.placeholder[obj.row + 1][obj.column] instanceof Array)) {
-                this.placeholder[obj.row + 1][obj.column] = [];
-            }
-            else if(this.placeholder[obj.row + 1][obj.column][0]) {
-                console.error("Connection point collision error!");
-                digsim.addMessage(digsim.WARNING, "[11]Collision detected! Unable to place component.");
-                return false;
-            }
-
-            // Place placeholders
-            placeholder = new Placeholder(obj.id, obj.column, obj.row - 1, obj.dimension.col, obj.dimension.row);
-            this.placeholder[obj.row - 1][obj.column][2] = placeholder;
-            placeholder = new Placeholder(obj.id, obj.column, obj.row + 1, obj.dimension.col, obj.dimension.row);
-            this.placeholder[obj.row + 1][obj.column][0] = placeholder;
         }
         // Nexts
-        utilMath = this.rotationMath(obj, "next", 0, 0);
+        utilMath = this.rotationMath(obj, this.NEXT, 0, 0);
         conRow = utilMath.conRow;
         conCol = utilMath.conCol;
         cnt = utilMath.cnt;
@@ -509,6 +519,44 @@ Digsim.prototype.setPlaceholders = function(obj) {
         // Place connection placeholders
         placeholder = new Placeholder(obj.id, conCol, conRow, obj.dimension.col, obj.dimension.row);
         this.placeholder[conRow][conCol][index] = placeholder;
+
+        if (obj.type !== digsim.LED) {
+            var col = obj.column, row = obj.row, index;
+            for (var x = 0, len = Math.max(obj.dimension.row, obj.dimension.col); x < len; ++x) {
+                console.log("{row, col} = {" + obj.dimension.row + ", " + obj.dimension.col + "}; max: " + len);
+                for (var y = 0; y < 2; ++y) {
+                    if (((obj.rotation) / 90) % 2) {
+                        if (y) {
+                            col = obj.column + obj.dimension.col;
+                            index = 3;
+                        }
+                        else {
+                            index = 1;
+                            col = obj.column - 1;    
+                        }
+                    }
+                    else {
+                        if (y) {
+                            row = obj.row + obj.dimension.row;
+                            index = 0;
+                        }
+                        else {
+                            index = 2;
+                            row = obj.row - 1;
+                        }
+                    }
+                    // Place connection placeholders
+                    placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
+                    this.placeholder[row][col][index] = placeholder;
+                }
+                if (((obj.rotation) / 90) % 2) { 
+                    ++row;
+                }
+                else {
+                    ++col;
+                }
+            }
+        }
 
     }
 
@@ -542,7 +590,7 @@ Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
 
     var index, rot = obj.rotation; // rotation variables
     
-    if (con === "prev") {
+    if (con === this.PREV) {
         // Previous
         switch (rot / 90)
         {
@@ -897,7 +945,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         }
 
         // Next
-        utilMath = this.rotationMath(obj, "next", i, cnt);
+        utilMath = this.rotationMath(obj, this.NEXT, i, cnt);
         conRow = utilMath.conRow;
         conCol = utilMath.conCol;
         cnt = utilMath.cnt;
@@ -917,8 +965,54 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         }
     }
     else {
+
+         if (obj.type !== digsim.LED) {
+            var col = obj.column, row = obj.row, index;
+            for (var x = 0, len = Math.max(obj.dimension.row, obj.dimension.col); x < len; ++x) {
+                for (var y = 0; y < 2; ++y) {
+                    if (((obj.rotation) / 90) % 2) {
+                        if (y) {
+                            col = obj.column + obj.dimension.col;
+                            index = 3;
+                        }
+                        else {
+                            index = 1;
+                            col = obj.column - 1;    
+                        }
+                    }
+                    else {
+                        if (y) {
+                            row = obj.row + obj.dimension.row;
+                            index = 0;
+                        }
+                        else {
+                            index = 2;
+                            row = obj.row - 1;
+                        }
+                    }
+                    for (var j = 0; j < 4; ++j) {
+                        if (j != index && this.placeholder[row][col][j]) {
+                            noneFound = false;
+                        }
+                    }
+                    if (noneFound) {
+                        this.placeholder[row][col] = undefined;
+                    }
+                    else {
+                        this.placeholder[row][col][index] = undefined;
+                    }
+                }
+                if (((obj.rotation) / 90) % 2) { 
+                    ++row;
+                }
+                else {
+                    ++col;
+                }
+            }
+        }
+
         // Next
-        utilMath = this.rotationMath(obj, "next", 0, 0);
+        utilMath = this.rotationMath(obj, this.NEXT, 0, 0);
         conRow = utilMath.conRow;
         conCol = utilMath.conCol;
         cnt = utilMath.cnt;

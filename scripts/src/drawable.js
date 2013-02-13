@@ -52,17 +52,18 @@ Drawable.prototype.checkConnect = function() {
         console.log("STEP 1");
         var PH;
         // Endpoint contains a wire
-        for (var i = 1; i < 4; ++i) {
+        for (var i = 0; i < 4; ++i) {
             // Output wire
-            utilMath = digsim.rotationMath(this, "next", 0, 0);
+            utilMath = digsim.rotationMath(this, digsim.NEXT, 0, 0);
             conRow = utilMath.conRow;
             conCol = utilMath.conCol;
 
             console.log("ROW, COL: " + this.row + " " + this.column);
-            console.log("CONROW, CONCOL: " + this.conRow + " " + this.conCol);
+            console.log("CONROW, CONCOL: " + conRow + " " + conCol);
             if (PH = digsim.placeholder[conRow][conCol][i]) {
+                console.log(PH);
                 obj = digsim.components[PH.ref];
-                if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
+                if ((obj !== this) && ($.inArray(obj, this.connections) === -1) && PH.connectable) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                     this.connections.push(obj);
                     obj.connections.push(this);
@@ -80,7 +81,7 @@ Drawable.prototype.checkConnect = function() {
         // Endpoint contains a wire
         for (var j = 0; j < this.numInputs; ++j) {
 
-            utilMath = digsim.rotationMath(this, "prev", i, cnt);
+            utilMath = digsim.rotationMath(this, digsim.PREV, i, cnt);
             conRow = utilMath.conRow;
             conCol = utilMath.conCol;
             cnt = utilMath.cnt;
@@ -90,7 +91,7 @@ Drawable.prototype.checkConnect = function() {
             for (var i = 1; i < 4; ++i) {
                 if (PH = digsim.placeholder[conRow][conCol][i]) {
                     obj = digsim.components[PH.ref];
-                    if ((obj !== this) && ($.inArray(obj, this.prevConnect) === -1)) { // connection is not part of the previous
+                    if ((obj !== this) && ($.inArray(obj, this.prevConnect) === -1) && PH.connectable) { // connection is not part of the previous
                         console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                         this.prevConnect.push(obj);
                         obj.connections.push(this);
@@ -101,7 +102,7 @@ Drawable.prototype.checkConnect = function() {
         }
 
         // Output wire
-        utilMath = digsim.rotationMath(this, "next", i, cnt);
+        utilMath = digsim.rotationMath(this, digsim.NEXT, i, cnt);
         conRow = utilMath.conRow;
         conCol = utilMath.conCol;
         cnt = utilMath.cnt;
@@ -110,10 +111,10 @@ Drawable.prototype.checkConnect = function() {
         console.log("conRow:" + conRow);
         console.log("outPt:" + this.outPt);
         
-        for (var i = 1; i < 4; ++i) {
+        for (var i = 0; i < 4; ++i) {
             if (PH = digsim.placeholder[conRow][conCol][i]) {
                 obj = digsim.components[PH.ref];
-                if ((obj !== this) && ($.inArray(obj, this.connections) === -1)) { // connection is not part of the previous
+                if ((obj !== this) && ($.inArray(obj, this.connections) === -1) && PH.connectable) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                     this.connections.push(obj);
                     obj.type < 0 ? obj.prevConnect.push(this) : obj.connections.push(this);

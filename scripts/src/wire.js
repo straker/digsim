@@ -52,7 +52,7 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                 obj = digsim.components[PH.ref];
                 ++wireCnt;
                 if (obj !== this) { // connection is not already in the connections
-                    if ($.inArray(obj, this.connections) === -1) {
+                    if (($.inArray(obj, this.connections) === -1) && PH.connectable) {
                         console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                         this.connections.push(obj);
                         if (obj.type < 0) {
