@@ -50,28 +50,30 @@ Wire.prototype.checkJunction = function(row, col, pos) {
         for (var i = 0; i < 4; ++i) {
             if (PH = digsim.placeholder[row][col][i]) {
                 obj = digsim.components[PH.ref];
-                ++wireCnt;
-                if (obj !== this) { // connection is not already in the connections
-                    if (($.inArray(obj, this.connections) === -1) && PH.connectable) {
-                        console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                        this.connections.push(obj);
-                        if (obj.type < 0) {
-                            if (col < obj.column) {
-                                obj.prevConnect.push(this);
+                if (PH.connectable) {
+                    ++wireCnt;
+                    if (obj !== this) { // connection is not already in the connections
+                        if (($.inArray(obj, this.connections) === -1)) {
+                            console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                            this.connections.push(obj);
+                            if (obj.type < 0) {
+                                if (col < obj.column) {
+                                    obj.prevConnect.push(this);
+                                }
+                                else {
+                                    obj.connections.push(this);
+                                }
                             }
                             else {
                                 obj.connections.push(this);
                             }
                         }
-                        else {
-                            obj.connections.push(this);
-                        }
-                    }
 
-                    // Check for dots
-                    if (obj.type !== digsim.WIRE) {
-                        this.juncts.push( { 'x': col, 'y': row } );
-                        dot = 1;
+                        // Check for dots
+                        if (obj.type !== digsim.WIRE) {
+                            this.juncts.push( { 'x': col, 'y': row } );
+                            dot = 1;
+                        }
                     }
                 }
                 if (wireCnt > 2) {

@@ -391,6 +391,52 @@ Digsim.prototype.setPlaceholders = function(obj) {
             }
         }
 
+        if (obj.type === digsim.NOT) {
+            var col = obj.column, row = obj.row, index;
+            if (obj.rotation === 180) {
+                col++;
+            }
+            else if (obj.rotation === 270) {
+                row++;
+            }
+            for (var y = 0; y < 2; ++y) {
+                if (((obj.rotation) / 90) % 2) {
+                    if (y) {
+                        col = obj.column + obj.dimension.col;
+                        index = 3;
+                    }
+                    else {
+                        index = 1;
+                        col = obj.column - 1;    
+                    }
+                }
+                else {
+                    if (y) {
+                        row = obj.row + obj.dimension.row;
+                        index = 0;
+                    }
+                    else {
+                        index = 2;
+                        row = obj.row - 1;
+                    }
+                }
+                // Check for collision top
+                if (!(this.placeholder[row][col] instanceof Array) && this.placeholder[row][col]) {
+                    console.error("Connection point collision error!");
+                    digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
+                    return false;
+                }
+                else if (!(this.placeholder[row][col] instanceof Array)) {
+                    this.placeholder[row][col] = [];
+                }
+                else if(this.placeholder[row][col][index]) {
+                    console.error("Connection point collision error!");
+                    digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
+                    return false;
+                }
+            }
+        }
+
         // Nexts
         utilMath = this.rotationMath(obj, this.NEXT, i, cnt);
         conRow = utilMath.conRow;
@@ -444,6 +490,42 @@ Digsim.prototype.setPlaceholders = function(obj) {
         console.log("ROW: " + conRow);
         placeholder = new Placeholder(obj.id, obj.column + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
         this.placeholder[conRow][conCol][index] = placeholder;
+
+        if (obj.type === digsim.NOT) {
+            var col = obj.column, row = obj.row, index;
+            console.log("{row, col} = {" + obj.dimension.row + ", " + obj.dimension.col + "}; max: " + len);
+            if (obj.rotation === 180) {
+                col++;
+            }
+            else if (obj.rotation === 270) {
+                row++;
+            }
+            for (var y = 0; y < 2; ++y) {
+                if (((obj.rotation) / 90) % 2) {
+                    if (y) {
+                        col = obj.column + obj.dimension.col;
+                        index = 3;
+                    }
+                    else {
+                        index = 1;
+                        col = obj.column - 1;    
+                    }
+                }
+                else {
+                    if (y) {
+                        row = obj.row + obj.dimension.row;
+                        index = 0;
+                    }
+                    else {
+                        index = 2;
+                        row = obj.row - 1;
+                    }
+                }
+                // Place connection placeholders
+                placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
+                this.placeholder[row][col][index] = placeholder;
+            }
+        }
     }
     else {
         // Draw top and bottom small placeholders for switches and clocks
@@ -583,6 +665,9 @@ Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
     var conCol, conRow, factor = 1;
     if (obj.type < 0) {
         factor = Math.floor(obj.numInputs / 2) || 1;
+        if (obj.type === digsim.NOT) {
+            factor = 0;
+        }
     }
     else if (obj.type === digsim.SWITCH || obj.type === digsim.CLOCK) {
         factor = 0;
@@ -613,7 +698,7 @@ Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
         }
         
         if (obj.type === digsim.NOT) {
-            conRow = obj.row + 1;
+            conRow = obj.row;
         }
         else {
             if (i % 2) {
@@ -919,9 +1004,55 @@ Digsim.prototype.deletePlaceholder = function(obj) {
     if (obj.type < 0) { // gate
         cnt = 0;
 
+        if (obj.type === digsim.NOT) {
+            var col = obj.column, row = obj.row, index;
+            console.log("{row, col} = {" + obj.dimension.row + ", " + obj.dimension.col + "}; max: " + len);
+            if (obj.rotation === 180) {
+                col++;
+            }
+            else if (obj.rotation === 270) {
+                row++;
+            }
+            for (var y = 0; y < 2; ++y) {
+                if (((obj.rotation) / 90) % 2) {
+                    if (y) {
+                        col = obj.column + obj.dimension.col;
+                        index = 3;
+                    }
+                    else {
+                        index = 1;
+                        col = obj.column - 1;    
+                    }
+                }
+                else {
+                    if (y) {
+                        row = obj.row + obj.dimension.row;
+                        index = 0;
+                    }
+                    else {
+                        index = 2;
+                        row = obj.row - 1;
+                    }
+                }
+                // Place connection placeholders
+                var noneFound = true;
+                for (var j = 0; j < 4; ++j) {
+                    if (j != index && this.placeholder[row][col][j]) {
+                        noneFound = false;
+                    }
+                }
+                if (noneFound) {
+                    this.placeholder[row][col] = undefined;
+                }
+                else {
+                    this.placeholder[row][col][index] = undefined;
+                }
+            }
+        }
+
         // Previous
         for (var i = 0; i < obj.numInputs; ++i) {            
-            utilMath = this.rotationMath(obj, "prev", i, cnt);
+            utilMath = this.rotationMath(obj, this.PREV, i, cnt);
             conRow = utilMath.conRow;
             conCol = utilMath.conCol;
             cnt = utilMath.cnt;
@@ -953,7 +1084,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         
         var noneFound = true;
         for (var j = 0; j < 4; ++j) {
-            if (j != 3 && this.placeholder[conRow][conCol][j]) {
+            if (j != index && this.placeholder[conRow][conCol][j]) {
                 noneFound = false;
             }
         }
@@ -990,11 +1121,13 @@ Digsim.prototype.deletePlaceholder = function(obj) {
                             row = obj.row - 1;
                         }
                     }
+                    var noneFound = true;
                     for (var j = 0; j < 4; ++j) {
                         if (j != index && this.placeholder[row][col][j]) {
                             noneFound = false;
                         }
                     }
+                    console.log("NONEFOUND: " + noneFound + " AT {" + row + "," + col + "}");
                     if (noneFound) {
                         this.placeholder[row][col] = undefined;
                     }
@@ -1739,6 +1872,7 @@ Digsim.prototype.rotate = function(event) {
         
         if (!digsim.dragging) {
             digsim.deletePlaceholder(obj);
+            console.log("THIS SHOULD DELETE");
         }
         
         obj.rotation = digsim.rotation = (obj.rotation + event.data.dir) % 360;
@@ -1754,6 +1888,8 @@ Digsim.prototype.rotate = function(event) {
             obj.draw(digsim.movingContext, 'red');
         }
         else {
+
+                console.log("SETTING PLACEHOLDRS");
             if (digsim.setPlaceholders(obj)) {
                 obj.draw(digsim.staticContext, 'red');
                 obj.checkConnect();

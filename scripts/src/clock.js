@@ -39,7 +39,7 @@ Clock.prototype.draw = function(context, lineColor) {
     context.lineWidth = 2;
     
     // Rotatation
-        var offsetH = 0, offsetV = 0;
+    var offsetH = 0, offsetV = 0;
     if (this.rotation == 90) {
         offsetV = -0.5;
     }

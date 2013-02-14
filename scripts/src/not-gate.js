@@ -17,7 +17,7 @@ function NOT() {
     this.connections = [];
     this.juncts = [];
     this.numInputs = 1;
-    this.dimension = {'row': 3, 'col': 2};
+    this.dimension = {'row': 1, 'col': 2};
 
     this.outPt = 0; 
 };
@@ -38,26 +38,43 @@ NOT.prototype.draw = function(context, lineColor) {
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
     
-    var center = {'row': (this.dimension.row / 2) * digsim.GRID_SIZE,
-        'col': digsim.GRID_SIZE / 2 * (this.dimension.col - 1)};
+    // Rotatation
+    var offsetH = 0, offsetV = 0;
+    if (this.rotation == 90) {
+        offsetV = -0.5;
+    }
+    else if (this.rotation === 270) {
+        offsetH = 0.5;
+    }
+    
+    var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.GRID_SIZE,
+        'col': (this.dimension.col / 2 + offsetH) * digsim.GRID_SIZE};
+
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
     
-    this.drawWires(context, lineColor);
+    // Draw wires
+    context.beginPath();
+    context.strokeStyle = lineColor || 'black';
+    context.moveTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE * 0.5);
+    context.lineTo(digsim.GRID_SIZE * -0.5, digsim.GRID_SIZE * 0.5);
+    context.stroke();
     
     // Draw gate  
-    context.moveTo(0, digsim.GRID_SIZE * 2 / 3);
-    context.lineTo(digsim.GRID_SIZE * 1.625, digsim.GRID_SIZE * 1.5);
-    context.lineTo(0, digsim.GRID_SIZE * 7 / 3);
+    context.beginPath();
+    context.moveTo(0, -digsim.GRID_SIZE / 3);
+    context.lineTo(digsim.GRID_SIZE * 1.625, digsim.GRID_SIZE * 0.5);
+    context.lineTo(0, digsim.GRID_SIZE * 4 / 3);
     context.closePath();
     context.fill();
     context.stroke();
     
+    // Draw circle
     context.beginPath();
-    context.moveTo(digsim.GRID_SIZE * 1.75, digsim.GRID_SIZE * 1.5);
+    context.moveTo(digsim.GRID_SIZE * 1.75, digsim.GRID_SIZE * 0.5);
     context.beginPath();
-    context.arc(digsim.GRID_SIZE * 1.8125, digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * 3 / 16, 0, 2 * Math.PI);
+    context.arc(digsim.GRID_SIZE * 1.8125, digsim.GRID_SIZE * 0.5, digsim.GRID_SIZE * 3 / 16, 0, 2 * Math.PI);
     context.fill();
     context.stroke();
     context.restore();
