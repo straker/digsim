@@ -55,6 +55,8 @@ function Digsim() {
     this.ERROR = 1;
     this.PREV = 0;
     this.NEXT = 1;
+    this.DFF = 100;
+    this.JKFF = 101;
     
     // Wire identifiers
     this.TL = 0;    // top-left
