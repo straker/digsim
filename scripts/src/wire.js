@@ -29,11 +29,11 @@ Wire.prototype.checkConnect = function() {
     
     console.log("CHECKING CONNECTION!åß¨∑∫∂¬˚¨ß¬∂¥¬˚∆∂…øß∂ˆå¨•••••••••••••••••••••")
     var row = Math.floor(this.row); 
-    var col = Math.floor(this.column);
+    var col = Math.floor(this.col);
     this.checkJunction(row, col, "start");
 
     row = Math.floor(this.path[0].y + this.row); 
-    col = Math.floor(this.path[0].x + this.column);
+    col = Math.floor(this.path[0].x + this.col);
     this.checkJunction(row, col, "end");
 };
 
@@ -56,11 +56,18 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                         if (($.inArray(obj, this.connections) === -1)) {
                             console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                             this.connections.push(obj);
+
+                            utilMath = digsim.rotationMath(obj, digsim.PREV, 0, 0);
+                            conRow = utilMath.conRow;
+                            conCol = utilMath.conCol;
+                            cnt = utilMath.cnt;
+                            index = utilMath.index;
+
                             if (obj.type < 0) {
-                                if (col < obj.column) {
+                                if (((obj.rotation / 90 % 2) && (row === conRow)) || (((obj.rotation / 90) % 2) === 0) && (col === conCol)) {
                                     obj.prevConnect.push(this);
                                 }
-                                else {
+                                else  {
                                     obj.connections.push(this);
                                 }
                             }
@@ -97,7 +104,7 @@ Wire.prototype.checkJunction = function(row, col, pos) {
  ***************************************************************************/
 Wire.prototype.draw = function(context, lineColor) {
     context.save();
-    context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
+    context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
 
     context.beginPath();
     context.strokeStyle = lineColor || 'black';
@@ -122,7 +129,7 @@ Wire.prototype.draw = function(context, lineColor) {
 
     for (var i = 0; i < this.juncts.length; ++i) {
         // console.log(".onSjunct:…………………………………………");
-        // console.log("ROW: " + this.row + " COL: " + this.column);
+        // console.log("ROW: " + this.row + " COL: " + this.col);
 
         context.beginPath();
         context.strokeStyle = '#000000';

@@ -11,7 +11,7 @@
  *****************************************************************************/
 
 function Drawable() {
-    this.column = 0;
+    this.col = 0;
     this.drawStatic = true;
     this.id = 0;
     this.numInputs = 2;
@@ -27,7 +27,7 @@ function Drawable() {
  *  Initiates a drawable object at a given column, row, and rotation
  *****************************************************************************/
 Drawable.prototype.init = function (col, row, rot, id) {
-    this.column = col;
+    this.col = col;
     this.drawStatic = true;
     this.id = id;
     this.rotation = rot;
@@ -58,7 +58,7 @@ Drawable.prototype.checkConnect = function() {
             conRow = utilMath.conRow;
             conCol = utilMath.conCol;
 
-            console.log("ROW, COL: " + this.row + " " + this.column);
+            console.log("ROW, COL: " + this.row + " " + this.col);
             console.log("CONROW, CONCOL: " + conRow + " " + conCol);
             if (PH = digsim.placeholder[conRow][conCol][i]) {
                 console.log(PH);
@@ -86,8 +86,8 @@ Drawable.prototype.checkConnect = function() {
             conCol = utilMath.conCol;
             cnt = utilMath.cnt;
 
-            console.log("conRow: " + conRow);
-            console.log("conCol: " + conCol);
+            console.log("•••••••conRow: " + conRow);
+            console.log("•••••••conCol: " + conCol);
             for (var i = 1; i < 4; ++i) {
                 if (PH = digsim.placeholder[conRow][conCol][i]) {
                     obj = digsim.components[PH.ref];
@@ -214,22 +214,22 @@ Drawable.prototype.drawWires = function(context, lineColor) {
     if (this.type != digsim.NOT) {
         for (var i = 0; i < this.numInputs; ++i) {
             if (i % 2) { 
-                context.moveTo((this.column + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + (factor * 2) + .5 - cnt));   
-                context.lineTo((this.column - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + (factor * 2) + .5 - cnt++));
+                context.moveTo((this.col + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + (factor * 2) + .5 - cnt));   
+                context.lineTo((this.col - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + (factor * 2) + .5 - cnt++));
             }
             else {
-                context.moveTo((this.column + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + .5));   
-                context.lineTo((this.column - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + .5));
+                context.moveTo((this.col + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + .5));   
+                context.lineTo((this.col - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + .5));
             }
         }
     }
     else {
-        context.moveTo((this.column + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));   
-        context.lineTo((this.column - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));     
+        context.moveTo((this.col + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));   
+        context.lineTo((this.col - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));     
     }
 
-    context.moveTo((this.column + (factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));
-    context.lineTo((this.column + (factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));   
+    context.moveTo((this.col + (factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));
+    context.lineTo((this.col + (factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));   
 
     context.stroke();
 }
@@ -267,6 +267,8 @@ Drawable.prototype.traverse = function() {
         conQueue.push(this.connections[i]);
         this.setNext(this.connections[i]);
     }
+
+    
 
     while (conQueue.length) {
         console.log("\n======START=====");

@@ -42,7 +42,7 @@ XOR.prototype.changeSize = function() {
 XOR.prototype.draw = function(context, lineColor) {
     
     context.save();
-    context.translate(this.column * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
+    context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
     context.fillStyle = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
@@ -116,7 +116,7 @@ XOR.prototype.draw = function(context, lineColor) {
     
     for (var i = 0; i < this.juncts.length; ++i) {
         // console.log(".onSjunct:…………………………………………");
-        // console.log("ROW: " + this.row + " COL: " + this.column);
+        // console.log("ROW: " + this.row + " COL: " + this.col);
 
         context.beginPath();
         context.strokeStyle = '#000000';
