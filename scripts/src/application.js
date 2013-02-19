@@ -161,7 +161,7 @@ Digsim.prototype.run = function() {
         $("canvas").on("mouseup", this.onGridMouseUp);
         $("canvas").on("click", this.onGridClicked);
         $("canvas").on("mousemove", this.onGridMouseMove);
-        $(".gates a, .io a, .modes a").on("click", this.onButtonClicked);
+        $(".gates>ul>li>a, .io a, .modes a").on("click", this.onButtonClicked);
         $("#New").on("click", this.newFile);
         $("#Toggle_Grid").on("click", this.toggleGrid);
         $("#Zoom_In").on("click", this.zoomIn);
@@ -349,19 +349,31 @@ Digsim.prototype.deleteConnections = function(obj) {
  ****************************************************************************/
 Digsim.prototype.setPlaceholders = function(obj) {
 
-    var row, col, cnt, conCol, conRow, placeholder, utilMath;
+    var row, col, tempRow, tempCol, cnt, conCol, conRow, placeholder, utilMath;
     var factor = Math.floor(obj.numInputs / 2) || 1;
     var index, rot = obj.rotation; // rotation variables
+    var tempPlaceholders = []; // Save placeholders here while checking for collisions
 
     // Check the object space for collision
     console.log(obj.row + ", " + obj.col);
     for (row = 0; row < obj.dimension.row; ++row) {
         for (col = 0; col < obj.dimension.col; ++col) {
+            // Check for collision
             if (this.placeholder[obj.row + row][obj.col + col]) {
                 console.error("COLLISION! ERROR!");
                 digsim.addMessage(digsim.WARNING, "[1]Collision detected! Unable to place component. ");
                 return false;
             }
+
+            // Set temporary placeholder
+            tempRow = obj.row + row;
+            tempCol = obj.col + col;
+            if (!(tempPlaceholders[tempRow] instanceof Array)) {
+                tempPlaceholders[tempRow] = [];
+            }
+
+            var placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row);
+            tempPlaceholders[tempRow][tempCol] = placeholder;
         }
     } 
 
@@ -383,16 +395,28 @@ Digsim.prototype.setPlaceholders = function(obj) {
                 digsim.addMessage(digsim.WARNING, "[2]Collision detected! Unable to place component.");
                 return false;
             }
-            else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
+            /*else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
                 this.placeholder[conRow][conCol] = [];
-            }
-            else if (this.placeholder[conRow][conCol][index]) {
+            }*/
+            else if ((this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol][index]) {
                 console.error("Connection point collision error!");
                 digsim.addMessage(digsim.WARNING, "[3]Collision detected! Unable to place component.");
                 return false;
             }
+
+            // Set temporary placeholder
+            if (!(tempPlaceholders[conRow] instanceof Array)) {
+                tempPlaceholders[conRow] = [];
+            }
+            if (!(tempPlaceholders[conRow][conCol] instanceof Array)) {
+                tempPlaceholders[conRow][conCol] = [];
+            }
+
+            placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+            tempPlaceholders[conRow][conCol][index] = placeholder;
         }
 
+        // Not additional placeholers
         if (obj.type === digsim.NOT) {
             var col = obj.col, row = obj.row, index;
             if (obj.rotation === 180) {
@@ -422,7 +446,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
                         row = obj.row - 1;
                     }
                 }
-                // Check for collision top
+                // Check for collision
                 if (!(this.placeholder[row][col] instanceof Array) && this.placeholder[row][col]) {
                     console.error("Connection point collision error!");
                     digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
@@ -452,16 +476,45 @@ Digsim.prototype.setPlaceholders = function(obj) {
             digsim.addMessage(digsim.WARNING, "[4]Collision detected! Unable to place component.");
             return false;
         }
-        else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
+        /*else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
             this.placeholder[conRow][conCol] = [];
-        }
-        else if (this.placeholder[conRow][conCol][index]) {
+        }*/
+        else if ((this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol][index]) {
             console.error("Connection point collision error!");
             digsim.addMessage(digsim.WARNING, "[5]Collision detected! Unable to place component.");
             return false;
         }
+
+        // Set temporary placeholder
+        if (!(tempPlaceholders[conRow] instanceof Array)) {
+            tempPlaceholders[conRow] = [];
+        }
+        if (!(tempPlaceholders[conRow][conCol] instanceof Array)) {
+            tempPlaceholders[conRow][conCol] = [];
+        }
+
+        placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+        tempPlaceholders[conRow][conCol][index] = placeholder;
+
         console.log("NO COLLISION! :)");
 
+        // Transfer placeholders
+        for(var row in tempPlaceholders) {
+            for (var col in tempPlaceholders[row]) {
+                if (tempPlaceholders[row][col] instanceof Array) {
+                    if (!(this.placeholder[row][col] instanceof Array)) {
+                        this.placeholder[row][col] = [];
+                    }
+                    for (var index in tempPlaceholders[row][col])
+                    this.placeholder[row][col][index] = tempPlaceholders[row][col][index];
+                }
+                else {
+                    this.placeholder[row][col] = tempPlaceholders[row][col];
+                }
+            }
+        }
+
+        /*
         // Place connection placeholders
         // Previous
         cnt = 0;
@@ -527,7 +580,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
                 placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
                 this.placeholder[row][col][index] = placeholder;
             }
-        }
+        }*/
     }
     else {
         // Draw top and bottom small placeholders for switches and clocks
@@ -644,6 +697,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
     }
 
+/*
     // Places the placeholder for the object
     for (row = 0; row < obj.dimension.row; ++row) {
         for (col = 0; col < obj.dimension.col; ++col) {
@@ -651,7 +705,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             this.placeholder[obj.row + row][obj.col + col] = placeholder;
         }
     }
-
+*/
     console.log("RETURN TRUE:");
     return true;
 };
@@ -1215,6 +1269,11 @@ Digsim.prototype.deletePlaceholder = function(obj) {
 Digsim.prototype.onButtonClicked = function (event) {
     event.preventDefault();
     var id = $(this).attr("id");
+
+    // Don't do anything if the button is disabled
+    if ($(this).hasClass('disabled')) {
+        return;
+    }
 
     // Activate butotn
     if (!$(this).hasClass('active')) {
