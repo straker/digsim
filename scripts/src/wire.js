@@ -11,6 +11,7 @@ function Wire() {
     this.type = digsim.WIRE;
     this.name = 'Wire';
     
+    this.numInputs = 0;
     this.next = [];
     this.prev = [];
     this.path = [];

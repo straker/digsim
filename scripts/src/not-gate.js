@@ -11,12 +11,12 @@ function NOT() {
     this.type = digsim.NOT;
     this.name = 'NOT';
     
+    this.numInputs = 1;
     this.next = [];
     this.prev = [];
     this.prevConnect = [];
     this.connections = [];
     this.juncts = [];
-    this.numInputs = 1;
     this.dimension = {'row': 1, 'col': 2};
 
     this.outPt = 0; 

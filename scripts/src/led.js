@@ -11,6 +11,7 @@ function LED() {
     this.type = digsim.LED;
     this.name = 'LED';
 
+    this.numInputs = 0;
     this.prev = [];
     this.connections = [];
     this.juncts = [];

@@ -11,6 +11,7 @@ function Clock() {
     this.type = digsim.CLOCK;
     this.name = 'Clock';
 
+    this.numInputs = 0;
     this.next = [];
     this.connections = [];
     this.juncts = [];
