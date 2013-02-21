@@ -8,7 +8,7 @@
  ******************************************************************************/
 
 function DFF(numInputs) {
-    this.type = digsim.DFF;
+    this.type = undefined; //digsim.DFF;
     this.name = 'DFF';
     
     this.next = [];
@@ -17,7 +17,7 @@ function DFF(numInputs) {
     this.connections = [];
     this.juncts = [];
     this.numInputs = 2;
-    this.dimension = {'row': 3, 'col': 2};
+    this.dimension = {'row': 1, 'col': 1}; // 3, 2
 };
 
 DFF.prototype = new Drawable();
@@ -30,6 +30,7 @@ DFF.prototype = new Drawable();
  ****************************************************************************/
 DFF.prototype.draw = function(context, lineColor) {
     
+    var fontSize = digsim.GRID_SIZE / 2;
     context.save();
     context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
@@ -52,6 +53,41 @@ DFF.prototype.draw = function(context, lineColor) {
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
+/** TESTING TO FIND THE ROTATIONAL CENTER OF THE LETTERS ***
+
+    var deleteMe = 'D'
+    center[deleteMe] = { 'x': 0.35 * digsim.GRID_SIZE, 'y': 0.36 * digsim.GRID_SIZE};
+    /**
+    context.translate(center['D'].x, center['D'].y);
+    context.rotate(this.rotation * Math.PI / -180);
+    context.translate(-center['D'].x, -center['D'].y);
+    /**
+    context.font =  (digsim.GRID_SIZE / 2) + "px Arial";
+    context.font = "50px Arial";
+    context.fontWidth = digsim.GRID_SIZE / 4;
+    context.fillStyle = lineColor || 'black';
+    context.fillText(deleteMe, 0,0);
+    var x = 35;
+    var y = 36;
+    context.moveTo(0,0);
+    context.lineTo(0,-y);
+    context.lineTo(x,-y);
+    context.lineTo(x,0);
+    context.lineTo(0,0);
+    context.lineWidth = 1;
+    context.strokeStyle = 'lime';
+    context.moveTo(center[deleteMe].x - 1, -(center[deleteMe].y - 1));
+    context.lineTo(center[deleteMe].x + 1, -(center[deleteMe].y + 1));
+    context.moveTo(center[deleteMe].x - 1, -(center[deleteMe].y + 1));
+    context.lineTo(center[deleteMe].x + 1, -(center[deleteMe].y - 1));
+    context.moveTo(0, -y/2);
+    context.lineTo(x, -y/2);
+    context.moveTo(x/2, 0);
+    context.lineTo(x/2, -y);
+/**/
+    this.drawWires(context, lineColor);
+
+    center['D'] = { 'x': 0.35 * digsim.GRID_SIZE, 'y': 0.36 * digsim.GRID_SIZE};
         
     // Draw gate
     context.moveTo(0, 0);
@@ -59,9 +95,29 @@ DFF.prototype.draw = function(context, lineColor) {
     context.lineTo(2 * digsim.GRID_SIZE,  3 * digsim.GRID_SIZE);
     context.lineTo(0,  3 * digsim.GRID_SIZE);
     context.closePath();
+    context.font =  (digsim.GRID_SIZE / 2) + "px Arial";
+    context.fontWidth = digsim.GRID_SIZE / 4;
+    context.fillStyle = lineColor || 'black';
+
+
+    context.fillText("D", digsim.GRID_SIZE / 6, digsim.GRID_SIZE * 0.75);
+
+
+    context.fillText("Q", digsim.GRID_SIZE * 1.375, digsim.GRID_SIZE * 0.75);
     
+
+    context.fillText("Q", digsim.GRID_SIZE * 1.375, digsim.GRID_SIZE * 2.75);
+    // Draw Q's bar
+    context.moveTo(digsim.GRID_SIZE * 1.4, digsim.GRID_SIZE * 2.3);
+    context.lineTo(digsim.GRID_SIZE * 1.75, digsim.GRID_SIZE * 2.3);
+    // Draw Clock
+    context.moveTo(0, digsim.GRID_SIZE * 1.25);
+    context.lineTo(digsim.GRID_SIZE / 4, digsim.GRID_SIZE * 1.5);
+    context.lineTo(0, digsim.GRID_SIZE * 1.75);
+/**/
     context.stroke();
     context.restore();
+
     
     for (var i = 0; i < this.juncts.length; ++i) {
         // console.log(".onSjunct:…………………………………………");

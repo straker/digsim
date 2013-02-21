@@ -361,7 +361,9 @@ Digsim.prototype.setPlaceholders = function(obj) {
             // Check for collision
             tempRow = obj.row + row;
             tempCol = obj.col + col;
-            if (this.placeholder[tempRow][tempRow]) {
+            console.log("TEMPSTUFF: " + tempRow + "  " + tempCol);
+            console.log(this.placeholder[tempRow][tempCol]);
+            if (this.placeholder[tempRow][tempCol]) {
                 console.error("COLLISION! ERROR!");
                 digsim.addMessage(digsim.WARNING, "[1]Collision detected! Unable to place component. ");
                 return false;
@@ -377,62 +379,25 @@ Digsim.prototype.setPlaceholders = function(obj) {
     } 
 
     // Check connection points for collision
-    //if (obj.type < 0) { // gate
-        cnt = 0;        
+    cnt = 0;        
 
-        // Previous
-        for (var i = 0; i < obj.numInputs; ++i) {
-            
-            utilMath = this.rotationMath(obj, this.PREV, i, cnt);
-            conRow = utilMath.conRow;
-            conCol = utilMath.conCol;
-            cnt = utilMath.cnt;
-            index = utilMath.index;
-            
-            if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
-                console.error("Connection point collision error!");
-                digsim.addMessage(digsim.WARNING, "[2]Collision detected! Unable to place component.");
-                return false;
-            }
-            /*else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
-                this.placeholder[conRow][conCol] = [];
-            }*/
-            else if ((this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol][index]) {
-                console.error("Connection point collision error!");
-                digsim.addMessage(digsim.WARNING, "[3]Collision detected! Unable to place component.");
-                return false;
-            }
-
-            // Set temporary placeholder
-            if (!(tempPlaceholders[conRow] instanceof Array)) {
-                tempPlaceholders[conRow] = [];
-            }
-            if (!(tempPlaceholders[conRow][conCol] instanceof Array)) {
-                tempPlaceholders[conRow][conCol] = [];
-            }
-            placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
-            tempPlaceholders[conRow][conCol][index] = placeholder;
-        }
-
-        // Nexts
-        utilMath = this.rotationMath(obj, this.NEXT, i, cnt);
+    // Previous
+    for (var i = 0; i < obj.numInputs; ++i) {
+        
+        utilMath = this.rotationMath(obj, this.PREV, i, cnt);
         conRow = utilMath.conRow;
         conCol = utilMath.conCol;
         cnt = utilMath.cnt;
         index = utilMath.index;
-        console.log("ROW: " + conRow);
         
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
             console.error("Connection point collision error!");
-            digsim.addMessage(digsim.WARNING, "[4]Collision detected! Unable to place component.");
+            digsim.addMessage(digsim.WARNING, "[2]Collision detected! Unable to place component.");
             return false;
         }
-        /*else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
-            this.placeholder[conRow][conCol] = [];
-        }*/
         else if ((this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol][index]) {
             console.error("Connection point collision error!");
-            digsim.addMessage(digsim.WARNING, "[5]Collision detected! Unable to place component.");
+            digsim.addMessage(digsim.WARNING, "[3]Collision detected! Unable to place component.");
             return false;
         }
 
@@ -445,16 +410,93 @@ Digsim.prototype.setPlaceholders = function(obj) {
         }
         placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
         tempPlaceholders[conRow][conCol][index] = placeholder;
+    }
 
-        // Additional placeholers for Not gate, Switch, and Clock
-        if (obj.type === digsim.NOT) {
-            var col = obj.col, row = obj.row, index;
-            if (obj.rotation === 180) {
-                col++;
+    // Nexts
+    utilMath = this.rotationMath(obj, this.NEXT, i, cnt);
+    conRow = utilMath.conRow;
+    conCol = utilMath.conCol;
+    cnt = utilMath.cnt;
+    index = utilMath.index;
+    console.log("ROW: " + conRow);
+    
+    if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
+        console.error("Connection point collision error!");
+        digsim.addMessage(digsim.WARNING, "[4]Collision detected! Unable to place component.");
+        return false;
+    }
+    else if ((this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol][index]) {
+        console.error("Connection point collision error!");
+        digsim.addMessage(digsim.WARNING, "[5]Collision detected! Unable to place component.");
+        return false;
+    }
+
+    // Set temporary placeholder
+    if (!(tempPlaceholders[conRow] instanceof Array)) {
+        tempPlaceholders[conRow] = [];
+    }
+    if (!(tempPlaceholders[conRow][conCol] instanceof Array)) {
+        tempPlaceholders[conRow][conCol] = [];
+    }
+    placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+    tempPlaceholders[conRow][conCol][index] = placeholder;
+
+    // Additional placeholers for Not gate, Switch, and Clock
+    if (obj.type === digsim.NOT) {
+        var col = obj.col, row = obj.row, index;
+        if (obj.rotation === 180) {
+            col++;
+        }
+        else if (obj.rotation === 270) {
+            row++;
+        }
+        for (var y = 0; y < 2; ++y) {
+            if (((obj.rotation) / 90) % 2) {
+                if (y) {
+                    col = obj.col + obj.dimension.col;
+                    index = 3;
+                }
+                else {
+                    index = 1;
+                    col = obj.col - 1;    
+                }
             }
-            else if (obj.rotation === 270) {
-                row++;
+            else {
+                if (y) {
+                    row = obj.row + obj.dimension.row;
+                    index = 0;
+                }
+                else {
+                    index = 2;
+                    row = obj.row - 1;
+                }
             }
+            // Check for collision
+            if (!(this.placeholder[row][col] instanceof Array) && this.placeholder[row][col]) {
+                console.error("Connection point collision error!");
+                digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
+                return false;
+            }
+            else if ((this.placeholder[row][col] instanceof Array) && this.placeholder[row][col][index]) {
+                console.error("Connection point collision error!");
+                digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
+                return false;
+            }
+
+            // Set temporary placeholder
+            if (!(tempPlaceholders[row] instanceof Array)) {
+                tempPlaceholders[row] = [];
+            }
+            if (!(tempPlaceholders[row][col] instanceof Array)) {
+                tempPlaceholders[row][col] = [];
+            }
+            placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
+            tempPlaceholders[row][col][index] = placeholder;
+        }
+    }
+    else if (obj.type === digsim.SWITCH || obj.type === digsim.CLOCK) {
+        var col = obj.col, row = obj.row, index;
+        for (var x = 0, len = Math.max(obj.dimension.row, obj.dimension.col); x < len; ++x) {
             for (var y = 0; y < 2; ++y) {
                 if (((obj.rotation) / 90) % 2) {
                     if (y) {
@@ -482,14 +524,12 @@ Digsim.prototype.setPlaceholders = function(obj) {
                     digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
                     return false;
                 }
-                /*else if (!(this.placeholder[row][col] instanceof Array)) {
-                    this.placeholder[row][col] = [];
-                }*/
                 else if ((this.placeholder[row][col] instanceof Array) && this.placeholder[row][col][index]) {
                     console.error("Connection point collision error!");
                     digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
                     return false;
                 }
+
 
                 // Set temporary placeholder
                 if (!(tempPlaceholders[row] instanceof Array)) {
@@ -501,299 +541,32 @@ Digsim.prototype.setPlaceholders = function(obj) {
                 placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
                 tempPlaceholders[row][col][index] = placeholder;
             }
-        }
-        else if (obj.type === digsim.SWITCH || obj.type === digsim.CLOCK) {
-            var col = obj.col, row = obj.row, index;
-            for (var x = 0, len = Math.max(obj.dimension.row, obj.dimension.col); x < len; ++x) {
-                for (var y = 0; y < 2; ++y) {
-                    if (((obj.rotation) / 90) % 2) {
-                        if (y) {
-                            col = obj.col + obj.dimension.col;
-                            index = 3;
-                        }
-                        else {
-                            index = 1;
-                            col = obj.col - 1;    
-                        }
-                    }
-                    else {
-                        if (y) {
-                            row = obj.row + obj.dimension.row;
-                            index = 0;
-                        }
-                        else {
-                            index = 2;
-                            row = obj.row - 1;
-                        }
-                    }
-                    // Check for collision
-                    if (!(this.placeholder[row][col] instanceof Array) && this.placeholder[row][col]) {
-                        console.error("Connection point collision error!");
-                        digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
-                        return false;
-                    }
-                    /*else if (!(this.placeholder[row][col] instanceof Array)) {
-                        this.placeholder[row][col] = [];
-                    }*/
-                    else if ((this.placeholder[row][col] instanceof Array) && this.placeholder[row][col][index]) {
-                        console.error("Connection point collision error!");
-                        digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
-                        return false;
-                    }
-
-
-                    // Set temporary placeholder
-                    if (!(tempPlaceholders[row] instanceof Array)) {
-                        tempPlaceholders[row] = [];
-                    }
-                    if (!(tempPlaceholders[row][col] instanceof Array)) {
-                        tempPlaceholders[row][col] = [];
-                    }
-                    placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
-                    tempPlaceholders[row][col][index] = placeholder;
-                }
-                if (((obj.rotation) / 90) % 2) { 
-                    ++row;
-                }
-                else {
-                    ++col;
-                }
+            if (((obj.rotation) / 90) % 2) { 
+                ++row;
             }
-        }
-
-        console.log("NO COLLISION! :)");
-
-        // Transfer placeholders
-        for(var row in tempPlaceholders) {
-            for (var col in tempPlaceholders[row]) {
-                if (tempPlaceholders[row][col] instanceof Array) {
-                    if (!(this.placeholder[row][col] instanceof Array)) {
-                        this.placeholder[row][col] = [];
-                    }
-                    for (var index in tempPlaceholders[row][col])
-                    this.placeholder[row][col][index] = tempPlaceholders[row][col][index];
-                }
-                else {
-                    this.placeholder[row][col] = tempPlaceholders[row][col];
-                }
+            else {
+                ++col;
             }
-        }
-
-        /*
-        // Place connection placeholders
-        // Previous
-        cnt = 0;
-        
-        
-        // Previous
-        for (var i = 0; i < obj.numInputs; ++i) {
-            
-            utilMath = this.rotationMath(obj, this.PREV, i, cnt);
-            conRow = utilMath.conRow;
-            conCol = utilMath.conCol;
-            cnt = utilMath.cnt;
-            index = utilMath.index;
-            
-            console.log("••••••••••••• " + conRow + ", " + conCol + " •••••••••••••");
-            placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
-            this.placeholder[conRow][conCol][index] = placeholder;
-        }
-            
-        
-        // Next
-        utilMath = this.rotationMath(obj, this.NEXT, i, cnt);
-        conRow = utilMath.conRow;
-        conCol = utilMath.conCol;
-        cnt = utilMath.cnt;
-        index = utilMath.index;
-        
-        console.log("ROW: " + conRow);
-        placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
-        this.placeholder[conRow][conCol][index] = placeholder;
-
-        if (obj.type === digsim.NOT) {
-            var col = obj.col, row = obj.row, index;
-            console.log("{row, col} = {" + obj.dimension.row + ", " + obj.dimension.col + "}; max: " + len);
-            if (obj.rotation === 180) {
-                col++;
-            }
-            else if (obj.rotation === 270) {
-                row++;
-            }
-            for (var y = 0; y < 2; ++y) {
-                if (((obj.rotation) / 90) % 2) {
-                    if (y) {
-                        col = obj.col + obj.dimension.col;
-                        index = 3;
-                    }
-                    else {
-                        index = 1;
-                        col = obj.col - 1;    
-                    }
-                }
-                else {
-                    if (y) {
-                        row = obj.row + obj.dimension.row;
-                        index = 0;
-                    }
-                    else {
-                        index = 2;
-                        row = obj.row - 1;
-                    }
-                }
-                // Place connection placeholders
-                placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
-                this.placeholder[row][col][index] = placeholder;
-            }
-        }*/
-    /*}
-    else {
-        // Draw top and bottom small placeholders for switches and clocks
-        if (obj.type !== digsim.LED) {
-            var col = obj.col, row = obj.row, index;
-            for (var x = 0, len = Math.max(obj.dimension.row, obj.dimension.col); x < len; ++x) {
-                for (var y = 0; y < 2; ++y) {
-                    if (((obj.rotation) / 90) % 2) {
-                        if (y) {
-                            col = obj.col + obj.dimension.col;
-                            index = 3;
-                        }
-                        else {
-                            index = 1;
-                            col = obj.col - 1;    
-                        }
-                    }
-                    else {
-                        if (y) {
-                            row = obj.row + obj.dimension.row;
-                            index = 0;
-                        }
-                        else {
-                            index = 2;
-                            row = obj.row - 1;
-                        }
-                    }
-                    // Check for collision top
-                    if (!(this.placeholder[row][col] instanceof Array) && this.placeholder[row][col]) {
-                        console.error("Connection point collision error!");
-                        digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
-                        return false;
-                    }
-                    /*else if (!(this.placeholder[row][col] instanceof Array)) {
-                        this.placeholder[row][col] = [];
-                    }
-                    else if ((this.placeholder[row][col] instanceof Array) && this.placeholder[row][col][index]) {
-                        console.error("Connection point collision error!");
-                        digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
-                        return false;
-                    }
-
-
-                    // Set temporary placeholder
-                    if (!(tempPlaceholders[row] instanceof Array)) {
-                        tempPlaceholders[row] = [];
-                    }
-                    if (!(tempPlaceholders[row][col] instanceof Array)) {
-                        tempPlaceholders[row][col] = [];
-                    }
-
-                    placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
-                    tempPlaceholders[row][col][index] = placeholder;
-                }
-                if (((obj.rotation) / 90) % 2) { 
-                    ++row;
-                }
-                else {
-                    ++col;
-                }
-            }
-        }
-        /*
-        // Nexts
-        utilMath = this.rotationMath(obj, this.NEXT, 0, 0);
-        conRow = utilMath.conRow;
-        conCol = utilMath.conCol;
-        cnt = utilMath.cnt;
-        index = utilMath.index;
-        console.log("INDEX: " + index);
-
-        if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
-            console.error("Connection point collision error!");
-            digsim.addMessage(digsim.WARNING, "[6]Collision detected! Unable to place component.");
-            return false;
-        }
-        /*else if (!(this.placeholder[conRow][conCol] instanceof Array)) {
-            this.placeholder[conRow][conCol] = [];
-        }
-        else if ((this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol][index]) {
-            console.error("Connection point collision error!");
-            digsim.addMessage(digsim.WARNING, "[7]Collision detected! Unable to place component.");
-            return false;
-        }
-
-         // Set temporary placeholder
-        if (!(tempPlaceholders[conRow] instanceof Array)) {
-            tempPlaceholders[conRow] = [];
-        }
-        if (!(tempPlaceholders[conRow][conCol] instanceof Array)) {
-            tempPlaceholders[conRow][conCol] = [];
-        }
-
-        placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
-        tempPlaceholders[conRow][conCol][index] = placeholder;
-
-        // Place connection placeholders
-        /*placeholder = new Placeholder(obj.id, conCol, conRow, obj.dimension.col, obj.dimension.row);
-        this.placeholder[conRow][conCol][index] = placeholder;
-
-        if (obj.type !== digsim.LED) {
-            var col = obj.col, row = obj.row, index;
-            for (var x = 0, len = Math.max(obj.dimension.row, obj.dimension.col); x < len; ++x) {
-                console.log("{row, col} = {" + obj.dimension.row + ", " + obj.dimension.col + "}; max: " + len);
-                for (var y = 0; y < 2; ++y) {
-                    if (((obj.rotation) / 90) % 2) {
-                        if (y) {
-                            col = obj.col + obj.dimension.col;
-                            index = 3;
-                        }
-                        else {
-                            index = 1;
-                            col = obj.col - 1;    
-                        }
-                    }
-                    else {
-                        if (y) {
-                            row = obj.row + obj.dimension.row;
-                            index = 0;
-                        }
-                        else {
-                            index = 2;
-                            row = obj.row - 1;
-                        }
-                    }
-                    // Place connection placeholders
-                    placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
-                    this.placeholder[row][col][index] = placeholder;
-                }
-                if (((obj.rotation) / 90) % 2) { 
-                    ++row;
-                }
-                else {
-                    ++col;
-                }
-            }
-        }*/
-    //}
-
-    /*
-    // Places the placeholder for the object
-    for (row = 0; row < obj.dimension.row; ++row) {
-        for (col = 0; col < obj.dimension.col; ++col) {
-            var placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row);
-            this.placeholder[obj.row + row][obj.col + col] = placeholder;
         }
     }
-    */
+
+    console.log("NO COLLISION! :)");
+
+    // Transfer placeholders
+    for(var row in tempPlaceholders) {
+        for (var col in tempPlaceholders[row]) {
+            if (tempPlaceholders[row][col] instanceof Array) {
+                if (!(this.placeholder[row][col] instanceof Array)) {
+                    this.placeholder[row][col] = [];
+                }
+                for (var index in tempPlaceholders[row][col])
+                this.placeholder[row][col][index] = tempPlaceholders[row][col][index];
+            }
+            else {
+                this.placeholder[row][col] = tempPlaceholders[row][col];
+            }
+        }
+    }
 
     console.log("RETURN TRUE:");
     return true;
@@ -1445,20 +1218,43 @@ Digsim.prototype.onGridClicked = function(event) {
     if (event.button !== 0) {
         return;
     }
+    // Not sure why this is here... but this was a while ago....
+    /*
     if (digsim.selectedComponent) {
+        console.log("RETARD HERE");
         digsim.selectedComponent.draw(digsim.staticContext);
-    }
+    } */
 
     var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
-    var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;;
+    var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;
     var row = Math.floor(mouseY / digsim.GRID_SIZE);
     var col = Math.floor(mouseX / digsim.GRID_SIZE);
 
     if (digsim.mode === digsim.WIRE_MODE) {
         event.preventDefault();
+
+        
+        if (!digsim.dragging) {}
         var x, y, dx = 0, dy = 0;
         
         if (!digsim.dragging) {
+            // Prevent wires from starting ontop of placeholders
+            if (!(typeof digsim.placeholder[row][col] === 'undefined' || (digsim.placeholder[row][col] instanceof Array))) { 
+                console.log("poo poo");
+                return; 
+            }    
+            if (digsim.placeholder[row][col] instanceof Array) {
+                var full = true;
+                for (var i = 0; i < 4; ++i) {
+                    if (typeof digsim.placeholder[row][col][i] === 'undefined') {
+                        full = false;
+                        break;
+                    }
+                }
+                if (full) {
+                    return;
+                }
+            }
             digsim.dragging = true;
             digsim.wirePos.startX = col + 0.5;
             digsim.wirePos.startY = row + 0.5;
@@ -1749,7 +1545,6 @@ Digsim.prototype.onGridClicked = function(event) {
             digsim.enableButton('Rotate_CCW');
             digsim.enableButton('Rotate_CW');
             digsim.selectedComponent.draw(digsim.staticContext, 'red');
-            /* NEED TO SHOW SOMEHOW THAT COMPONENT IS SELECTED */
         }
     }
 };                     
@@ -1813,7 +1608,80 @@ Digsim.prototype.onGridMouseDown = function(event) {
     }
     else if (digsim.mode === digsim.SIM_MODE) {        
         if (digsim.placeholder[row][col]) {
-            var obj = digsim.components[ digsim.placeholder[row][col].ref ];
+
+            var obj;
+            if (digsim.placeholder[row][col] instanceof Array) {
+                // Wire selected
+
+                var relX = mouseX % digsim.GRID_SIZE;
+                var relY = mouseY % digsim.GRID_SIZE;
+                var leftVert = topHor = Math.ceil(digsim.GRID_SIZE * (1 - digsim.HIT_RADIUS) / 2);
+                var rightVert = bottomHor = digsim.GRID_SIZE - topHor;
+                var diagSep = digsim.GRID_SIZE - relX;
+                var vert = (relX >= topHor) && (relX <= bottomHor);
+                var hor = (relY >= leftVert) && (relY <= rightVert);
+                var index = -1;
+                var array = digsim.placeholder[row][col];
+
+                
+                console.log("hor: " + hor);
+                console.log("vert: " + vert);
+                if (vert && hor && (array[0] || array[2]) && (array[1] || array[3])) {
+                    console.log("fatal error:");
+                    // mid click and multiple wires
+                    // Determine grid snap for wires not connecting to other wires. 
+                    if (relY < relX) {  // top
+                        if (relY < diagSep) {  // top-left
+                            index = digsim.TL;
+                        }
+                        else { // top-right
+                            index = digsim.TR;
+                        }
+                    }
+                    else { // bottom
+                        if (relY < diagSep) { // bottom-left
+                            index = digsim.BL;
+                        }
+                        else { // bottom-right
+                            index = digsim.BR;
+                        }
+                    }                
+                }
+                else if (hor && (array[1] || array[3]) && relY >= topHor && relY <= bottomHor) {
+                    console.log("non-fatal error");
+                    if (relX <= digsim.GRID_SIZE / 2) {
+                        index = 3;
+                    }
+                    else {
+                        index = 1;
+                    }
+                }
+                else if (vert && relX >= leftVert && relX <= rightVert) {
+                    console.log("this is hello world");
+                    if (relY <= digsim.GRID_SIZE / 2) {
+                        index = 0;
+                    }
+                    else {
+                        index = 2;
+                    }
+                }
+
+                if (index === -1) {
+                    console.log("§§§ no wire §§§");
+                }
+
+                console.log("index: " + index);
+                console.log("Selected ");
+                console.log(digsim.placeholder[row][col][index]);
+                
+                if (index != -1 && digsim.placeholder[row][col][index]) {
+                    obj = digsim.components[ digsim.placeholder[row][col][index].ref ];
+                }
+            }
+            else {
+                obj = digsim.components[ digsim.placeholder[row][col].ref ];
+            }
+
             if (obj.type === digsim.SWITCH) {
                 console.log("");
                 console.log("");
@@ -1918,8 +1786,60 @@ Digsim.prototype.onGridMouseMove = function(event) {
         var col = Math.floor(mouseX / digsim.GRID_SIZE);
         var PH = digsim.placeholder[row][col];
         if (PH instanceof Array) {
-            /* FIX LATER */
-            $("canvas").css('cursor','default');
+
+            var relX = mouseX % digsim.GRID_SIZE;
+            var relY = mouseY % digsim.GRID_SIZE;
+            var leftVert = topHor = Math.ceil(digsim.GRID_SIZE * (1 - digsim.HIT_RADIUS) / 2);
+            var rightVert = bottomHor = digsim.GRID_SIZE - topHor;
+            var diagSep = digsim.GRID_SIZE - relX;
+            var vert = (relX >= topHor) && (relX <= bottomHor);
+            var hor = (relY >= leftVert) && (relY <= rightVert);
+            var index = -1;
+            var array = digsim.placeholder[row][col];
+
+            if (vert && hor && (array[0] || array[2]) && (array[1] || array[3])) {
+                // mid click and multiple wires
+                // Determine grid snap for wires not connecting to other wires. 
+                if (relY < relX) {  // top
+                    if (relY < diagSep) {  // top-left
+                        index = digsim.TL;
+                    }
+                    else { // top-right
+                        index = digsim.TR;
+                    }
+                }
+                else { // bottom
+                    if (relY < diagSep) { // bottom-left
+                        index = digsim.BL;
+                    }
+                    else { // bottom-right
+                        index = digsim.BR;
+                    }
+                }                
+            }
+            else if (hor && (array[1] || array[3]) && relY >= topHor && relY <= bottomHor) {
+                if (relX <= digsim.GRID_SIZE / 2) {
+                    index = 3;
+                }
+                else {
+                    index = 1;
+                }
+            }
+            else if (vert && relX >= leftVert && relX <= rightVert) {
+                if (relY <= digsim.GRID_SIZE / 2) {
+                    index = 0;
+                }
+                else {
+                    index = 2;
+                }
+            }
+
+            if (index != -1 && digsim.placeholder[row][col][index]) {
+                $("canvas").css('cursor','move');
+            }
+            else {
+                $("canvas").css('cursor','default');
+            }
         }
         else if (PH) {
             $("canvas").css('cursor','move');
@@ -2437,12 +2357,13 @@ window.requestAnimFrame = (function() {
 Digsim.prototype.addMessage = function(type, msg) {
     if (type === digsim.ERROR) {
         $('#messages').append("<span class='error'>" + msg + "</span><br>");
+        $("#messages").scrollTop($("#messages")[0].scrollHeight);
         digsim.deactivate();
     }
     else if (type === digsim.WARNING) {
         $('#messages').append("<span class='warning'>" + msg + "</span><br>");
+        $("#messages").scrollTop($("#messages")[0].scrollHeight);
     }
-    
 }
 
 /*****************************************************************************

@@ -1,37 +1,26 @@
 /*******************************************************************************
  * Program: 
- *  xor-gate.js
+ *  jkff.js
  *
  * Authors:
  *  Steven Lambert
  *  Zack Sheffield
  ******************************************************************************/
 
-function XOR(numInputs) {
-    this.type = digsim.XOR;
-    this.name = 'XOR';
+function JKFF(numInputs) {
+    this.type = undefined; //digsim.JKFF;
+    this.name = 'JKFF';
     
     this.next = [];
     this.prev = [];
     this.prevConnect = [];
     this.connections = [];
     this.juncts = [];
-    this.numInputs = numInputs || 2;
-    var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
-    this.dimension = {'row': size, 'col': (size + 1)};
-
-    this.outPt = 2;
+    this.numInputs = 2;
+    this.dimension = {'row': 3, 'col': 2};
 };
-XOR.prototype = new Drawable();
 
-/*****************************************************************************
- * CHANGE SIZE
- *  Changes the size of the gate based on numInputs
- ****************************************************************************/
-XOR.prototype.changeSize = function() {
-    var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
-    this.dimension = {'row': size, 'col': (size + 1)};
-}
+JKFF.prototype = new Drawable();
 
 /*****************************************************************************
  * DRAW
@@ -39,8 +28,9 @@ XOR.prototype.changeSize = function() {
  *  handle any number of inputs. Props to Steven Lambert for figuring out how
  *  to draw a half circle with the bezierCurveTo method. 
  ****************************************************************************/
-XOR.prototype.draw = function(context, lineColor) {
+JKFF.prototype.draw = function(context, lineColor) {
     
+    var fontSize = digsim.GRID_SIZE / 2;
     context.save();
     context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
@@ -48,6 +38,7 @@ XOR.prototype.draw = function(context, lineColor) {
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
 
+    // Rotatation
     var offsetH = 0, offsetV = 0;
     if (this.rotation == 90) {
         offsetV = -0.5;
@@ -62,55 +53,30 @@ XOR.prototype.draw = function(context, lineColor) {
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
-    
-    this.drawWires(context, lineColor);
-    
-    // Draw gate
-    var factor = Math.floor(this.numInputs / 2); 
-    var gsf = digsim.GRID_SIZE * factor;
-    
-    context.moveTo(0, 0);
-    context.lineTo(gsf,  0);            
-    
-    // VECTOR CALCULUS... good luck. :)
-    
-    var t = 0.28;               // SET THIS TO CHANGE CURVATURE
-    var baseCurveature = 1.15;  // SET THIS TO CHANGE BASE CURVATURE
-    var height = 2 * factor + 1;
-    var x0 = gsf;
-    var y0 = 0;
-    var y1 = height * digsim.GRID_SIZE / 2;
-    var x1 = y1 * 2 + digsim.GRID_SIZE;
-    var xc = (x0 + x1) / 2;
-    var yc = (y0 + y1) / 2;
-    var x = (y1 - y0) * t + xc;
-    var y = (x0 - x1) * t + yc;
-    
-    context.quadraticCurveTo(x, y, x1, y1);
-    
-    x0 = x1;
-    y0 = y1;
-    x1 = gsf;
-    y1 = height * digsim.GRID_SIZE;
-    xc = (x0 + x1) / 2;
-    yc = (y0 + y1) / 2;
-    x = (y1 - y0) * t + xc;
-    y = (x0 - x1) * t + yc;
-    
-    context.quadraticCurveTo(x, y, x1, y1);
-    
-    context.lineTo(0, y1);
-    
-    context.lineWidth = 1;
-    context.quadraticCurveTo(digsim.GRID_SIZE * baseCurveature, y1 / 2, 
-                             0, 0);
-    context.stroke();
-    context.fill();
 
-    // base quadratic curve
-    context.beginPath();
-    context.moveTo(digsim.GRID_SIZE / -4, y1);
-    context.quadraticCurveTo(digsim.GRID_SIZE * baseCurveature - digsim.GRID_SIZE / 4, y1 / 2, digsim.GRID_SIZE / -4, 0);
+    this.drawWires(context, lineColor);
+        
+    // Draw gate
+    context.moveTo(0, 0);
+    context.lineTo(2 * digsim.GRID_SIZE,  0);
+    context.lineTo(2 * digsim.GRID_SIZE,  3 * digsim.GRID_SIZE);
+    context.lineTo(0,  3 * digsim.GRID_SIZE);
+    context.closePath();
+
+    context.font =  (digsim.GRID_SIZE / 2) + "px Arial";
+    context.fillStyle = lineColor || 'black';
+    context.fillText("J", digsim.GRID_SIZE / 6, digsim.GRID_SIZE * 0.75);
+    context.fillText("K", digsim.GRID_SIZE / 6, digsim.GRID_SIZE * 2.75);
+    context.fillText("Q", digsim.GRID_SIZE * 1.375, digsim.GRID_SIZE * 0.75);
+    context.fillText("Q", digsim.GRID_SIZE * 1.375, digsim.GRID_SIZE * 2.75);
+    // Draw Q's bar
+    context.moveTo(digsim.GRID_SIZE * 1.4, digsim.GRID_SIZE * 2.3);
+    context.lineTo(digsim.GRID_SIZE * 1.75, digsim.GRID_SIZE * 2.3);
+    // Draw Clock
+    context.moveTo(0, digsim.GRID_SIZE * 1.25);
+    context.lineTo(digsim.GRID_SIZE / 4, digsim.GRID_SIZE * 1.5);
+    context.lineTo(0, digsim.GRID_SIZE * 1.75);
+
     context.stroke();
     context.restore();
     
@@ -132,7 +98,7 @@ XOR.prototype.draw = function(context, lineColor) {
  * COMPUTE LOGIC
  *  ORs all the input wires together to set the current state of the gate. 
  ******************************************************************************/
-XOR.prototype.computeLogic = function() {  
+JKFF.prototype.computeLogic = function() {  
 
     var cnt = 0;
     for (var i = 0; i < this.numInputs; ++i) {

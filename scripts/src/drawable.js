@@ -1,4 +1,4 @@
-/******************************************************************************
+ /******************************************************************************
  * Program: 
  *  drawable.js
  *
@@ -48,7 +48,7 @@ Drawable.prototype.checkConnect = function() {
     
     console.log("SETP 0");
     console.log(this);
-    if ((this.type === digsim.LED) || (this.type === digsim.SWITCH) || this.type === digsim.CLOCK) {
+    if (this.type >= 0) {
         console.log("STEP 1");
         var PH;
         // Endpoint contains a wire
@@ -66,7 +66,24 @@ Drawable.prototype.checkConnect = function() {
                 if ((obj !== this) && ($.inArray(obj, this.connections) === -1) && PH.connectable) { // connection is not part of the previous
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                     this.connections.push(obj);
-                    obj.connections.push(this);
+
+                    utilMath = digsim.rotationMath(obj, digsim.PREV, 0, 0);
+                    objConRow = utilMath.conRow;
+                    objConCol = utilMath.conCol;
+                    cnt = utilMath.cnt;
+                    index = utilMath.index;
+
+                    if (obj.type < 0) {
+                        if (((obj.rotation / 90 % 2) && (conRow === objConRow)) || (((obj.rotation / 90) % 2) === 0) && (conCol === objConCol)) {
+                            obj.prevConnect.push(this);
+                        }
+                        else  {
+                            obj.connections.push(this);
+                        }
+                    }
+                    else {
+                        obj.connections.push(this);
+                    }
 
                     this.juncts.push( { 'x': conCol, 'y': conRow } );
                 }
@@ -175,7 +192,21 @@ Drawable.prototype.drawWires = function(context, lineColor) {
     
     var factor = Math.floor(this.numInputs / 2) || 1;
     var cnt = 0;
-    if (this.type != digsim.NOT) {
+    if (this.type == undefined) {
+        if (this.name == "JKFF") {
+            context.moveTo(0, digsim.GRID_SIZE * 2.5);
+            context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * 2.5);
+        }
+        context.moveTo(0, digsim.GRID_SIZE / 2);
+        context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE / 2);
+        context.moveTo(0, digsim.GRID_SIZE * 1.5);
+        context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * 1.5);
+        context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE / 2);
+        context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE / 2);
+        context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 2.5);
+        context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE * 2.5);   
+    }
+    else if (this.type != digsim.NOT) {
         for (var i = 0; i < this.numInputs; ++i) {
             if (i % 2) {
                 context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * ((factor * 2) + .5 - cnt));
