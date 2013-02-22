@@ -2151,7 +2151,9 @@ KEY_CODES = {
     52: '4-input',
     67: 'Clock',
     9: 'Rotate_CW',
-    's9': 'Rotate_CCW'
+    's9': 'Rotate_CCW',
+    70: 'DFF',
+    's70': 'JKFF'
 };
 HOT_KEYS = {
     'AND': 'A',
@@ -2176,7 +2178,9 @@ HOT_KEYS = {
     '4-input': '4',
     'Clock': 'C',
     'Rotate_CW': 'Tab',
-    'Rotate_CCW': 'shift+Tab'
+    'Rotate_CCW': 'shift+Tab',
+    'DFF': 'F',
+    'JKFF': 'shift+F'
 };
 document.onkeydown = function(event) {
     // return which key was pressed.

@@ -87,14 +87,13 @@ DFF.prototype.draw = function(context, lineColor) {
 /**/
     this.drawWires(context, lineColor);
 
-    center['D'] = { 'x': 0.35 * digsim.GRID_SIZE, 'y': 0.36 * digsim.GRID_SIZE};
-        
     // Draw gate
     context.moveTo(0, 0);
     context.lineTo(2 * digsim.GRID_SIZE,  0);
     context.lineTo(2 * digsim.GRID_SIZE,  3 * digsim.GRID_SIZE);
     context.lineTo(0,  3 * digsim.GRID_SIZE);
     context.closePath();
+    context.fill();
     context.font =  (digsim.GRID_SIZE / 2) + "px Arial";
     context.fontWidth = digsim.GRID_SIZE / 4;
     context.fillStyle = lineColor || 'black';
@@ -135,15 +134,14 @@ DFF.prototype.draw = function(context, lineColor) {
 // Infallable logic function
 /*******************************************************************************
  * COMPUTE LOGIC
- *  ORs all the input wires together to set the current state of the gate. 
+ *  Truth table: *** changes only on the rising edge of the clock
+ *  Q   D   Qnext
+ *  0   0   0
+ *  0   1   1
+ *  1   0   0
+ *  1   1   1
  ******************************************************************************/
 DFF.prototype.computeLogic = function() {  
-
-    var cnt = 0;
-    for (var i = 0; i < this.numInputs; ++i) {
-        cnt += (this.prev[i] ? this.prev[i].state : 0);
-        console.log("PREV["+i+"].state: " + (this.prev[i] ? this.prev[i].state : 0));
-    }
-    this.state = cnt % 2;
+    this.state = this.D;
 };
 

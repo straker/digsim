@@ -62,6 +62,7 @@ JKFF.prototype.draw = function(context, lineColor) {
     context.lineTo(2 * digsim.GRID_SIZE,  3 * digsim.GRID_SIZE);
     context.lineTo(0,  3 * digsim.GRID_SIZE);
     context.closePath();
+    context.fill();
 
     context.font =  (digsim.GRID_SIZE / 2) + "px Arial";
     context.fillStyle = lineColor || 'black';
@@ -96,14 +97,23 @@ JKFF.prototype.draw = function(context, lineColor) {
 // Infallable logic function
 /*******************************************************************************
  * COMPUTE LOGIC
- *  ORs all the input wires together to set the current state of the gate. 
+ *  Truth table:
+ *  J   K  Qnext    Comment
+ *  0   0   Q       hold state
+ *  0   1   0       reset
+ *  1   0   1       set
+ *  1   1   Qnot    toggle
  ******************************************************************************/
 JKFF.prototype.computeLogic = function() {  
 
-    var cnt = 0;
-    for (var i = 0; i < this.numInputs; ++i) {
-        cnt += (this.prev[i] ? this.prev[i].state : 0);
-        console.log("PREV["+i+"].state: " + (this.prev[i] ? this.prev[i].state : 0));
+    if (this.J == 0 && this.K == 1) { // Reset
+        this.state = 0;
+    }
+    else if (this.J == 1 && this.K == 0) { // Set
+        this.state = 1;
+    }
+    else if (this.J && this.K) { // Toggle
+        this.state = !this.state;
     }
     this.state = cnt % 2;
 };
