@@ -12,7 +12,6 @@
  * To-do:
  * select switch with wire click thingy yeah
  * pick up wires
- * Rotations
  * Panning
  * auto-route
  * implement touch controls
@@ -47,12 +46,15 @@ function Digsim() {
     this.WIRE = 6;
     this.SWITCH = 7;
     this.LED = 8;
+
     this.DEFAULT_MODE = 0;
     this.WIRE_MODE = 1;
     this.SIM_MODE = 2;
     this.PLACE_MODE = 3;
+
     this.WARNING = 0;
     this.ERROR = 1;
+
     this.PREV = 0;
     this.NEXT = 1;
     this.DFF = 100;
@@ -1096,19 +1098,19 @@ Digsim.prototype.deletePlaceholder = function(obj) {
     $("canvas").css('cursor','default');
     $('ul:not(.num-inputs) .active').removeClass('active');
     this.disableControls();
-    console.log("disable controls");
+
+    var prev_mode = this.mode;
     this.mode = this.DEFAULT_MODE;
+
     this.dragging = false;
     this.draggingGate = {};
     this.clearCanvas(this.movingContext, this.gridWidth, this.gridHeight);
-    this.disableControls();
 
-    if (id == "Run") {
+    // Reset all states and redraw canvas if application was in run mode
+    if (id == "Run" || prev_mode === this.SIM_MODE) {
         console.log("done running");
-        for (var i = 0, len = this.components.length; i < len; ++i) {
-            if (typeof this.components[i] !== 'undefined') {
+        for (var i in this.components) {
                 this.components[i].state = 0;
-            }
         }
         this.drawComponents();
     }
@@ -1835,7 +1837,12 @@ Digsim.prototype.onGridMouseMove = function(event) {
             }
 
             if (index != -1 && digsim.placeholder[row][col][index]) {
-                $("canvas").css('cursor','move');
+                if (digsim.components[ digsim.placeholder[row][col][index].ref ].dx !== 0) {
+                    $("canvas").css('cursor','row-resize');
+                }
+                else {
+                    $("canvas").css('cursor','col-resize');
+                }
             }
             else {
                 $("canvas").css('cursor','default');
