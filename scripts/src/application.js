@@ -46,6 +46,8 @@ function Digsim() {
     this.WIRE = 6;
     this.SWITCH = 7;
     this.LED = 8;
+    this.DFF = 100;
+    this.JKFF = 101;
 
     this.DEFAULT_MODE = 0;
     this.WIRE_MODE = 1;
@@ -57,8 +59,7 @@ function Digsim() {
 
     this.PREV = 0;
     this.NEXT = 1;
-    this.DFF = 100;
-    this.JKFF = 101;
+
     
     // Wire identifiers
     this.TL = 0;    // top-left
@@ -99,7 +100,8 @@ function Digsim() {
     this.mode = 0;
 
     // Autorouting
-    this.autoroute = false;    
+    this.autoroute = true;    
+    this.endRoute = false;
 
     // Data arrays
     this.components = [];   // Holds all of the objects by their unique ID 
@@ -1137,6 +1139,7 @@ Digsim.prototype.onButtonClicked = function (event) {
     if (!$(this).hasClass('active')) {
         // Remove the active class from all buttons that have it
         digsim.deactivate($('ul:not(.num-inputs) .active').attr('id'));
+        digsim.deactivate($('ul:not(.Auto-route) .active').attr('id'));
         $(this).addClass('active');
 
         if (id == "Wire") {
@@ -1174,6 +1177,9 @@ Digsim.prototype.onButtonClicked = function (event) {
 
             cycleClock();
             digsim.drawComponents();
+        }
+        else if(id == "Auto-route") {
+            digsim.autoroute = !digsim.autoroute;
         }
         else {
             $("canvas").css('cursor','default');
@@ -1234,7 +1240,6 @@ Digsim.prototype.onGridClicked = function(event) {
         if (!digsim.dragging) {
             // Prevent wires from starting ontop of placeholders
             if (!(typeof digsim.placeholder[row][col] === 'undefined' || (digsim.placeholder[row][col] instanceof Array))) { 
-                console.log("poo poo");
                 return; 
             }    
             if (digsim.placeholder[row][col] instanceof Array) {
@@ -1255,14 +1260,19 @@ Digsim.prototype.onGridClicked = function(event) {
             digsim.lockH = digsim.lockV = 0;
             animateWire();
         }
-        /* */
         else {
             if (digsim.autoroute) {
                 //Dijkstra pathfinding algorithm - www.zsheffield.net/dijkstra-pathfinding
                 var start = {'r': Math.floor(digsim.wirePos.startY), 'c': Math.floor(digsim.wirePos.startX)};
                 var target = {'r': row, 'c': col};
-                console.warn("START: r:" + start.r + " c:" + start.c);
-                console.warn("TARGET: r:" + target.r + " c:" + target.c);
+                if (typeof digsim.placeholder[target.r][target.c] !== 'undefined') {
+                    digsim.endRoute = true;
+                }
+                else {
+                    digsim.endRoute = false;
+                }
+                console.log("START: r:" + start.r + " c:" + start.c);
+                console.log("TARGET: r:" + target.r + " c:" + target.c);
 
                 var neighbors = [];
                 var BIGNUM = ~(1 << 31) - 10;
@@ -1307,32 +1317,32 @@ Digsim.prototype.onGridClicked = function(event) {
                                    (typeof digsim.placeholder[r-1][c][1] !== 'undefined') &&
                                    (typeof digsim.placeholder[r-1][c][2] === 'undefined') &&
                                    (typeof digsim.placeholder[r-1][c][3] !== 'undefined');
-                                   console.warn("("+c+","+(r-1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
-                                   return t;
+                                   console.log("("+c+","+(r-1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
+                                   return ((r - 1) === target.r && c === target.c) ? true : t;
                             break;
                         case 1: // moving right
                             t =    (typeof digsim.placeholder[r][c+1][0] !== 'undefined') &&
                                    (typeof digsim.placeholder[r][c+1][1] === 'undefined') &&
                                    (typeof digsim.placeholder[r][c+1][2] !== 'undefined') &&
                                    (typeof digsim.placeholder[r][c+1][3] === 'undefined');
-                                   console.warn("("+(c+1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
-                                   return t;
+                                   console.log("("+(c+1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
+                                   return (r === target.r && (c + 1) === target.c) ? true : t;
                             break; 
                         case 2: // moving down
                             t =    (typeof digsim.placeholder[r+1][c][0] === 'undefined') &&
                                    (typeof digsim.placeholder[r+1][c][1] !== 'undefined') &&
                                    (typeof digsim.placeholder[r+1][c][2] === 'undefined') &&
                                    (typeof digsim.placeholder[r+1][c][3] !== 'undefined');
-                                   console.warn("("+c+","+(r+1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
-                                   return t;
+                                   console.log("("+c+","+(r+1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
+                                   return ((r + 1) === target.r && c === target.c) ? true : t;
                             break;
                         default: // moving left
                             t =    (typeof digsim.placeholder[r][c-1][0] !== 'undefined') &&
                                    (typeof digsim.placeholder[r][c-1][1] === 'undefined') &&
                                    (typeof digsim.placeholder[r][c-1][2] !== 'undefined') &&
                                    (typeof digsim.placeholder[r][c-1][3] === 'undefined');
-                                   console.warn("("+(c-1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
-                                   return t;
+                                   console.log("("+(c-1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
+                                   return (r === target.r && (c - 1) === target.c) ? true : t;
                     }
                 }
                 
@@ -1340,7 +1350,7 @@ Digsim.prototype.onGridClicked = function(event) {
                 while (!pathfound)
                 {
                     if (index === prev.length) {
-                        console.warn("INDEX === PREV.LENGTH");
+                        console.log("INDEX === PREV.LENGTH");
                         break;
                     }
                     u = prev[index];
@@ -1356,18 +1366,17 @@ Digsim.prototype.onGridClicked = function(event) {
                     
                     // FIND NEIGHBORS
                     // Neighbor above
-
                     if ((u.r - 1) >= 0) {
                         if (typeof Q[u.r - 1][u.c] === 'undefined' &&
                             !(digsim.placeholder[u.r - 1][u.c] instanceof Array) &&
                             typeof digsim.placeholder[u.r - 1][u.c] === 'undefined') {
                             neighbors.push( {'r': u.r - 1, 'c': u.c} );
-                        console.warn("neighbor above ("+u.c+","+u.r+") is valid");
+                        console.log("neighbor above ("+u.c+","+u.r+") is valid");
                         }
                         else if (digsim.placeholder[u.r - 1][u.c] instanceof Array) {
                             if (checkAdj(u, 0)) {
                                 neighbors.push( {'r': u.r - 1, 'c': u.c} );
-                                console.warn("neighbor above ("+u.c+","+u.r+") is valid");
+                                console.log("neighbor above ("+u.c+","+u.r+") is valid");
                             }
                         }
                     }
@@ -1377,12 +1386,12 @@ Digsim.prototype.onGridClicked = function(event) {
                             !(digsim.placeholder[u.r][u.c + 1] instanceof Array) && 
                              typeof digsim.placeholder[u.r][u.c + 1] === 'undefined') {
                             neighbors.push( {'r': u.r, 'c': u.c + 1} );
-                        console.warn("neighbor right of ("+u.c+","+u.r+") is valid");
+                        console.log("neighbor right of ("+u.c+","+u.r+") is valid");
                         }
                         else if (digsim.placeholder[u.r][u.c + 1] instanceof Array) {
                             if (checkAdj(u, 1)) {
                                 neighbors.push( {'r': u.r, 'c': u.c + 1} );
-                                console.warn("neighbor right of ("+u.c+","+u.r+") is valid");
+                                console.log("neighbor right of ("+u.c+","+u.r+") is valid");
                             }
                         }
                     }
@@ -1392,12 +1401,12 @@ Digsim.prototype.onGridClicked = function(event) {
                             !(digsim.placeholder[u.r + 1][u.c] instanceof Array) && 
                             (typeof digsim.placeholder[u.r + 1][u.c] === 'undefined')) {
                                 neighbors.push( {'r': u.r + 1, 'c': u.c} );
-                                console.warn("neighbor below ("+u.c+","+u.r+") is valid");
+                                console.log("neighbor below ("+u.c+","+u.r+") is valid");
                         }
                         else if (digsim.placeholder[u.r + 1][u.c] instanceof Array) {
                             if (checkAdj(u, 2)) {
                                 neighbors.push( {'r': u.r + 1, 'c': u.c} );
-                                console.warn("neighbor below ("+u.c+","+u.r+") is valid");
+                                console.log("neighbor below ("+u.c+","+u.r+") is valid");
                             }
                         }
                     }
@@ -1407,18 +1416,18 @@ Digsim.prototype.onGridClicked = function(event) {
                             !(digsim.placeholder[u.r][u.c - 1] instanceof Array) && 
                             typeof digsim.placeholder[u.r][u.c - 1] === 'undefined') {
                                 neighbors.push( {'r': u.r, 'c': u.c - 1} );
-                                console.warn("neighbor left of ("+u.c+","+u.r+") is valid");
+                                console.log("neighbor left of ("+u.c+","+u.r+") is valid");
                         }
                         else if (digsim.placeholder[u.r][u.c - 1] instanceof Array) {
                             if (checkAdj(u, 3)) {
                                 neighbors.push( {'r': u.r, 'c': u.c - 1} );
-                                console.warn("neighbor left of ("+u.c+","+u.r+") is valid");
+                                console.log("neighbor left of ("+u.c+","+u.r+") is valid");
                             }
                         }
                     }
                     
                     // Add the right neighbor to the path
-                    console.warn(neighbors.length + " valid neigbors to ("+u.c+","+u.r+")");
+                    console.log(neighbors.length + " valid neigbors to ("+u.c+","+u.r+")");
                     for (var i = 0; i < neighbors.length; ++i) {
                         alt = dist[u.r][u.c] + 1;
                         if (alt < dist[ neighbors[i].r ][ neighbors[i].c ]) {
@@ -1432,21 +1441,97 @@ Digsim.prototype.onGridClicked = function(event) {
                     }
                     neighbors = [];
                     ++index;
-                    console.warn("");
+                    console.log("");
                 }
-                u = prev[prev.length - 1];
+                u = prev[prev.length - 1]; // This is the target
+                if (u.r === start.r && u.c === start.c) { // no path
+                    return;
+                }
                 var S = [];
                 while (u != undefined) {
                     S.unshift( {'r': u.r, 'c': u.c} );
                     u = u.p;
                 }
-                console.warn("S•••••••••••••");
-                console.warn(S);
-                console.warn("••••••••••••••");
+                console.log("S•••••••••••••");
+                console.log(S);
+                console.log("••••••••••••••");
 
                 // Now to actually make the wires
-                
-                
+                // First, create the separate paths 
+                console.log("Starting wire placement for autoroute");
+                var path = [];
+                var currBranch = {'r':0,'c':0};
+                var currStart = start;
+                var validPlacement;
+                prevDy = S[1].r - S[0].r;
+                prevDx = S[1].c - S[0].c;
+                currBranch.r += prevDy;
+                currBranch.c += prevDx;
+                for (var i = 1, len = S.length - 1; i < len; ++i) {
+                    dx = S[i + 1].c - S[i].c;
+                    dy = S[i + 1].r - S[i].r;
+                    console.warn(" DX: " + dx + "  DY: " + dy);
+                    console.warn("pDX: " + prevDx + " pDY: " + prevDy);
+                    if (dx !== prevDx && dy !== prevDy) {
+                        console.warn("New path found! "+currBranch.c + " " + currBranch.r);
+                        var wire = new Wire();
+                        wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
+                        wire.path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
+                        var validPlacement = digsim.setWirePlaceholder(wire, prevDx, prevDy);
+                        if (validPlacement) {
+                            digsim.components[digsim.iComp++] = wire;
+                            // Draws the wire on static context.
+                            wire.checkConnect();
+                            wire.draw(digsim.staticContext);
+                        }
+                        else {
+                            // DO NOT PLACE WIRE, there's something in the way.
+                            wire.path.pop();
+                            digsim.dragging = true;
+                            console.warn("ERROR WITH AUTOROUTING - found invalid path");
+                        }
+                        currStart.r += currBranch.r;
+                        currStart.c += currBranch.c;
+                        currBranch = {'r':0,'c':0};
+                        prevDx = dx;
+                        prevDy = dy;
+                        console.warn(i < len);
+                        --i;
+                    }
+                    else {
+                        currBranch.r += prevDy;
+                        currBranch.c += prevDx;
+                        prevDx = dx;
+                        prevDy = dy;
+                    }
+                }
+                console.warn("New path found! "+currBranch.c + " " + currBranch.r);
+                var wire = new Wire();
+                wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
+                wire.path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
+                var validPlacement = digsim.setWirePlaceholder(wire, prevDx, prevDy);
+                if (validPlacement) {
+                    digsim.components[digsim.iComp++] = wire;
+                    // Draws the wire on static context.
+                    wire.checkConnect();
+                    wire.draw(digsim.staticContext);
+                }
+                else {
+                    // DO NOT PLACE WIRE, there's something in the way.
+                    wire.path.pop();
+                    digsim.dragging = true;
+                    console.warn("ERROR WITH AUTOROUTING - found invalid path");
+                }
+                if (digsim.endRoute) {
+                    digsim.dragging = false;
+                }
+                else {
+                    console.log("DOES THIS EVEN DO ANYTHING?");
+                    digsim.wirePos.startX = target.c + 0.5;
+                    digsim.wirePos.startY = target.r + 0.5;
+                    digsim.dragging = true;
+                }
+
             } // End of autoroute
             else {
                 digsim.dragging = false;
@@ -2349,36 +2434,43 @@ function animateWire() {
         
         // Draw wire
         context.beginPath();
-        context.fillStyle = '#000000';
+        context.fillStyle = '#3399FF';
         context.lineWidth = 2;
         context.strokeStyle = '#3399FF';
         context.lineCap = 'round';
         context.arc(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE, 2, 0, 2 * Math.PI);
+        context.fill();
         context.moveTo(digsim.wirePos.startX * digsim.GRID_SIZE, digsim.wirePos.startY * digsim.GRID_SIZE);
-        var x, y;
-        // Chooses which direction to lock to, based on which component is furthest from
-        // the start point.
-        if (Math.abs(digsim.wirePos.startY * digsim.GRID_SIZE - digsim.mousePos.y) >
-            Math.abs(digsim.wirePos.startX * digsim.GRID_SIZE - digsim.mousePos.x)) {
-            digsim.lockV = true;
-            digsim.lockH = false;
+        if (digsim.autoroute){
+            x = (col + 0.5) * digsim.GRID_SIZE;
+            y = (row + 0.5) * digsim.GRID_SIZE;
         }
         else {
-            digsim.lockV = false;
-            digsim.lockH = true;
-        }
-        
-        if (digsim.lockH) {
-            x = digsim.mousePos.x;
-            y = digsim.wirePos.startY * digsim.GRID_SIZE;
-        }
-        else if (digsim.lockV) {
-            y = digsim.mousePos.y;
-            x = digsim.wirePos.startX * digsim.GRID_SIZE;
-        }
-        else {
-            x = digsim.mousePos.x;
-            y = digsim.mousePos.y;
+            var x, y;
+            // Chooses which direction to lock to, based on which component is furthest from
+            // the start point.
+            if (Math.abs(digsim.wirePos.startY * digsim.GRID_SIZE - digsim.mousePos.y) >
+                Math.abs(digsim.wirePos.startX * digsim.GRID_SIZE - digsim.mousePos.x)) {
+                digsim.lockV = true;
+                digsim.lockH = false;
+            }
+            else {
+                digsim.lockV = false;
+                digsim.lockH = true;
+            }
+            
+            if (digsim.lockH) {
+                x = digsim.mousePos.x;
+                y = digsim.wirePos.startY * digsim.GRID_SIZE;
+            }
+            else if (digsim.lockV) {
+                y = digsim.mousePos.y;
+                x = digsim.wirePos.startX * digsim.GRID_SIZE;
+            }
+            else {
+                x = digsim.mousePos.x;
+                y = digsim.mousePos.y;
+            }
         }
         context.lineTo(x, y); 
         context.stroke();
