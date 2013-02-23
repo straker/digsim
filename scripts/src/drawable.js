@@ -192,7 +192,7 @@ Drawable.prototype.drawWires = function(context, lineColor) {
     
     var factor = Math.floor(this.numInputs / 2) || 1;
     var cnt = 0;
-    if (this.type) {
+    if (this.type || this.name == "MUX") {
         if (this.type != digsim.NOT) {
             for (var i = 0; i < this.numInputs; ++i) {
                 if (i % 2) {
@@ -205,7 +205,7 @@ Drawable.prototype.drawWires = function(context, lineColor) {
                 }
             }
         }
-        else if (this.type) {
+        else {
             context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * (cnt + 1.5));
             context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + 1.5));
         }
@@ -226,6 +226,17 @@ Drawable.prototype.drawWires = function(context, lineColor) {
         context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE / 2);
         context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 2.5);
         context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE * 2.5);   
+    }
+
+    // Draw select wires for MUX
+    if (this.name == "MUX") {
+        context.moveTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.dimension.row + 0.5));
+        context.lineTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.dimension.row - 1));
+        if (this.numInputs == 4) {
+            context.moveTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 5.5);
+            context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 4.5);
+        }
+
     }
 
     context.stroke();

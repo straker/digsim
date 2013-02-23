@@ -10,10 +10,10 @@
  *  A fully functional circuit simulation program. 
  *
  * To-do:
+ * fix placeholder cleanup of switch and maybe others
  * select switch with wire click thingy yeah
  * pick up wires
  * Panning
- * auto-route
  * implement touch controls
  * D flip flop, JK flip flop, 2/4 to 1 MUX
  * save and load schematics/files
@@ -48,6 +48,7 @@ function Digsim() {
     this.LED = 8;
     this.DFF = 100;
     this.JKFF = 101;
+    this.MUX = 102;
 
     this.DEFAULT_MODE = 0;
     this.WIRE_MODE = 1;
@@ -2024,11 +2025,15 @@ Digsim.prototype.changeNumInputs = function(event) {
     if (!$(this).hasClass('active')) {
         $('.num-inputs .active').removeClass('active');
         $(this).addClass('active');
+        var store = digsim.numGateInputs;
         digsim.numGateInputs = $(this).data('inputs');
         if (digsim.draggingGate) {
             var type = digsim.draggingGate.type;
-            if (type !== digsim.NOT && type < 0 && !digsim.selectedComponent) {
+            if (type !== digsim.NOT && (type < 0 || digsim.draggingGate.name == "MUX") && !digsim.selectedComponent) {
                 digsim.draggingGate.numInputs = digsim.numGateInputs;
+                if (digsim.draggingGate.name == "MUX" && digsim.numGateInputs == 3) {
+                    digsim.draggingGate.numInputs = digsim.numGateInputs = store;
+                }
                 digsim.draggingGate.changeSize();
             }
         }
