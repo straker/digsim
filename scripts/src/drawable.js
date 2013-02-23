@@ -192,7 +192,28 @@ Drawable.prototype.drawWires = function(context, lineColor) {
     
     var factor = Math.floor(this.numInputs / 2) || 1;
     var cnt = 0;
-    if (this.type == undefined) {
+    if (this.type) {
+        if (this.type != digsim.NOT) {
+            for (var i = 0; i < this.numInputs; ++i) {
+                if (i % 2) {
+                    context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * ((factor * 2) + .5 - cnt));
+                    context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * ((factor * 2) + .5 - cnt++));
+                }
+                else {
+                    context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * (cnt + .5));
+                    context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + .5));
+                }
+            }
+        }
+        else if (this.type) {
+            context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * (cnt + 1.5));
+            context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + 1.5));
+        }
+        
+        context.moveTo(((factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
+        context.lineTo(((factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
+    }
+    else {
         if (this.name == "JKFF") {
             context.moveTo(0, digsim.GRID_SIZE * 2.5);
             context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * 2.5);
@@ -206,61 +227,6 @@ Drawable.prototype.drawWires = function(context, lineColor) {
         context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 2.5);
         context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE * 2.5);   
     }
-    else if (this.type != digsim.NOT) {
-        for (var i = 0; i < this.numInputs; ++i) {
-            if (i % 2) {
-                context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * ((factor * 2) + .5 - cnt));
-                context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * ((factor * 2) + .5 - cnt++));
-            }
-            else {
-                context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * (cnt + .5));
-                context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + .5));
-            }
-        }
-    }
-    else {
-        context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * (cnt + 1.5));
-        context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + 1.5));
-    }
-    
-    context.moveTo(((factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
-    context.lineTo(((factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
-    
-    context.stroke();
-}
-
-/******************************************************************************
- * DRAW WIRES
- *  Draws..... wires?
- *****************************************************************************
-Drawable.prototype.drawWires = function(context, lineColor) {
-     // Draw wires
-    context.beginPath();
-    context.fillStyle = '#FFFFFF';
-    context.strokeStyle = lineColor || 'black';
-    context.lineWidth = 2;
-
-    var factor = Math.floor(this.numInputs / 2) || 1; 
-    var cnt = 0;
-    if (this.type != digsim.NOT) {
-        for (var i = 0; i < this.numInputs; ++i) {
-            if (i % 2) { 
-                context.moveTo((this.col + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + (factor * 2) + .5 - cnt));   
-                context.lineTo((this.col - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + (factor * 2) + .5 - cnt++));
-            }
-            else {
-                context.moveTo((this.col + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + .5));   
-                context.lineTo((this.col - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + .5));
-            }
-        }
-    }
-    else {
-        context.moveTo((this.col + 1) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));   
-        context.lineTo((this.col - 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + cnt + 1.5));     
-    }
-
-    context.moveTo((this.col + (factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));
-    context.lineTo((this.col + (factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (this.row + factor + .5));   
 
     context.stroke();
 }
@@ -298,8 +264,6 @@ Drawable.prototype.traverse = function() {
         conQueue.push(this.connections[i]);
         this.setNext(this.connections[i]);
     }
-
-    
 
     while (conQueue.length) {
         console.log("\n======START=====");
