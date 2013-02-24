@@ -18,6 +18,7 @@ function DFF(numInputs) {
     this.juncts = [];
     this.numInputs = 2;
     this.dimension = {'row': 1, 'col': 1}; // 3, 2
+    this.clockState = 0;
 };
 
 DFF.prototype = new Drawable();
@@ -142,6 +143,8 @@ DFF.prototype.draw = function(context, lineColor) {
  *  1   1   1
  ******************************************************************************/
 DFF.prototype.computeLogic = function() {  
-    this.state = this.D;
+    if (digsim.RISING_EDGE && this.clockState) {
+        this.state = this.D;
+    }
 };
 

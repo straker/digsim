@@ -33,7 +33,7 @@ function Digsim() {
     this.HIT_RADIUS = .73333333;
     this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
     this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
-    this.CLK_FREQ = 60; 
+    this.CLK_FREQ = 60; // This number divided by 60 is delay (in seconds) between changes in the clock state
     
     // Type identifiers
     this.AND = -1;  // Gates are negative because they have a special
@@ -50,66 +50,69 @@ function Digsim() {
     this.JKFF = 101;
     this.MUX = 102;
 
-    this.DEFAULT_MODE = 0;
-    this.WIRE_MODE = 1;
-    this.SIM_MODE = 2;
-    this.PLACE_MODE = 3;
+    this.DEFAULT_MODE = 0; 
+    this.WIRE_MODE = 1;     // For placing wires
+    this.SIM_MODE = 2;      // For simulation
+    this.PLACE_MODE = 3;    // Placing components
 
-    this.WARNING = 0;
-    this.ERROR = 1;
+    this.WARNING = 0;       // Orange(ish) warning messages - simulation will still run
+    this.ERROR = 1;         // Red error messages - will not simulate
 
     this.PREV = 0;
     this.NEXT = 1;
 
     
-    // Wire identifiers
-    this.TL = 0;    // top-left
-    this.TR = 1;    // top-right
-    this.BR = 2;    // bottom-right
-    this.BL = 3;    // bottom-left
-    this.MID = 4;   // connect wire to wire
+    // // Wire identifiers
+    // this.TL = 0;    // top-left
+    // this.TR = 1;    // top-right
+    // this.BR = 2;    // bottom-right
+    // this.BL = 3;    // bottom-left
+    // this.MID = 4;   // connect wire to wire
 
     // Animation variables
-    this.wirePos = {
-        startX: -1, 
+    this.wirePos = {        // When drawing wires, this will contain the 
+        startX: -1,         // starting position information
         startY: -1, 
         startPos: -1, 
     };
-    this.dragging = false;
-    this.draggingGate;
-    this.lockH = 0;
-    this.lockV = 0;
-    this.clkCnt = 0;
-    this.rotation = 0;
-
+    this.dragging = false;  // When this is true, we are dragging a wire
+    this.draggingGate;      // When this is true, we are dragging a gate
+    this.lockH = 0;         // Locks the wire horizontally (non-autorouting)
+    this.lockV = 0;         // Locks the wire vertically (non-autorouting)
+    this.clkCnt = 0;        // This will count to digsim.CLK_FREQ before it resets and changes states
+    this.rotation = 0;      // Gives the rotation of the current selected object in degrees - resets when 
+                            // entering new modes
     // Grid variables
     this.gridWidth = this.NUM_COLS * this.GRID_SIZE;
     this.gridHeight = this.NUM_ROWS * this.GRID_SIZE;
     this.mousePos = { x: -1, y: -1 };
-    this.offsetCol = 0;
-    this.offsetRow = 0;
-    this.gridToggle = 0;
+    this.offsetCol = 0;     // "Global" variable needed for even functions
+    this.offsetRow = 0;     // "Global" variable needed for even functions
+    this.gridToggle = 0;    // Toggles the grid (tri-state)
 
     // Gate identifier
-    this.iComp = 0;
-    this.numGateInputs = 2;
-    this.prevGate = "";
+    this.iComp = 0;         // Gives each component a new unique identifier
+    this.numGateInputs = 2; // Number of inputs - attached to the user interface selection
+    this.prevGate = "";     // Needed for even functions
 
     // Misc
-    this.clipboard;
-    this.selectedComponent;
-    this.mode = 0;
+    this.clipboard;         // Used for cut/copy/paste
+    this.selectedComponent; // Used for selecting components :D
+    this.mode = 0;          // The current mode
+
+    // Flip flop simulation
+    this.RISING_EDGE = false;   // Used to simulate the rising edge of the clock
 
     // Autorouting
-    this.autoroute = true;    
-    this.endRoute = false;
-
+    this.autoroute = true;  // Turns the autoroute function on and off
+    this.endRoute = false;  // Decides if we will start a new wire where we've ended the
+                            // last one, based on if we've connected to something or not
     // Data arrays
     this.components = [];   // Holds all of the objects by their unique ID 
     this.drivers = [];      // Holds the place of the logic drivers in components[].
     this.placeholder = [];  // Holds component positions on grid
     for (var i = 0; i < this.NUM_COLS; ++i) {
-        this.placeholder[i] = [];
+        this.placeholder[i] = [];   // Set placeholder to a 2D array
     }
 };
 
@@ -155,7 +158,7 @@ Digsim.prototype.run = function() {
     $('.messages').css('height', this.gridHeight - 37);
 
     if(this.init()) {
-        // onClick events
+        // Assign funcitons to onClick events
         $("canvas").on("mousedown", this.onGridMouseDown);
         $("canvas").on("mouseup", this.onGridMouseUp);
         $("canvas").on("click", this.onGridClicked);
@@ -265,8 +268,6 @@ Digsim.prototype.drawGrid = function(context) {
     }
 };
 
-
-
 /*============================================================================
   ============================================================================
   ========================= COMPONENTS & PLACEHOLDERS ========================
@@ -280,7 +281,6 @@ Digsim.prototype.drawGrid = function(context) {
  ****************************************************************************/
 Digsim.prototype.drawComponents = function() {
     this.clearCanvas(this.staticContext, this.gridWidth, this.gridHeight);
-    console.log(this.components);
     for (index in this.components) {
         if(typeof this.components[index] !== 'undefined' && this.components[index].drawStatic) {
             this.components[index].draw(this.staticContext);
@@ -290,11 +290,12 @@ Digsim.prototype.drawComponents = function() {
 
 /*****************************************************************************
  * DELETE COMPONENT
- *  duh.
+ *  Remove component from component array, delete itself from all of its
+ *  connections, then delete its placeholders
  ****************************************************************************/
 Digsim.prototype.deleteComponent = function() {
     obj = this.selectedComponent;
-    // Remove the component from the array
+    // If it's a driver, remove it from the drivers[] array also
     if (obj.type === this.SWITCH || obj.type === this.CLOCK) {
         this.drivers.splice(this.drivers.indexOf(obj.id), 1);
     }
@@ -306,35 +307,28 @@ Digsim.prototype.deleteComponent = function() {
 
 /*****************************************************************************
  * DELETE CONNECTIONS
- *  Remove all connections for the component
+ *  Remove all connections for the component.
+ *
+ *  obj - the object whose connections we need to delete
  ****************************************************************************/
 Digsim.prototype.deleteConnections = function(obj) {
-    console.log("•••••••••••• DELETE CONNECTIONS•••••••••••••••");
+
+    var index, connections;
+    // First, remove the object from its connections' list of connections
     for (var i = 0; i < obj.connections.length; ++i) {
-        var connections = obj.connections[i].connections;
-        console.log("connections.indexOf(obj) = " + connections.indexOf(obj));
+        connections = obj.connections[i].connections;
         connections.splice(connections.indexOf(obj),1);
     }
 
-    // Remove connetions to gates
+    // Remove connetions to gates - must be used because gates use
+    // a prevConnect variable
     if (obj.type < 0) {
-        console.log("OBJ IS GATE");
         for (var i = 0; i < obj.prevConnect.length; ++i) {
-        //     console.log("I: " + i);
-        //     console.log("obj.prevConnect.length: " + obj.prevConnect.length);
-        //     console.log(obj.prevConnect[i]);
-            var connections = obj.prevConnect[i].connections;
-        //     console.log("CONNECTIONS: ••••••••••••");
-             console.log(connections);
-             var index = connections.indexOf(obj);
-             console.log("INDEX: " + index);
-             if (index >= 0) {
-                 connections.splice(index, 1);
-             }
-        //     console.log("connections.indexOf(obj) = " + connections.indexOf(obj));
-        //     var poo = connections.splice(connections.indexOf(obj),1);
-        //     console.log("POO: "); 
-        //     console.log(poo);
+            connections = obj.prevConnect[i].connections;
+            index = connections.indexOf(obj);
+            if (index >= 0) {
+                connections.splice(index, 1);
+            }
         }
     }
     
@@ -349,12 +343,11 @@ Digsim.prototype.deleteConnections = function(obj) {
 Digsim.prototype.setPlaceholders = function(obj) {
 
     var row, col, tempRow, tempCol, cnt, conCol, conRow, placeholder, utilMath;
-    var factor = Math.floor(obj.numInputs / 2) || 1;
+    var factor = Math.floor(obj.numInputs / 2) || 1; // Used for sizeable gates
     var index, rot = obj.rotation; // rotation variables
     var tempPlaceholders = []; // Save placeholders here while checking for collisions
 
     // Check the object space for collision
-    console.log(obj.row + ", " + obj.col);
     for (row = 0; row < obj.dimension.row; ++row) {
         for (col = 0; col < obj.dimension.col; ++col) {
             // Check for collision
@@ -372,8 +365,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             if (!(tempPlaceholders[tempRow] instanceof Array)) {
                 tempPlaceholders[tempRow] = [];
             }
-            var placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row);
-            tempPlaceholders[tempRow][tempCol] = placeholder;
+            tempPlaceholders[tempRow][tempCol] = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row);
         }
     } 
 
@@ -383,32 +375,32 @@ Digsim.prototype.setPlaceholders = function(obj) {
     // Previous
     for (var i = 0; i < obj.numInputs; ++i) {
         
-        utilMath = this.rotationMath(obj, this.PREV, i, cnt);
+        // Calculate positions of connections based on rotation
+        utilMath = this.rotationMath(obj, this.PREV, i, cnt); 
         conRow = utilMath.conRow;
         conCol = utilMath.conCol;
         cnt = utilMath.cnt;
         index = utilMath.index;
         
+        // If grid space is not an array and contains something...
         if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
-            console.error("Connection point collision error!");
             digsim.addMessage(digsim.WARNING, "[2]Collision detected! Unable to place component.");
             return false;
         }
+        // If grid space is an array and contains something...
         else if ((this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol][index]) {
-            console.error("Connection point collision error!");
             digsim.addMessage(digsim.WARNING, "[3]Collision detected! Unable to place component.");
             return false;
         }
 
         // Set temporary placeholder
-        if (!(tempPlaceholders[conRow] instanceof Array)) {
+        if (!(tempPlaceholders[conRow] instanceof Array)) { // If it's not a 2D array, make it a 2D array
             tempPlaceholders[conRow] = [];
         }
-        if (!(tempPlaceholders[conRow][conCol] instanceof Array)) {
+        if (!(tempPlaceholders[conRow][conCol] instanceof Array)) { // If it's not a 3D array, make it a 3D array (for wires only)
             tempPlaceholders[conRow][conCol] = [];
         }
-        placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
-        tempPlaceholders[conRow][conCol][index] = placeholder;
+        tempPlaceholders[conRow][conCol][index] = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
     }
 
     // Nexts
@@ -417,28 +409,26 @@ Digsim.prototype.setPlaceholders = function(obj) {
     conCol = utilMath.conCol;
     cnt = utilMath.cnt;
     index = utilMath.index;
-    console.log("ROW: " + conRow);
     
+    // If it's not a wire, but there's still something there...
     if (!(this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol]) {
-        console.error("Connection point collision error!");
         digsim.addMessage(digsim.WARNING, "[4]Collision detected! Unable to place component.");
         return false;
     }
+    // If there's wires there and in the spot where we need the placeholder...
     else if ((this.placeholder[conRow][conCol] instanceof Array) && this.placeholder[conRow][conCol][index]) {
-        console.error("Connection point collision error!");
         digsim.addMessage(digsim.WARNING, "[5]Collision detected! Unable to place component.");
         return false;
     }
 
     // Set temporary placeholder
-    if (!(tempPlaceholders[conRow] instanceof Array)) {
+    if (!(tempPlaceholders[conRow] instanceof Array)) { // If it's not a 2D array, make it a 2D array
         tempPlaceholders[conRow] = [];
     }
-    if (!(tempPlaceholders[conRow][conCol] instanceof Array)) {
+    if (!(tempPlaceholders[conRow][conCol] instanceof Array)) { // If it's not a 3D array, make it a 3D array
         tempPlaceholders[conRow][conCol] = [];
     }
-    placeholder = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
-    tempPlaceholders[conRow][conCol][index] = placeholder;
+    tempPlaceholders[conRow][conCol][index] = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
 
     // Additional placeholers for Not gate, Switch, and Clock
     if (obj.type === digsim.NOT) {
@@ -471,26 +461,25 @@ Digsim.prototype.setPlaceholders = function(obj) {
                 }
             }
             // Check for collision
+            // If it's not an array and there's something there...
             if (!(this.placeholder[row][col] instanceof Array) && this.placeholder[row][col]) {
-                console.error("Connection point collision error!");
                 digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
                 return false;
             }
+            // If it is an array (wire) and there's something there
             else if ((this.placeholder[row][col] instanceof Array) && this.placeholder[row][col][index]) {
-                console.error("Connection point collision error!");
                 digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
                 return false;
             }
 
             // Set temporary placeholder
-            if (!(tempPlaceholders[row] instanceof Array)) {
+            if (!(tempPlaceholders[row] instanceof Array)) { // If it's not a 2D array, make it so
                 tempPlaceholders[row] = [];
             }
-            if (!(tempPlaceholders[row][col] instanceof Array)) {
+            if (!(tempPlaceholders[row][col] instanceof Array)) { // If it's not a 3D array, make it so
                 tempPlaceholders[row][col] = [];
             }
-            placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
-            tempPlaceholders[row][col][index] = placeholder;
+            tempPlaceholders[row][col][index] = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
         }
     }
     else if (obj.type === digsim.SWITCH || obj.type === digsim.CLOCK) {
@@ -518,29 +507,27 @@ Digsim.prototype.setPlaceholders = function(obj) {
                     }
                 }
                 // Check for collision
+                // If it's not a wire but there's still something there
                 if (!(this.placeholder[row][col] instanceof Array) && this.placeholder[row][col]) {
-                    console.error("Connection point collision error!");
                     digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place component.");
                     return false;
                 }
+                // If there are wires in this grid space, make sure there aren't wires in the place we're putting the component
                 else if ((this.placeholder[row][col] instanceof Array) && this.placeholder[row][col][index]) {
-                    console.error("Connection point collision error!");
                     digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place component.");
                     return false;
                 }
 
-
                 // Set temporary placeholder
-                if (!(tempPlaceholders[row] instanceof Array)) {
+                if (!(tempPlaceholders[row] instanceof Array)) { // If it's not 2D, make it so
                     tempPlaceholders[row] = [];
                 }
-                if (!(tempPlaceholders[row][col] instanceof Array)) {
+                if (!(tempPlaceholders[row][col] instanceof Array)) { // If it's not 3D, make it so
                     tempPlaceholders[row][col] = [];
                 }
-                placeholder = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
-                tempPlaceholders[row][col][index] = placeholder;
+                tempPlaceholders[row][col][index] = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
             }
-            if (((obj.rotation) / 90) % 2) { 
+            if (obj.rotation === 90 || obj.rotation === 270) {
                 ++row;
             }
             else {
@@ -551,15 +538,16 @@ Digsim.prototype.setPlaceholders = function(obj) {
 
     console.log("NO COLLISION! :)");
 
-    // Transfer placeholders
+    // There are no collisions, so transfer the temporary placeholders to permanent placeholders
     for(var row in tempPlaceholders) {
         for (var col in tempPlaceholders[row]) {
             if (tempPlaceholders[row][col] instanceof Array) {
                 if (!(this.placeholder[row][col] instanceof Array)) {
                     this.placeholder[row][col] = [];
                 }
-                for (var index in tempPlaceholders[row][col])
-                this.placeholder[row][col][index] = tempPlaceholders[row][col][index];
+                for (var index in tempPlaceholders[row][col]) {
+                    this.placeholder[row][col][index] = tempPlaceholders[row][col][index];
+                }
             }
             else {
                 this.placeholder[row][col] = tempPlaceholders[row][col];
@@ -576,6 +564,12 @@ Digsim.prototype.setPlaceholders = function(obj) {
  * UTILITY: ROTATION MATH
  *  To get rid of redundant code, this will take care of all the rotation math
  *  that must be computed.
+ *
+ *  obj - the object we need to calculate the rotation stuff for
+ *  con - we need to look at either previous connections or next connection
+ *  i   - often, this function is called within a loop that loops through
+ *        multiple connections. This variable takes care of that
+ *  cnt - related to i
  ****************************************************************************/
 Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
     
@@ -647,25 +641,21 @@ Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
                     conCol = obj.col;
                     conRow = obj.row + 2;
                     index = 0;
-                    console.log("case 0");
                     break;
                 case 1:
                     index = 1;
                     conCol = obj.col - 1;
                     conRow = obj.row;
-                    console.log("case 1");
                     break;
                 case 2:
                     index = 2;
                     conCol = obj.col;
                     conRow = obj.row - 1;
-                    console.log("case 2");
                     break;
                 default:
                     index = 3;
                     conCol = obj.col + 2;
                     conRow = obj.row;
-                    console.log("case default");
             }
         }
         else {
@@ -698,18 +688,22 @@ Digsim.prototype.rotationMath = function(obj, con, i, cnt) {
             }
         }
         console.log("ROW: " + conRow);
-
     }
-    
-    return {"conRow": conRow, "conCol": conCol, "cnt": cnt, "index": index};
+    return {'conRow': conRow, 'conCol': conCol, 'cnt': cnt, 'index': index};
 };
 
 /*****************************************************************************
  * SET WIRE PLACEHOLDER
- *  Given a wire object, adds it to the placeholder data array with unique
+ *  Given a wire object, add it to the placeholder data array with unique
  *  identifier. 
+ *
+ * wire    - the wire object
+ * dx      - indicates a horizontal wire
+ * dy      - indicates a vertical wire
+ * nocheck - autorouting already does placeholder checking, so we can skip 
+ *           this step in some instances
  ****************************************************************************/
-Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
+Digsim.prototype.setWirePlaceholder = function(wire, dx, dy, nocheck) {
     //console.log("row: " + row + "\ncol: " + col);
     
     console.log(wire);
@@ -728,83 +722,86 @@ Digsim.prototype.setWirePlaceholder = function(wire, dx, dy) {
     console.log("DX: " + dx + "  DY: " + dy);
     console.log("I: " + initial + "  ENDBOOL " + endBool);
     console.log("INC: " + inc);
-    if (dx) {
-        console.log("CHECKING FOR COLLISION(DX)");
-        end = Math.max(wire.col, endCol);
-        begin = Math.min(wire.col, endCol);
-        j = Math.floor(begin);
-        while (j < end) {
-            console.log("J: " + j + "  END: " + (end) + "  INC/2: " + inc/2)
-            console.log("J%1: " + (j % 1));
-            thisPH = this.placeholder[floorEndRow][Math.floor(j)];
 
-            if (thisPH instanceof Array) {
-                if (j >= begin) {
-                    
-                    if (j % 1) {
-                        console.log("placed at index " + 1);
-                        if (thisPH[1]) {
+    if (!nocheck) { // Here we will check for collisions
+        if (dx) {
+            console.log("CHECKING FOR COLLISION(DX)");
+            end = Math.max(wire.col, endCol);   // take care of left to right or right to left wires
+            begin = Math.min(wire.col, endCol);
+            j = Math.floor(begin);
+            while (j < end) {
+                console.log("J: " + j + "  END: " + (end) + "  INC/2: " + inc/2)
+                console.log("J%1: " + (j % 1));
+                thisPH = this.placeholder[floorEndRow][Math.floor(j)];
+
+                if (thisPH instanceof Array) {
+                    if (j >= begin) {
+                        
+                        if (j % 1) { // we're looking at index 1 and 3 (left and right)
+                            console.log("placed at index " + 1);
+                            if (thisPH[1]) {
+                                console.error("wire collision error!");
+                                digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place wire.");
+                                return false;
+                            }
+                        }
+                        else if (thisPH[3]) {
                             console.error("wire collision error!");
-                            digsim.addMessage(digsim.WARNING, "[8]Collision detected! Unable to place wire.");
+                            digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place wire.");
                             return false;
                         }
                     }
-                    else if (thisPH[3]) {
-                        console.error("wire collision error!");
-                        digsim.addMessage(digsim.WARNING, "[9]Collision detected! Unable to place wire.");
-                        return false;
-                    }
+                    j += 0.5;
                 }
-                j += 0.5;
+                else if (thisPH) { // There's something in this placeholder
+                    console.error("COLLISION! ERROR!");
+                    digsim.addMessage(digsim.WARNING, "[10]Collision detected! Unable to place wire.");
+                    return false;
+                }
+                else {
+                    ++j;
+                }
+                console.log("");
             }
-            else if (thisPH) {
-                console.error("COLLISION! ERROR!");
-                digsim.addMessage(digsim.WARNING, "[10]Collision detected! Unable to place wire.");
-                return false;
-            }
-            else {
-                ++j;
-            }
-            console.log("");
         }
-    }
-    else if (dy) {
-        console.log("CHECKING FOR COLLISION(DY)");
-        end = Math.max(wire.row, endRow);
-        begin = Math.min(wire.row, endRow);
-        j = Math.floor(begin);
-        while (j < end) {
-            console.log("J: " + j + "  END: " + (end) + "  INC/2: " + inc/2)
-            console.log("J%1: " + (j % 1));
-            thisPH = this.placeholder[Math.floor(j)][floorEndCol];
-            if (thisPH instanceof Array) {
-                if (j >= begin) {
-                    
-                    if (j % 1) {
-                        console.log("placed at index " + 1);
-                        if (thisPH[2]) {
+        else if (dy) { // Vertical wires
+            console.log("CHECKING FOR COLLISION(DY)");
+            end = Math.max(wire.row, endRow);   // Take care of wires placed up and down
+            begin = Math.min(wire.row, endRow); // or down and up
+            j = Math.floor(begin);
+            while (j < end) {
+                console.log("J: " + j + "  END: " + (end) + "  INC/2: " + inc/2)
+                console.log("J%1: " + (j % 1));
+                thisPH = this.placeholder[Math.floor(j)][floorEndCol];
+                if (thisPH instanceof Array) {  // There are wires already placed - we must make sure that there are none
+                    if (j >= begin) {           // placed in indexes 0 or 2
+                        
+                        if (j % 1) {
+                            console.log("placed at index " + 1);
+                            if (thisPH[2]) {
+                                console.error("wire collision error!");
+                                digsim.addMessage(digsim.WARNING, "[11]Collision detected! Unable to place wire.");
+                                return false;
+                            }
+                        }
+                        else if (thisPH[0]) {
                             console.error("wire collision error!");
-                            digsim.addMessage(digsim.WARNING, "[11]Collision detected! Unable to place wire.");
+                            digsim.addMessage(digsim.WARNING, "[12]Collision detected! Unable to place wire.");
                             return false;
                         }
                     }
-                    else if (thisPH[0]) {
-                        console.error("wire collision error!");
-                        digsim.addMessage(digsim.WARNING, "[12]Collision detected! Unable to place wire.");
-                        return false;
-                    }
+                    j += 0.5;
                 }
-                j += 0.5;
+                else if (thisPH) {  // There's another component in the way
+                    console.error("COLLISION! ERROR!");
+                    digsim.addMessage(digsim.WARNING, "[13]Collision detected! Unable to place wire.");
+                    return false;
+                }
+                else {
+                    ++j;
+                }
+                console.log("");
             }
-            else if (thisPH) {
-                console.error("COLLISION! ERROR!");
-                digsim.addMessage(digsim.WARNING, "[13]Collision detected! Unable to place wire.");
-                return false;
-            }
-            else {
-                ++j;
-            }
-            console.log("");
         }
     }
 
@@ -1478,7 +1475,7 @@ Digsim.prototype.onGridClicked = function(event) {
                         var wire = new Wire();
                         wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
                         wire.path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
-                        var validPlacement = digsim.setWirePlaceholder(wire, prevDx, prevDy);
+                        var validPlacement = digsim.setWirePlaceholder(wire, prevDx, prevDy, true);
                         if (validPlacement) {
                             digsim.components[digsim.iComp++] = wire;
                             // Draws the wire on static context.
@@ -1510,7 +1507,7 @@ Digsim.prototype.onGridClicked = function(event) {
                 var wire = new Wire();
                 wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
                 wire.path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
-                var validPlacement = digsim.setWirePlaceholder(wire, prevDx, prevDy);
+                var validPlacement = digsim.setWirePlaceholder(wire, prevDx, prevDy, true);
                 if (validPlacement) {
                     digsim.components[digsim.iComp++] = wire;
                     // Draws the wire on static context.
@@ -1521,13 +1518,15 @@ Digsim.prototype.onGridClicked = function(event) {
                     // DO NOT PLACE WIRE, there's something in the way.
                     wire.path.pop();
                     digsim.dragging = true;
-                    console.warn("ERROR WITH AUTOROUTING - found invalid path");
+                    console.log("ERROR WITH AUTOROUTING - found invalid path");
                 }
                 if (digsim.endRoute) {
+                    // If we attach to something at the end, don't start another wire
                     digsim.dragging = false;
                 }
-                else {
-                    console.log("DOES THIS EVEN DO ANYTHING?");
+                else { 
+                    // If we cannot attach to something at the end point, 
+                    // We will start a new wire where we ended the last one
                     digsim.wirePos.startX = target.c + 0.5;
                     digsim.wirePos.startY = target.r + 0.5;
                     digsim.dragging = true;
@@ -1844,6 +1843,13 @@ Digsim.prototype.onGridMouseDown = function(event) {
                 obj = digsim.components[ digsim.placeholder[row][col].ref ];
             }
 
+            // Set rise time propogation delay - give the program some time to propogate the 
+            // state through the circuit, and the flip flops will be affected only by rising clock 
+            // edges
+            console.log("digsim.RISING_EDGE set to true");
+            digsim.RISING_EDGE = true;
+            setTimeout("digsim.stopRisingEdge()", 20);
+
             if (obj.type === digsim.SWITCH) {
                 console.log("");
                 console.log("");
@@ -1854,6 +1860,11 @@ Digsim.prototype.onGridMouseDown = function(event) {
             }
         }
     }
+};
+
+Digsim.prototype.stopRisingEdge = function() {
+    console.log("digsim.RISING_EDGE set to false")
+    digsim.RISING_EDGE = false;
 };
 
 /*****************************************************************************
@@ -2596,6 +2607,8 @@ Digsim.prototype.showPlaceholders = function() {
         }
     }
 };
+
+
 
 /*****************************************************************************
  * NAMESPACE

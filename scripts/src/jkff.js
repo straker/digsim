@@ -18,6 +18,7 @@ function JKFF(numInputs) {
     this.juncts = [];
     this.numInputs = 2;
     this.dimension = {'row': 3, 'col': 2};
+    this.clockState = 0;
 };
 
 JKFF.prototype = new Drawable();
@@ -105,16 +106,16 @@ JKFF.prototype.draw = function(context, lineColor) {
  *  1   1   Qnot    toggle
  ******************************************************************************/
 JKFF.prototype.computeLogic = function() {  
-
-    if (this.J == 0 && this.K == 1) { // Reset
-        this.state = 0;
+    if (this.clockState && digsim.RISING_EDGE) {
+        if (this.J == 0 && this.K == 1) { // Reset
+            this.state = 0;
+        }
+        else if (this.J == 1 && this.K == 0) { // Set
+            this.state = 1;
+        }
+        else if (this.J && this.K) { // Toggle
+            this.state = !this.state;
+        }
     }
-    else if (this.J == 1 && this.K == 0) { // Set
-        this.state = 1;
-    }
-    else if (this.J && this.K) { // Toggle
-        this.state = !this.state;
-    }
-    this.state = cnt % 2;
 };
 
