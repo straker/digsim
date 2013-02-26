@@ -62,10 +62,10 @@ MUX.prototype.draw = function(context, lineColor) {
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
-    
     this.drawWires(context, lineColor);
     
     // Draw body
+    context.beginPath();
     context.moveTo(0, 0);
     context.lineTo(0, this.dimension.row * digsim.GRID_SIZE);
     context.lineTo(digsim.GRID_SIZE * 2, (this.dimension.row - this.numInputs / 4) * digsim.GRID_SIZE);
