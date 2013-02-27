@@ -914,7 +914,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         console.log("endCol: " + endCol);
         console.log("floorEndRow: " + floorEndRow);
         console.log("floorEndCol: " + floorEndCol);
-        
+        // return;
         if (obj.dx) {
             var end = Math.max(obj.col, endCol);
             for (var j = Math.min(obj.col, endCol); j !== end; j += 0.5) {
@@ -931,8 +931,8 @@ Digsim.prototype.deletePlaceholder = function(obj) {
                     delete this.placeholder[floorEndRow][col][3]; // = undefined;
                 }
                 var noneFound = true;
-                for (var j = 0; j < 4; ++j) {
-                    if (j != index && this.placeholder[floorEndRow][col][j]) {
+                for (var k = 0; k < 4; ++k) {
+                    if (k != index && this.placeholder[floorEndRow][col][k]) {
                         noneFound = false;
                     }
                 }
@@ -945,17 +945,20 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         else if (obj.dy) {
             var end = Math.max(obj.row, endRow);
             for (var j = Math.min(obj.row, endRow); j !== end; j += 0.5) {
+                console.log("J: "+j);
                 console.log("J%1: " + (j % 1));
                 row = Math.floor(j);
                 if (j % 1) {
+                    console.log(this.placeholder[row][floorEndCol]);
+                    //console.log("row: " + row + ", floorEndCol: " + floorEndCol);
                     delete this.placeholder[row][floorEndCol][2]; // = undefined;
                 }
                 else {
                     delete this.placeholder[row][floorEndCol][0]; // = undefined;
                 }
                 var noneFound = true;
-                for (var j = 0; j < 4; ++j) {
-                    if (j != index && this.placeholder[row][floorEndCol][j]) {
+                for (var k = 0; k < 4; ++k) {
+                    if (k != index && this.placeholder[row][floorEndCol][k]) {
                         noneFound = false;
                     }
                 }
