@@ -15,6 +15,8 @@ function Wire() {
     this.next = [];
     this.prev = [];
     this.path = [];
+    this.startConnections = [];
+    this.endConnections = [];
     this.connections = [];
     this.juncts = [];
     this.dy = 0;
@@ -40,7 +42,7 @@ Wire.prototype.checkConnect = function() {
 
 /*****************************************************************************
  * CHECK JUNCTION
- *  Checks connections for jucntions so we can add aesthetic dots. 
+ *  Checks connections for junctions so we can add aesthetic dots. 
  ****************************************************************************/
 Wire.prototype.checkJunction = function(row, col, pos) {
     var PH, obj, wireCnt = 0, dot = 0;
@@ -57,6 +59,27 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                         if (($.inArray(obj, this.connections) === -1)) {
                             console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                             this.connections.push(obj);
+                            
+                            if (pos === "start") {
+                                this.startConnections.push(obj.id);
+                            }
+                            else {
+                                this.endConnections.push(obj.id);
+                            }
+
+                            if (obj.type === digsim.WIRE) {
+                                console.log("THIS: {"+(row + 0.5)+","+(col + 0.5)+"}");
+                                console.log("OBJ: {"+obj.row+","+obj.col+"}");
+                                console.log("OBJ: {"+(obj.row + obj.path[0].y)+","+(obj.col + obj.path[0].x)+"}");
+                                if (obj.row === (row + 0.5) && obj.col === (col + 0.5)) {
+                                    console.log("OBJ CONNECTS AT ITS START");
+                                    obj.startConnections.push(this.id);
+                                }
+                                else if (obj.row + obj.path[0].y === (row + 0.5) && obj.col + obj.path[0].x === (col + 0.5)) {
+                                    console.log("OBJ CONNECTS AT ITS END");
+                                    obj.endConnections.push(this.id);
+                                }
+                            }
 
                             utilMath = digsim.rotationMath(obj, digsim.PREV, 0, 0);
                             conRow = utilMath.conRow;
