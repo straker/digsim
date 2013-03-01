@@ -75,6 +75,7 @@ function Digsim() {
     this.lockH = 0;         // Locks the wire horizontally (non-autorouting)
     this.lockV = 0;         // Locks the wire vertically (non-autorouting)
     this.clkCnt = 0;        // This will count to digsim.CLK_FREQ before it resets and changes states
+    this.deletedPH = [];    // Holds the references to the deleted placeholders so they can be redrawn after dragging
     this.rotation = 0;      // Gives the rotation of the current selected object in degrees - resets when 
                             // entering new modes
     // Grid variables
@@ -571,8 +572,8 @@ Digsim.prototype.setWirePlaceholders = function(wire, dx, dy, nocheck) {
     //console.log("row: " + row + "\ncol: " + col);
     
     console.log(wire);
-    var endRow = wire.path[0].y + wire.row; 
-    var endCol = wire.path[0].x + wire.col; // Current ending pos
+    var endRow = wire.path.y + wire.row; 
+    var endCol = wire.path.x + wire.col; // Current ending pos
     
     var floorEndRow = Math.floor(endRow);
     var floorEndCol = Math.floor(endCol);
@@ -725,8 +726,8 @@ Digsim.prototype.deletePlaceholder = function(obj) {
     
     if (obj.type === digsim.WIRE) {
         console.log(obj);
-        var endRow = obj.row + obj.path[0].y;
-        var endCol = obj.col + obj.path[0].x;
+        var endRow = obj.row + obj.path.y;
+        var endCol = obj.col + obj.path.x;
         var floorEndRow = Math.floor(endRow);
         var floorEndCol = Math.floor(endCol);
         var row, col;
@@ -1149,7 +1150,7 @@ Digsim.prototype.onGridClicked = function(event) {
                 var target = {'r': row, 'c': col};
 
                 digsim.route(start, target);
-            } // End of autoroute
+            } 
             else {
                 digsim.dragging = false;
                 
@@ -1440,7 +1441,7 @@ Digsim.prototype.route = function(start, target, returnPath) {
                 wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
                 wire.dx = prevDx;
                 wire.dy = prevDy;
-                wire.path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
+                wire.path = { 'x':(currBranch.c ),'y':(currBranch.r ) };
 
                 var validPlacement = digsim.setWirePlaceholders(wire, prevDx, prevDy, true);
                 if (validPlacement) {
@@ -1479,7 +1480,8 @@ Digsim.prototype.route = function(start, target, returnPath) {
         wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
         wire.dx = prevDx;
         wire.dy = prevDy;
-        wire.path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
+        // wire.path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
+        wire.path = { 'x':(currBranch.c ),'y':(currBranch.r ) };
         var validPlacement = digsim.setWirePlaceholders(wire, prevDx, prevDy, true);
         if (validPlacement) {
             digsim.components[digsim.iComp++] = wire;
@@ -1540,8 +1542,9 @@ Digsim.prototype.onGridMouseDown = function(event) {
             
             digsim.dragging = true;
             var index = digsim.utils.getWireIndex(mouseX, mouseY);
-
-            if (index != -1 && digsim.placeholder[row][col][index]) {
+            console.warn(index);
+            
+            if (index !== -1 && digsim.placeholder[row][col][index]) {
                 var ref = digsim.placeholder[row][col][index].ref;                
                 digsim.selectedComponent = digsim.components[ref];
                 digsim.draggingComponent = digsim.components[ref];
@@ -1550,6 +1553,7 @@ Digsim.prototype.onGridMouseDown = function(event) {
                 for (con in digsim.selectedComponent.connections) {
                     if (digsim.selectedComponent.connections[con].type === digsim.WIRE) {
                         digsim.deletePlaceholder(digsim.selectedComponent.connections[con]);
+                        digsim.deletedPH.push(digsim.selectedComponent.connections[con]);
                     }
                 }
                 animateWire();
@@ -1637,6 +1641,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
 
             if (digsim.draggingComponent.type === digsim.WIRE) {
                 validPlacement = digsim.setWirePlaceholders(digsim.draggingComponent, digsim.draggingComponent.dx, digsim.draggingComponent.dy);
+                console.warn("FINISHED DRAGGING");
             }
             else {
                 validPlacement = digsim.setPlaceholders(digsim.draggingComponent);
@@ -1645,6 +1650,31 @@ Digsim.prototype.onGridMouseUp = function(event) {
             if (validPlacement) {
                 console.log("valid placement");
                 digsim.components[digsim.draggingComponent.id] = digsim.draggingComponent;
+                for (i in digsim.deletedPH) {
+                    // Find a new path
+                    if (digsim.draggingComponent.dx) {
+                        digsim.components[i].path.y = digsim.draggingComponent.col - digsim.components[i].col;
+                        console.warn(digsim.draggingComponent.col);
+                        console.warn(digsim.components[i].col);
+                        console.warn("•••••••••" + (digsim.draggingComponent.col - digsim.components[i].col));
+                    }
+                    else {
+
+                        digsim.components[i].path.x = digsim.draggingComponent.col - digsim.components[i].col;
+                        console.warn(digsim.draggingComponent.col);
+                        console.warn(digsim.components[i].col);
+                        console.warn("•••••••••" + (digsim.draggingComponent.col - digsim.components[i].col));
+                    }
+                    console.warn(digsim.components[i])
+                    validPlacement = digsim.setWirePlaceholders(digsim.components[i], digsim.components[i].dx, digsim.components[i].dy);
+                    if (validPlacement) { 
+                        digsim.components[i].drawStatic = true;
+                        digsim.components[i].checkConnect();
+                        digsim.components[i].draw(digsim.staticContext);
+                        digsim.deletedPH = [];
+                    }
+
+                }
                 digsim.draggingComponent.drawStatic = true;
                 digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
                 digsim.draggingComponent.checkConnect();
@@ -2171,7 +2201,7 @@ function animateWire() {
         if (obj = digsim.selectedComponent) {
             //console.log("test");
             if (obj.dx) {
-                obj.row = row + 0.5;
+                obj.row = row + 0.5; // Move to center of grid. 
             }
             else {
                 obj.col = col + 0.5;
@@ -2182,7 +2212,7 @@ function animateWire() {
             context.strokeStyle = 'red';
             context.lineCap = 'round';
             context.moveTo(obj.col * digsim.GRID_SIZE, obj.row * digsim.GRID_SIZE);
-            context.lineTo((obj.col + obj.path[0].x) * digsim.GRID_SIZE, (obj.row + obj.path[0].y) * digsim.GRID_SIZE);
+            context.lineTo((obj.col + obj.path.x) * digsim.GRID_SIZE, (obj.row + obj.path.y) * digsim.GRID_SIZE);
             context.stroke();
 
             var start, target, path, wire;
@@ -2194,7 +2224,7 @@ function animateWire() {
                 
                 start = { 'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
                 if (($.inArray(obj.id, wire.startConnections) !== -1)) {
-                    target = { 'r': Math.floor(wire.row+wire.path[0].y), 'c': Math.floor(wire.col + wire.path[0].x) };
+                    target = { 'r': Math.floor(wire.row+wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
                 }
                 else {
                     target = {'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
@@ -2220,9 +2250,9 @@ function animateWire() {
             for (var i = 0, len = obj.endConnections.length; i < len; ++i) {
                 wire = digsim.components[obj.endConnections[i]];
                 
-                start = { 'r': Math.floor(obj.row + obj.path[0].y), 'c': Math.floor(obj.col + obj.path[0].x) };
+                start = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
                 if (($.inArray(obj.id, wire.startConnections) !== -1)) {
-                    target = { 'r': Math.floor(wire.row+wire.path[0].y), 'c': Math.floor(wire.col + wire.path[0].x) };
+                    target = { 'r': Math.floor(wire.row + wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
                 }
                 else {
                     target = {'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
@@ -2502,35 +2532,35 @@ Digsim.prototype.utils = {
             case 0: // moving up
                 array = digsim.placeholder[r-1][c];
                 t =    (typeof array[0] === 'undefined') &&
-                       (typeof array[1] !== 'undefined') &&
+                       (typeof array[1] !== 'undefined' && digsim.components[ array[1].ref ].type === digsim.WIRE) &&
                        (typeof array[2] === 'undefined') &&
-                       (typeof array[3] !== 'undefined');
+                       (typeof array[3] !== 'undefined' && digsim.components[ array[3].ref ].type === digsim.WIRE);
                        // console.log("("+c+","+(r-1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
                        return ((r - 1) === target.r && c === target.c) ? true : t;
                 break;
             case 1: // moving right
                 array = digsim.placeholder[r][c+1];
-                t =    (typeof array[0] !== 'undefined') &&
+                t =    (typeof array[0] !== 'undefined' && digsim.components[ array[0].ref ].type === digsim.WIRE) &&
                        (typeof array[1] === 'undefined') &&
-                       (typeof array[2] !== 'undefined') &&
+                       (typeof array[2] !== 'undefined' && digsim.components[ array[2].ref ].type === digsim.WIRE) &&
                        (typeof array[3] === 'undefined');
                        // console.log("("+(c+1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
                        return (r === target.r && (c + 1) === target.c) ? true : t;
-                break; 
+                    break; 
             case 2: // moving down
                 array = digsim.placeholder[r+1][c];
-                t =    (typeof Array[0] === 'undefined') &&
-                       (typeof Array[1] !== 'undefined') &&
-                       (typeof Array[2] === 'undefined') &&
-                       (typeof Array[3] !== 'undefined');
+                t =    (typeof array[0] === 'undefined') &&
+                       (typeof array[1] !== 'undefined' && digsim.components[ array[1].ref ].type === digsim.WIRE) &&
+                       (typeof array[2] === 'undefined') &&
+                       (typeof array[3] !== 'undefined' && digsim.components[ array[3].ref ].type === digsim.WIRE);
                        // console.log("("+c+","+(r+1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
                        return ((r + 1) === target.r && c === target.c) ? true : t;
                 break;
             default: // moving left
                 array = digsim.placeholder[r][c-1];
-                t =    (typeof array[0] !== 'undefined') &&
+                t =    (typeof array[0] !== 'undefined' && digsim.components[ array[0].ref ].type === digsim.WIRE) &&
                        (typeof array[1] === 'undefined') &&
-                       (typeof array[2] !== 'undefined') &&
+                       (typeof array[2] !== 'undefined' && digsim.components[ array[2].ref ].type === digsim.WIRE) &&
                        (typeof array[3] === 'undefined');
                        // console.log("("+(c-1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
                        return (r === target.r && (c - 1) === target.c) ? true : t;

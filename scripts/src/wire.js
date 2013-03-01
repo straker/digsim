@@ -14,7 +14,7 @@ function Wire() {
     this.numInputs = 0;
     this.next = [];
     this.prev = [];
-    this.path = [];
+    this.path = {'x': 0, 'y': 0};
     this.startConnections = [];
     this.endConnections = [];
     this.connections = [];
@@ -35,8 +35,8 @@ Wire.prototype.checkConnect = function() {
     var col = Math.floor(this.col);
     this.checkJunction(row, col, "start");
 
-    row = Math.floor(this.path[0].y + this.row); 
-    col = Math.floor(this.path[0].x + this.col);
+    row = Math.floor(this.path.y + this.row); 
+    col = Math.floor(this.path.x + this.col);
     this.checkJunction(row, col, "end");
 };
 
@@ -70,12 +70,12 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                             if (obj.type === digsim.WIRE) {
                                 console.log("THIS: {"+(row + 0.5)+","+(col + 0.5)+"}");
                                 console.log("OBJ: {"+obj.row+","+obj.col+"}");
-                                console.log("OBJ: {"+(obj.row + obj.path[0].y)+","+(obj.col + obj.path[0].x)+"}");
+                                console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
                                 if (obj.row === (row + 0.5) && obj.col === (col + 0.5)) {
                                     console.log("OBJ CONNECTS AT ITS START");
                                     obj.startConnections.push(this.id);
                                 }
-                                else if (obj.row + obj.path[0].y === (row + 0.5) && obj.col + obj.path[0].x === (col + 0.5)) {
+                                else if (obj.row + obj.path.y === (row + 0.5) && obj.col + obj.path.x === (col + 0.5)) {
                                     console.log("OBJ CONNECTS AT ITS END");
                                     obj.endConnections.push(this.id);
                                 }
@@ -145,9 +145,7 @@ Wire.prototype.draw = function(context, lineColor) {
     }        
 
     context.moveTo(0, 0);
-    for (var i = 0; i < this.path.length; ++i) {
-        context.lineTo(this.path[i].x * digsim.GRID_SIZE, this.path[i].y * digsim.GRID_SIZE);
-    }
+    context.lineTo(this.path.x * digsim.GRID_SIZE, this.path.y * digsim.GRID_SIZE);
     context.stroke();
     context.restore();
 
