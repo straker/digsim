@@ -81,7 +81,7 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                                 }
                             }
 
-                            utilMath = digsim.rotationMath(obj, digsim.PREV, 0, 0);
+                            utilMath = digsim.utils.rotationMath(obj, digsim.PREV, 0, 0);
                             conRow = utilMath.conRow;
                             conCol = utilMath.conCol;
                             cnt = utilMath.cnt;
