@@ -1552,10 +1552,12 @@ Digsim.prototype.onGridMouseDown = function(event) {
                 digsim.deletePlaceholder(digsim.selectedComponent);
                 for (con in digsim.selectedComponent.connections) {
                     if (digsim.selectedComponent.connections[con].type === digsim.WIRE) {
+                        digsim.selectedComponent.connections[con].drawStatic = false;
                         digsim.deletePlaceholder(digsim.selectedComponent.connections[con]);
                         digsim.deletedPH.push(digsim.selectedComponent.connections[con]);
                     }
                 }
+                digsim.drawComponents();
                 animateWire();
             }
         }
