@@ -1434,16 +1434,21 @@ Digsim.prototype.route = function(start, target, returnPath) {
         dy = S[i + 1].r - S[i].r;
         if (dx !== prevDx && dy !== prevDy) {
             if (returnPath) {
-                path.push( {'x':(currBranch.c + currStart.c),'y':(currBranch.r + currStart.r)} );
+                path.push( {'x':Math.abs(currBranch.c + currStart.c),'y':Math.abs(currBranch.r + currStart.r)} );
             }
             else {
                 var wire = new Wire();
-                wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
-                wire.dx = prevDx;
-                wire.dy = prevDy;
-                wire.path = { 'x':(currBranch.c ),'y':(currBranch.r ) };
+                if (prevDx === -1 || prevDy === -1) {
+                    wire.init(currStart.c + 0.5 + currBranch.c, currStart.r + 0.5 + currBranch.r, 0, digsim.iComp);
+                }
+                else {
+                    wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
+                }
+                wire.dx = Math.abs(prevDx);
+                wire.dy = Math.abs(prevDy);
+                wire.path = { 'x':Math.abs(currBranch.c),'y':Math.abs(currBranch.r ) };
 
-                var validPlacement = digsim.setWirePlaceholders(wire, prevDx, prevDy, true);
+                var validPlacement = digsim.setWirePlaceholders(wire, wire.dx, wire.dy, true);
                 if (validPlacement) {
                     digsim.components[digsim.iComp++] = wire;
 
@@ -1472,17 +1477,22 @@ Digsim.prototype.route = function(start, target, returnPath) {
         }
     }
     if (returnPath) {
-        path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
+        // path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
         return path;
     }
     else {
         var wire = new Wire();
-        wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
-        wire.dx = prevDx;
-        wire.dy = prevDy;
-        // wire.path.push( {'x':(currBranch.c ),'y':(currBranch.r )} );
-        wire.path = { 'x':(currBranch.c ),'y':(currBranch.r ) };
-        var validPlacement = digsim.setWirePlaceholders(wire, prevDx, prevDy, true);
+        if (prevDx === -1 || prevDy === -1) {
+            wire.init(currStart.c + 0.5 + currBranch.c, currStart.r + 0.5 + currBranch.r, 0, digsim.iComp);
+        }
+        else {
+            wire.init(currStart.c + 0.5, currStart.r + 0.5, 0, digsim.iComp);
+        }
+        wire.dx = Math.abs(prevDx);
+        wire.dy = Math.abs(prevDy);
+        wire.path = { 'x':Math.abs(currBranch.c),'y':Math.abs(currBranch.r ) };
+
+        var validPlacement = digsim.setWirePlaceholders(wire, wire.dx, wire.dy, true);
         if (validPlacement) {
             digsim.components[digsim.iComp++] = wire;
             // Draws the wire on static context.
@@ -1554,7 +1564,6 @@ Digsim.prototype.onGridMouseDown = function(event) {
                     if (digsim.selectedComponent.connections[con].type === digsim.WIRE) {
                         digsim.selectedComponent.connections[con].drawStatic = false;
                         digsim.deletePlaceholder(digsim.selectedComponent.connections[con]);
-                        digsim.deletedPH.push(digsim.selectedComponent.connections[con]);
                     }
                 }
                 digsim.drawComponents();
@@ -1651,32 +1660,8 @@ Digsim.prototype.onGridMouseUp = function(event) {
 
             if (validPlacement) {
                 console.log("valid placement");
-                digsim.components[digsim.draggingComponent.id] = digsim.draggingComponent;
-                for (i in digsim.deletedPH) {
-                    // Find a new path
-                    if (digsim.draggingComponent.dx) {
-                        digsim.components[i].path.y = digsim.draggingComponent.col - digsim.components[i].col;
-                        console.warn(digsim.draggingComponent.col);
-                        console.warn(digsim.components[i].col);
-                        console.warn("•••••••••" + (digsim.draggingComponent.col - digsim.components[i].col));
-                    }
-                    else {
+                var wire = digsim.components[digsim.draggingComponent.id] = digsim.draggingComponent;
 
-                        digsim.components[i].path.x = digsim.draggingComponent.col - digsim.components[i].col;
-                        console.warn(digsim.draggingComponent.col);
-                        console.warn(digsim.components[i].col);
-                        console.warn("•••••••••" + (digsim.draggingComponent.col - digsim.components[i].col));
-                    }
-                    console.warn(digsim.components[i])
-                    validPlacement = digsim.setWirePlaceholders(digsim.components[i], digsim.components[i].dx, digsim.components[i].dy);
-                    if (validPlacement) { 
-                        digsim.components[i].drawStatic = true;
-                        digsim.components[i].checkConnect();
-                        digsim.components[i].draw(digsim.staticContext);
-                        digsim.deletedPH = [];
-                    }
-
-                }
                 digsim.draggingComponent.drawStatic = true;
                 digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
                 digsim.draggingComponent.checkConnect();
