@@ -316,6 +316,15 @@ Digsim.prototype.deleteConnections = function(obj) {
     for (var i = 0; i < obj.connections.length; ++i) {
         connections = obj.connections[i].connections;
         connections.splice(connections.indexOf(obj),1);
+        if (obj.connections[i].type === digsim.WIRE) {
+            wire = obj.connections[i]
+            if ($.inArray(obj.id, wire.startConnections) !== -1) {
+                wire.startConnections.splice(wire.startConnections.indexOf(obj.id),1);
+            }
+            else {
+                wire.endConnections.splice(wire.endConnections.indexOf(obj.id),1);
+            }
+        }
     }
 
     // Remove connetions to gates - must be used because gates use
@@ -331,6 +340,10 @@ Digsim.prototype.deleteConnections = function(obj) {
     }
     
     obj.connections = [];
+    if (obj.type === digsim.WIRE) {
+        obj.startConnections = [];
+        obj.endConnections = [];
+    }
 };
 
 /*****************************************************************************
@@ -1272,7 +1285,7 @@ Digsim.prototype.onGridClicked = function(event) {
  *  Route a path from start to target and adds placeholders too.
  *  Dijkstra pathfinding algorithm - www.zsheffield.net/dijkstra-pathfinding
  ****************************************************************************/
-Digsim.prototype.route = function(startRef, targetRef, returnPath, wireObj, conIndex) {
+Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
     var start = {'c': startRef.c, 'r': startRef.r};     // json objects are pass by reference, and we don't want
     var target = {'c': targetRef.c, 'r': targetRef.r};  // to change the original data - so here, we make a copy...
 
@@ -1481,31 +1494,27 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, wireObj, conI
         }
     }
 
+    // Update an existing wire
     if (digsim.mode === digsim.DEFAULT_MODE && !returnPath) {
-        var obj = digsim.components[wireObj.startConnections[conIndex]];
-        if (($.inArray(wireObj.id, obj.startConnections) !== -1)) {
-            if (path.length) {
-                obj.path.x = Math.abs(obj.col - path[path.length - 1].x);
-                obj.path.y = Math.abs(obj.row + path[path.length - 1].y);
-            }
-            else {
-                obj.path = {'x': Math.abs(currBranch.c), 'y': Math.abs(currBranch.r)};
-            }
+        // Get the two points
+        var point1, point2;
+        if (path.length) {
+            point1 = {'x': path[path.length - 1].x, 'y': path[path.length - 1].y};
         }
         else {
-            console.log("PATH! :D");console.log(path);
-            if (path.length) {
-                obj.row = path[path.length - 1].y + 0.5;
-                obj.col = path[path.length - 1].x + 0.5;
-            }
-            else {
-                obj.col = Math.abs(currBranch.c + currStart.c + 0.5);
-                obj.row = Math.abs(currBranch.r + currStart.r + 0.5);
-            }
-            obj.path = {'x': Math.abs(currBranch.c), 'y': Math.abs(currBranch.r)};
+            point1 = {'x': currStart.c, 'y': currStart.r};
         }
-        obj.dx = !!obj.path.x; // Setting the dx and dy of the new wire :)
+        point2 = {'x': (currBranch.c + currStart.c), 'y': (currBranch.r + currStart.r)};
+
+        // Update wire coordinates
+        obj.row = Math.min(point1.y, point2.y) + 0.5;
+        obj.col = Math.min(point1.x, point2.x) + 0.5;
+        obj.path = {'x': Math.abs(point1.x - point2.x), 'y': Math.abs(point1.y - point2.y)};
+
+        // Set the dx and dy of the new wire
+        obj.dx = !!obj.path.x;
         obj.dy = !!obj.path.y;
+
         var validPlacement = digsim.setWirePlaceholders(obj, obj.dx, obj.dy, true);
         obj.drawStatic = true;
     }
@@ -1513,6 +1522,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, wireObj, conI
         path.push( {'x':Math.abs(currBranch.c + currStart.c),'y':Math.abs(currBranch.r + currStart.r)} );
         return path;
     }
+    // Place a new wire
     else {
         var wire = new Wire();
         if (prevDx === -1 || prevDy === -1) {
@@ -1706,6 +1716,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
 
                 for (var i = 0, len = wire.startConnections.length; i < len; ++i) {
                     var obj = digsim.components[wire.startConnections[i]];
+
                     var target;
                     var start = { 'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
                     if (($.inArray(wire.id, obj.startConnections) !== -1)) {
@@ -1714,15 +1725,40 @@ Digsim.prototype.onGridMouseUp = function(event) {
                     else {
                         target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
                     }
-                    digsim.route(start, target, false, wire, i);
+
+                    digsim.route(start, target, false, obj);
                 }
-                // digsim.deleteConnections(digsim.draggingComponent);
-                // digsim.draggingComponent.checkConnect();
-                var connections = digsim.draggingComponent.connections.slice(0);
-                for (var i = 0, len = connections.length; i < len; ++i) {
-                    digsim.deleteConnections(connections[i]);
-                    connections[i].checkConnect();
+                for (var i = 0, len = wire.endConnections.length; i < len; ++i) {
+                    var obj = digsim.components[wire.endConnections[i]];
+
+                    var target;
+                    var start = { 'r': Math.floor(wire.row + wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
+                    if (($.inArray(wire.id, obj.startConnections) !== -1)) {
+                        target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                    }
+                    else {
+                        target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                    }
+
+                    digsim.route(start, target, false, obj);
                 }
+                // Save the id's of the connected wires to reassemble connections
+                var array = [];
+                for (var i = 0, len = wire.connections.length; i < len; ++i) {
+                    array.push(wire.connections[i].id);
+                }
+                console.log(array);
+
+                // Delete wire connections
+                digsim.deleteConnections(digsim.draggingComponent);
+                digsim.draggingComponent.checkConnect();
+
+                // Delete connections connections
+                for (var i = 0, len = array.length; i < len; ++i) {
+                    digsim.deleteConnections(digsim.components[i]);
+                    digsim.components[i].checkConnect();
+                }
+
                 digsim.drawComponents();
             }
             else {
@@ -1796,7 +1832,7 @@ Digsim.prototype.onGridMouseMove = function(event) {
             var index = digsim.utils.getWireIndex(mouseX, mouseY);
 
             if (index != -1 && digsim.placeholder[row][col][index]) {
-                if (digsim.components[ digsim.placeholder[row][col][index].ref ].dx !== 0) {
+                if (digsim.components[ digsim.placeholder[row][col][index].ref ].dx) {
                     $("canvas").css('cursor','row-resize');
                 }
                 else {
@@ -2297,22 +2333,20 @@ function animateWire() {
                 else {
                     target = {'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
                 }
-                // console.log("START:");
-                // console.log(start);
-                // console.log("TARGET:");
-                // console.log(target);
                 path = digsim.route(start, target, true);
-                // console.log(path);
-                
+
                 // Draw wire
                 if (path) {
+                    context.beginPath();
+                    context.moveTo((start.c + 0.5) * digsim.GRID_SIZE, (start.r + 0.5) * digsim.GRID_SIZE);
+                
                     for (var j = 0, len2 = path.length; j < len2; ++j) {
-                        context.beginPath();
-                        context.moveTo((start.c + 0.5) * digsim.GRID_SIZE, (start.r + 0.5) * digsim.GRID_SIZE);
-                        context.lineTo((start.c + path[j].x + 0.5) * digsim.GRID_SIZE, (start.r + path[j].y + 0.5) * digsim.GRID_SIZE);
+                        context.lineTo((path[j].x + 0.5) * digsim.GRID_SIZE, (path[j].y + 0.5) * digsim.GRID_SIZE);
                     }
                     context.stroke();
+
                 }
+
             }
         }
         else {
