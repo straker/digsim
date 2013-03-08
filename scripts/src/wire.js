@@ -50,12 +50,57 @@ Wire.prototype.checkJunction = function(row, col, pos) {
     console.log("CHECK JUNCT " + pos);
     if (digsim.placeholder[row][col] instanceof Array) {
         // We want to connect. 
+        var array = digsim.placeholder[row][col];
         for (var i = 0; i < 4; ++i) {
-            if (PH = digsim.placeholder[row][col][i]) {
+            if (PH = array[i]) {
                 obj = digsim.components[PH.ref];
                 if (PH.connectable) {
                     ++wireCnt;
-                    if (obj !== this) { // connection is not already in the connections
+                    if (obj !== this) { 
+
+                        // Wire merging and spliting
+                        if (obj.type === digsim.WIRE) {
+                            // Merge wires only if they both go in the same direction
+                            if (this.dx === obj.dx && this.dy === obj.dy) {
+                                // Merge wires only if there are no other wires in the same grid space
+                                if (typeof array[(i+1)%4] === 'undefined' && typeof array[ (i-1) < 0 ? 3 : (i-1) ] === 'undefined') {
+                                    console.log("∂ß∂ƒ©˙∆˚¬˚∆˙∆©ƒƒ© MERGE ß∂ƒ©˙∆˚¬……æ˚∆˙©ƒ∂©˙∆˚¬");
+                                }
+                            }
+                            // Wire spliting
+                            else {
+                                // Split a wire if it goes through the new connction
+                                if (array[(i+2)%4] && obj.id === array[(i+2)%4].ref) {
+                                    console.log("´∑´®†¥¨ˆøπ“ SPLIT œ∑´®†¥¨ˆø");
+                                    
+                                    // Update first wire
+                                    console.log("{"+col+", "+row+"}");
+                                    var endpoint = {'x': Math.floor(obj.col + obj.path.x - col), 'y': Math.floor(obj.row + obj.path.y - row)};
+                                    obj.path = {'x': Math.floor(col - obj.col + 0.5), 'y': Math.floor(row - obj.row + 0.5)};
+                                    console.log(obj);
+                                    console.log("TEST");
+                                    digsim.deletePlaceholder(obj);
+                                    digsim.deleteConnections(obj);
+                                    digsim.setWirePlaceholders(obj, obj.dx, obj.dy, true);
+                                    obj.checkConnect();
+
+                                    // Create new wire
+                                    var wire = new Wire();
+                                    wire.init(col + 0.5, row + 0.5, 0, digsim.iComp);
+                                    wire.dx = obj.dx;
+                                    wire.dy = obj.dy;
+                                    wire.path = endpoint;
+                                    console.log(wire);
+                                    console.log("TEST");
+                                    digsim.components[digsim.iComp++] = wire;
+                                    digsim.setWirePlaceholders(wire, obj.dx, obj.dy, true);
+                                    wire.checkConnect();
+                                    digsim.drawComponents();
+                                }
+                            }
+                        }
+
+                        // connection is not already in the connections
                         if (($.inArray(obj, this.connections) === -1)) {
                             console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                             this.connections.push(obj);
@@ -71,6 +116,7 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                                 console.log("THIS: {"+(row + 0.5)+","+(col + 0.5)+"}");
                                 console.log("OBJ: {"+obj.row+","+obj.col+"}");
                                 console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
+
                                 if (obj.row === (row + 0.5) && obj.col === (col + 0.5)) {
                                     console.log("OBJ CONNECTS AT ITS START");
                                     obj.startConnections.push(this.id);
