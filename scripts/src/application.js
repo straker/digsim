@@ -95,6 +95,7 @@ function Digsim() {
     this.clipboard;         // Used for cut/copy/paste
     this.selectedComponent; // Used for selecting components :D
     this.mode = 0;          // The current mode
+    this.gateConnectPt = {'r': -1, 'c': -1}; // Tells where the wire must connect to when dragging around wires. 
 
     // Flip flop simulation
     this.RISING_EDGE = false;   // Used to simulate the rising edge of the clock
@@ -337,6 +338,7 @@ Digsim.prototype.deleteConnections = function(obj) {
                 connections.splice(index, 1);
             }
         }
+        obj.prevConnect = [];
     }
     
     obj.connections = [];
@@ -1424,7 +1426,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
         ++index;
     }
     u = prev[prev.length - 1]; // This is the target
-    if (u.r === start.r && u.c === start.c) { // no path
+    if (u.r !== target.r || u.c !== target.c) { // no path
         digsim.utils.addMessage(digsim.WARNING, "[18]Unable to find valid path for autoroute");
         return;
     }
@@ -1606,6 +1608,7 @@ Digsim.prototype.onGridMouseDown = function(event) {
                 digsim.draggingComponent = digsim.components[ref];
                 digsim.draggingComponent.drawStatic = false;
                 digsim.deletePlaceholder(digsim.selectedComponent);
+
                 for (con in digsim.selectedComponent.connections) {
                     if (digsim.selectedComponent.connections[con].type === digsim.WIRE) {
                         digsim.selectedComponent.connections[con].drawStatic = false;
@@ -1731,16 +1734,30 @@ Digsim.prototype.onGridMouseUp = function(event) {
                 for (var i = 0, len = wire.endConnections.length; i < len; ++i) {
                     var obj = digsim.components[wire.endConnections[i]];
 
-                    var target;
+                    var target, newWire;
                     var start = { 'r': Math.floor(wire.row + wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
-                    if (($.inArray(wire.id, obj.startConnections) !== -1)) {
-                        target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                    if (obj.type === digsim.WIRE) {
+                        if (($.inArray(wire.id, obj.startConnections) !== -1)) {
+                            target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                        }
+                        else {
+                            target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                        }
+                        digsim.route(start, target, false, obj);
                     }
                     else {
-                        target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                        target = (digsim.gateConnectPt.r !== -1) ? digsim.gateConnectPt : digsim.gateConnectPt = start;
+                        newWire = new Wire();
+                        newWire.init(start.c + 0.5, start.r + 0.5, 0, digsim.iComp);
+                        newWire.dx = !wire.dx;
+                        newWire.dy = !wire.dy;
+                        digsim.components[digsim.iComp++] = newWire;
+                        digsim.route(start, target, false, newWire);
+                        digsim.deleteConnections(obj);
+                        obj.checkConnect();
+                        newWire.checkConnect();
                     }
-
-                    digsim.route(start, target, false, obj);
+                    digsim.gateConnectPt = {'r': -1, 'c': -1};
                 }
                 // Save the id's of the connected wires to reassemble connections
                 var array = [];
@@ -2277,13 +2294,13 @@ function animateWire() {
     if (digsim.dragging) {
         requestAnimFrame(animateWire);
 
-        if (obj = digsim.selectedComponent) {
+        if (wire = digsim.selectedComponent) {
             //console.log("test");
-            if (obj.dx) {
-                obj.row = row + 0.5; // Move to center of grid. 
+            if (wire.dx) {
+                wire.row = row + 0.5; // Move to center of grid. 
             }
             else {
-                obj.col = col + 0.5;
+                wire.col = col + 0.5;
             }
 
             // Draw wire
@@ -2291,22 +2308,22 @@ function animateWire() {
             context.lineWidth = 2;
             context.strokeStyle = 'red';
             context.lineCap = 'round';
-            context.moveTo(obj.col * digsim.GRID_SIZE, obj.row * digsim.GRID_SIZE);
-            context.lineTo((obj.col + obj.path.x) * digsim.GRID_SIZE, (obj.row + obj.path.y) * digsim.GRID_SIZE);
+            context.moveTo(wire.col * digsim.GRID_SIZE, wire.row * digsim.GRID_SIZE);
+            context.lineTo((wire.col + wire.path.x) * digsim.GRID_SIZE, (wire.row + wire.path.y) * digsim.GRID_SIZE);
             context.stroke();
 
-            var start, target, path, wire;
+            var start, target, path, obj;
             context.strokeStyle = '#3399FF';
 
-            for (var i = 0, len = obj.startConnections.length; i < len; ++i) {
-                wire = digsim.components[obj.startConnections[i]];
+            for (var i = 0, len = wire.startConnections.length; i < len; ++i) {
+                obj = digsim.components[wire.startConnections[i]];
                 
-                start = { 'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
-                if (($.inArray(obj.id, wire.startConnections) !== -1)) {
-                    target = { 'r': Math.floor(wire.row + wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
+                start = { 'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
+                if (($.inArray(wire.id, obj.startConnections) !== -1)) {
+                    target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
                 }
                 else {
-                    target = {'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
+                    target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
                 }
                 path = digsim.route(start, target, true);
 
@@ -2323,15 +2340,20 @@ function animateWire() {
                 }
 
             }
-            for (var i = 0, len = obj.endConnections.length; i < len; ++i) {
-                wire = digsim.components[obj.endConnections[i]];
+            for (var i = 0, len = wire.endConnections.length; i < len; ++i) {
+                obj = digsim.components[wire.endConnections[i]];
                 
-                start = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
-                if (($.inArray(obj.id, wire.startConnections) !== -1)) {
-                    target = { 'r': Math.floor(wire.row + wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
+                start = { 'r': Math.floor(wire.row + wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
+                if (obj.type === digsim.WIRE) {
+                    if (($.inArray(wire.id, obj.startConnections) !== -1)) {
+                        target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                    }
+                    else {
+                        target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                    }
                 }
                 else {
-                    target = {'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
+                    target = (digsim.gateConnectPt.r !== -1) ? digsim.gateConnectPt : digsim.gateConnectPt = start;
                 }
                 path = digsim.route(start, target, true);
 
