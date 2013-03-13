@@ -67,6 +67,21 @@ Drawable.prototype.checkConnect = function() {
                     console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                     this.connections.push(obj);
 
+                    if (obj.type === digsim.WIRE) {
+                        console.log("THIS: {"+(conRow + 0.5)+","+(conCol + 0.5)+"}");
+                        console.log("OBJ: {"+obj.row+","+obj.col+"}");
+                        console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
+
+                        if (obj.row === (conRow + 0.5) && obj.col === (conCol + 0.5)) {
+                            console.log("OBJ CONNECTS AT ITS START");
+                            obj.startConnections.push(this.id);
+                        }
+                        else if (obj.row + obj.path.y === (conRow + 0.5) && obj.col + obj.path.x === (conCol + 0.5)) {
+                            console.log("OBJ CONNECTS AT ITS END");
+                            obj.endConnections.push(this.id);
+                        }
+                    }
+
                     utilMath = digsim.utils.rotationMath(obj, digsim.PREV, 0, 0);
                     objConRow = utilMath.conRow;
                     objConCol = utilMath.conCol;
@@ -113,6 +128,21 @@ Drawable.prototype.checkConnect = function() {
                         this.prevConnect.push(obj);
                         obj.connections.push(this);
                         this.juncts.push( {'x': conCol, 'y': conRow} );
+
+                        if (obj.type === digsim.WIRE) {
+                            console.log("THIS: {"+(conRow + 0.5)+","+(conCol + 0.5)+"}");
+                            console.log("OBJ: {"+obj.row+","+obj.col+"}");
+                            console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
+
+                            if (obj.row === (conRow + 0.5) && obj.col === (conCol + 0.5)) {
+                                console.log("OBJ CONNECTS AT ITS START");
+                                obj.startConnections.push(this.id);
+                            }
+                            else if (obj.row + obj.path.y === (conRow + 0.5) && obj.col + obj.path.x === (conCol + 0.5)) {
+                                console.log("OBJ CONNECTS AT ITS END");
+                                obj.endConnections.push(this.id);
+                            }
+                        }
                     }
                 }
             }
@@ -136,6 +166,21 @@ Drawable.prototype.checkConnect = function() {
                     this.connections.push(obj);
                     obj.type < 0 ? obj.prevConnect.push(this) : obj.connections.push(this);
                     this.juncts.push( {'x': conCol, 'y': conRow} );
+
+                    if (obj.type === digsim.WIRE) {
+                        console.log("THIS: {"+(conRow + 0.5)+","+(conCol + 0.5)+"}");
+                        console.log("OBJ: {"+obj.row+","+obj.col+"}");
+                        console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
+
+                        if (obj.row === (conRow + 0.5) && obj.col === (conCol + 0.5)) {
+                            console.log("OBJ CONNECTS AT ITS START");
+                            obj.startConnections.push(this.id);
+                        }
+                        else if (obj.row + obj.path.y === (conRow + 0.5) && obj.col + obj.path.x === (conCol + 0.5)) {
+                            console.log("OBJ CONNECTS AT ITS END");
+                            obj.endConnections.push(this.id);
+                        }
+                    }
                 }
             }
         }

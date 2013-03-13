@@ -65,6 +65,30 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                                 // Merge wires only if there are no other wires in the same grid space
                                 if (typeof array[(i+1)%4] === 'undefined' && typeof array[ (i-1) < 0 ? 3 : (i-1) ] === 'undefined') {
                                     console.log("∂ß∂ƒ©˙∆˚¬˚∆˙∆©ƒƒ© MERGE ß∂ƒ©˙∆˚¬……æ˚∆˙©ƒ∂©˙∆˚¬");
+
+                                    // Get the four points of both wires
+                                    var point1, point2, point3, point4, endpoint;
+                                    point1 = {'x': this.col, 'y': this.row};
+                                    point2 = {'x': obj.col, 'y': obj.row};
+                                    point3 = {'x': this.col + this.path.x, 'y': this.row + this.path.y}
+                                    point4 = {'x': obj.col + obj.path.x, 'y': obj.row + obj.path.y}
+
+                                    // Update wire coordinates
+                                    obj.row = Math.min(point1.y, point2.y);
+                                    obj.col = Math.min(point1.x, point2.x);
+                                    endpoint = {'x': Math.max(point3.x, point4.x), 'y': Math.max(point3.y, point4.y)};
+                                    obj.path = {'x': Math.abs(endpoint.x - obj.col), 'y': Math.abs(endpoint.y - obj.row)};
+
+                                    // Update wire connections
+                                    digsim.deletePlaceholder(obj);
+                                    digsim.deleteConnections(obj);
+                                    digsim.setWirePlaceholders(obj, true);
+                                    obj.checkConnect();
+
+                                    // Remove new wire
+                                    delete digsim.components[this.id];
+
+                                    return;
                                 }
                             }
                             // Wire spliting
@@ -81,7 +105,7 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                                     console.log("TEST");
                                     digsim.deletePlaceholder(obj);
                                     digsim.deleteConnections(obj);
-                                    digsim.setWirePlaceholders(obj, obj.dx, obj.dy, true);
+                                    digsim.setWirePlaceholders(obj, true);
                                     obj.checkConnect();
 
                                     // Create new wire
@@ -93,7 +117,7 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                                     console.log(wire);
                                     console.log("TEST");
                                     digsim.components[digsim.iComp++] = wire;
-                                    digsim.setWirePlaceholders(wire, obj.dx, obj.dy, true);
+                                    digsim.setWirePlaceholders(wire, true);
                                     wire.checkConnect();
                                     digsim.drawComponents();
                                 }
@@ -107,11 +131,19 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                             
                             if (pos === "start") {
                                 this.startConnections.push(obj.id);
+                                if (this.id === 3) {
+                                    console.log("CONNECTED START");
+                                }
                             }
                             else {
                                 this.endConnections.push(obj.id);
+                                if (this.id === 3) {
+                                    console.log("CONNECTED END");
+                                }
                             }
-
+                            if (this.id === 3) {
+                                console.log(pos);
+                            }
                             if (obj.type === digsim.WIRE) {
                                 console.log("THIS: {"+(row + 0.5)+","+(col + 0.5)+"}");
                                 console.log("OBJ: {"+obj.row+","+obj.col+"}");
@@ -188,7 +220,7 @@ Wire.prototype.draw = function(context, lineColor) {
         else {
             context.strokeStyle = '#0000FF';
         }
-    }        
+    }
 
     context.moveTo(0, 0);
     context.lineTo(this.path.x * digsim.GRID_SIZE, this.path.y * digsim.GRID_SIZE);

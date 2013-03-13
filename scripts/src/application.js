@@ -292,8 +292,7 @@ Digsim.prototype.drawComponents = function() {
  *  Remove component from component array, delete itself from all of its
  *  connections, then delete its placeholders
  ****************************************************************************/
-Digsim.prototype.deleteComponent = function() {
-    obj = this.selectedComponent;
+Digsim.prototype.deleteComponent = function(obj) {
     // If it's a driver, remove it from the drivers[] array also
     if (obj.type === this.SWITCH || obj.type === this.CLOCK) {
         this.drivers.splice(this.drivers.indexOf(obj.id), 1);
@@ -583,10 +582,12 @@ Digsim.prototype.setPlaceholders = function(obj) {
  * nocheck - autorouting already does placeholder checking, so we can skip 
  *           this step in some instances
  ****************************************************************************/
-Digsim.prototype.setWirePlaceholders = function(wire, dx, dy, nocheck) {
+Digsim.prototype.setWirePlaceholders = function(wire, nocheck) {
     //console.log("row: " + row + "\ncol: " + col);
     
     console.log(wire);
+    var dx = wire.dx;
+    var dy = wire.dy;
     var endRow = wire.path.y + wire.row; 
     var endCol = wire.path.x + wire.col; // Current ending pos
     
@@ -1466,7 +1467,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
                 wire.dy = Math.abs(prevDy);
                 wire.path = { 'x':Math.abs(currBranch.c),'y':Math.abs(currBranch.r ) };
 
-                var validPlacement = digsim.setWirePlaceholders(wire, wire.dx, wire.dy, true);
+                var validPlacement = digsim.setWirePlaceholders(wire, true);
                 if (validPlacement) {
                     digsim.components[digsim.iComp++] = wire;
 
@@ -1517,7 +1518,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
         obj.dx = !!obj.path.x;
         obj.dy = !!obj.path.y;
 
-        var validPlacement = digsim.setWirePlaceholders(obj, obj.dx, obj.dy, true);
+        var validPlacement = digsim.setWirePlaceholders(obj, true);
         obj.drawStatic = true;
     }
     else if (returnPath) {
@@ -1537,7 +1538,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
         wire.dy = Math.abs(prevDy);
         wire.path = { 'x':Math.abs(currBranch.c),'y':Math.abs(currBranch.r ) };
 
-        var validPlacement = digsim.setWirePlaceholders(wire, wire.dx, wire.dy, true);
+        var validPlacement = digsim.setWirePlaceholders(wire, true);
         if (validPlacement) {
             digsim.components[digsim.iComp++] = wire;
             // Draws the wire on static context.
@@ -1700,7 +1701,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
         if (digsim.dragging) {
 
             if (digsim.draggingComponent.type === digsim.WIRE) {
-                validPlacement = digsim.setWirePlaceholders(digsim.draggingComponent, digsim.draggingComponent.dx, digsim.draggingComponent.dy);
+                validPlacement = digsim.setWirePlaceholders(digsim.draggingComponent);
                 console.warn("FINISHED DRAGGING");
             }
             else {
@@ -1709,7 +1710,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
 
             if (validPlacement) {
                 console.log("valid placement");
-                var wire = digsim.components[digsim.draggingComponent.id] = digsim.draggingComponent;
+                digsim.components[digsim.draggingComponent.id] = digsim.draggingComponent;
 
                 digsim.draggingComponent.drawStatic = true;
                 digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
@@ -1717,66 +1718,70 @@ Digsim.prototype.onGridMouseUp = function(event) {
 
                 digsim.dragging = false;
 
-                for (var i = 0, len = wire.startConnections.length; i < len; ++i) {
-                    var obj = digsim.components[wire.startConnections[i]];
+                if (digsim.draggingComponent.type = digsim.WIRE) {
+                    var wire = digsim.draggingComponent;
 
-                    var target;
-                    var start = { 'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
-                    if (($.inArray(wire.id, obj.startConnections) !== -1)) {
-                        target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
-                    }
-                    else {
-                        target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
-                    }
+                    for (var i = 0, len = wire.startConnections.length; i < len; ++i) {
+                        var obj = digsim.components[wire.startConnections[i]];
 
-                    digsim.route(start, target, false, obj);
-                }
-                for (var i = 0, len = wire.endConnections.length; i < len; ++i) {
-                    var obj = digsim.components[wire.endConnections[i]];
-
-                    var target, newWire;
-                    var start = { 'r': Math.floor(wire.row + wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
-                    if (obj.type === digsim.WIRE) {
+                        var target;
+                        var start = { 'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
                         if (($.inArray(wire.id, obj.startConnections) !== -1)) {
                             target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
                         }
                         else {
                             target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
                         }
+
                         digsim.route(start, target, false, obj);
                     }
-                    else {
-                        target = (digsim.gateConnectPt.r !== -1) ? digsim.gateConnectPt : digsim.gateConnectPt = start;
-                        newWire = new Wire();
-                        newWire.init(start.c + 0.5, start.r + 0.5, 0, digsim.iComp);
-                        newWire.dx = !wire.dx;
-                        newWire.dy = !wire.dy;
-                        digsim.components[digsim.iComp++] = newWire;
-                        digsim.route(start, target, false, newWire);
-                        digsim.deleteConnections(obj);
-                        obj.checkConnect();
-                        newWire.checkConnect();
+                    for (var i = 0, len = wire.endConnections.length; i < len; ++i) {
+                        var obj = digsim.components[wire.endConnections[i]];
+
+                        var target, newWire;
+                        var start = { 'r': Math.floor(wire.row + wire.path.y), 'c': Math.floor(wire.col + wire.path.x) };
+                        if (obj.type === digsim.WIRE) {
+                            if (($.inArray(wire.id, obj.startConnections) !== -1)) {
+                                target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                            }
+                            else {
+                                target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                            }
+                            digsim.route(start, target, false, obj);
+                        }
+                        else {
+                            target = (digsim.gateConnectPt.r !== -1) ? digsim.gateConnectPt : digsim.gateConnectPt = start;
+                            newWire = new Wire();
+                            newWire.init(start.c + 0.5, start.r + 0.5, 0, digsim.iComp);
+                            newWire.dx = !wire.dx;
+                            newWire.dy = !wire.dy;
+                            digsim.components[digsim.iComp++] = newWire;
+                            digsim.route(start, target, false, newWire);
+                            digsim.deleteConnections(obj);
+                            obj.checkConnect();
+                            newWire.checkConnect();
+                        }
+                        digsim.gateConnectPt = {'r': -1, 'c': -1};
                     }
-                    digsim.gateConnectPt = {'r': -1, 'c': -1};
-                }
-                // Save the id's of the connected wires to reassemble connections
-                var array = [];
-                for (var i = 0, len = wire.connections.length; i < len; ++i) {
-                    array.push(wire.connections[i].id);
-                }
-                console.log(array);
+                    // Save the id's of the connected wires to reassemble connections
+                    var array = [];
+                    for (var i = 0, len = wire.connections.length; i < len; ++i) {
+                        array.push(wire.connections[i].id);
+                    }
+                    console.log(array);
 
-                // Delete wire connections
-                digsim.deleteConnections(digsim.draggingComponent);
-                digsim.draggingComponent.checkConnect();
+                    // Delete wire connections
+                    digsim.deleteConnections(digsim.draggingComponent);
+                    digsim.draggingComponent.checkConnect();
 
-                // Delete connections connections
-                for (var i = 0, len = array.length; i < len; ++i) {
-                    digsim.deleteConnections(digsim.components[i]);
-                    digsim.components[i].checkConnect();
+                    // Delete connections connections
+                    for (var i = 0, len = array.length; i < len; ++i) {
+                        digsim.deleteConnections(digsim.components[ array[i] ]);
+                        digsim.components[ array[i] ].checkConnect();
+                    }
+
+                    digsim.drawComponents();
                 }
-
-                digsim.drawComponents();
             }
             else {
                 digsim.dragging = true;
@@ -1951,7 +1956,7 @@ Digsim.prototype.paste = function(event) {
  ****************************************************************************/
 Digsim.prototype.delete = function(event) {
     if (!$('#Delete').hasClass('disabled')) {
-        digsim.deleteComponent();
+        digsim.deleteComponent(digsim.selectedComponent);
     }
 };
 
