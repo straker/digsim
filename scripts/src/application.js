@@ -95,7 +95,10 @@ function Digsim() {
     this.clipboard;         // Used for cut/copy/paste
     this.selectedComponent; // Used for selecting components :D
     this.mode = 0;          // The current mode
-    this.gateConnectPt = {'r': -1, 'c': -1}; // Tells where the wire must connect to when dragging around wires. 
+    this.endConnectPt = {'r': -1, 'c': -1}; // Tells where the wire must connect to when dragging around wires. 
+    this.startConnectPt = {'r': -1, 'c': -1}; // Tells where the wire must connect to when dragging around wires. 
+    this.compConnectPts = []; // Tells us which input to connect to
+    this.backspace2delete = false;
 
     // Flip flop simulation
     this.RISING_EDGE = false;   // Used to simulate the rising edge of the clock
@@ -112,6 +115,9 @@ function Digsim() {
         this.placeholder[i] = [];   // Set placeholder to a 2D array
     }
 };
+
+// Confirm reloading the page or accidentally navigating back to the previous page. 
+// window.onbeforeunload = function() {return 'You are probably trying to delete something. You must use the "delete" key instead of the "backspace" key.'};
 
 /*****************************************************************************
  * INIT
@@ -1633,10 +1639,25 @@ Digsim.prototype.onGridMouseDown = function(event) {
             digsim.draggingComponent.drawStatic = false;
             digsim.offsetRow = digsim.placeholder[row][col].posY;
             digsim.offsetCol = digsim.placeholder[row][col].posX;
-            digsim.deleteConnections(digsim.draggingComponent);
+            //digsim.deleteConnections(digsim.draggingComponent);
             digsim.deletePlaceholder(digsim.draggingComponent);
             
-            digsim.draggingComponent.draw(digsim.movingContext);
+            if (digsim.draggingComponent.type < 0) {
+                for (con in digsim.draggingComponent.prevConnect) {
+                    if (digsim.draggingComponent.prevConnect[con].type === digsim.WIRE) {
+                        digsim.draggingComponent.prevConnect[con].drawStatic = false;
+                        digsim.deletePlaceholder(digsim.draggingComponent.prevConnect[con]);
+                    }
+                    // Save off offsets, start = row + offset etc...
+                }
+            }
+            for (con in digsim.draggingComponent.connections) {
+                if (digsim.draggingComponent.connections[con].type === digsim.WIRE) {
+                    digsim.draggingComponent.connections[con].drawStatic = false;
+                    digsim.deletePlaceholder(digsim.draggingComponent.connections[con]);
+                }
+            }
+            digsim.drawComponents();
             animate();
         }
         else {
@@ -1718,7 +1739,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
 
                 digsim.dragging = false;
 
-                if (digsim.draggingComponent.type = digsim.WIRE) {
+                if (digsim.draggingComponent.type === digsim.WIRE) {
                     var wire = digsim.draggingComponent;
 
                     for (var i = 0, len = wire.startConnections.length; i < len; ++i) {
@@ -1726,14 +1747,28 @@ Digsim.prototype.onGridMouseUp = function(event) {
 
                         var target;
                         var start = { 'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
-                        if (($.inArray(wire.id, obj.startConnections) !== -1)) {
-                            target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                        if (obj.type === digsim.WIRE) {
+                            if (($.inArray(wire.id, obj.startConnections) !== -1)) {
+                                target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                            }
+                            else {
+                                target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                            }
+                            digsim.route(start, target, false, obj);
                         }
                         else {
-                            target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                            target = (digsim.startConnectPt.r !== -1) ? digsim.startConnectPt : digsim.startConnectPt = start;
+                            newWire = new Wire();
+                            newWire.init(start.c + 0.5, start.r + 0.5, 0, digsim.iComp);
+                            newWire.dx = !wire.dx;
+                            newWire.dy = !wire.dy;
+                            digsim.components[digsim.iComp++] = newWire;
+                            digsim.route(start, target, false, newWire);
+                            digsim.deleteConnections(obj);
+                            obj.checkConnect();
+                            newWire.checkConnect();
                         }
-
-                        digsim.route(start, target, false, obj);
+                        digsim.startConnectPt = {'r': -1, 'c': -1};
                     }
                     for (var i = 0, len = wire.endConnections.length; i < len; ++i) {
                         var obj = digsim.components[wire.endConnections[i]];
@@ -1750,7 +1785,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
                             digsim.route(start, target, false, obj);
                         }
                         else {
-                            target = (digsim.gateConnectPt.r !== -1) ? digsim.gateConnectPt : digsim.gateConnectPt = start;
+                            target = (digsim.endConnectPt.r !== -1) ? digsim.endConnectPt : digsim.endConnectPt = start;
                             newWire = new Wire();
                             newWire.init(start.c + 0.5, start.r + 0.5, 0, digsim.iComp);
                             newWire.dx = !wire.dx;
@@ -1761,7 +1796,7 @@ Digsim.prototype.onGridMouseUp = function(event) {
                             obj.checkConnect();
                             newWire.checkConnect();
                         }
-                        digsim.gateConnectPt = {'r': -1, 'c': -1};
+                        digsim.endConnectPt = {'r': -1, 'c': -1};
                     }
                     // Save the id's of the connected wires to reassemble connections
                     var array = [];
@@ -1973,7 +2008,7 @@ Digsim.prototype.rotate = function(event) {
             digsim.deletePlaceholder(obj);
             console.log("THIS SHOULD DELETE");
         }
-        
+        var pRot = obj.rotation;
         obj.rotation = digsim.rotation = (obj.rotation + event.data.dir) % 360;
         
         // Swap row/col
@@ -1996,6 +2031,9 @@ Digsim.prototype.rotate = function(event) {
             else {
                 obj.draw(digsim.movingContext, 'red');
             }
+        }
+        for (var i = 0, len = digsim.compConnectPts.length; i < len; ++i) {
+            digsim.compConnectPts[i] = digsim.utils.offsetMath(digsim.compConnectPts[i], pRot, obj.rotation);
         }
     }
 };
@@ -2177,6 +2215,7 @@ KEY_CODES = {
     90: 'Zoom_In',
     's90': 'Zoom_Out',
     46: 'Delete',
+    8: 'Delete', 
     'c88': 'Cut',
     'c67': 'Copy',
     'c86': 'Paste',
@@ -2228,7 +2267,10 @@ document.onkeydown = function(event) {
     if (keyCode === 9) {
         event.preventDefault();
     }
-
+    if (keyCode === 8) {
+        window.event.keyCode = 46; 
+        window.onbeforeunload = function() {return "If you're trying to delete a componenet, use the delete key instead of the backspace key."};
+    }
     // Don't do anything when mac user refresh
     if (!(keyCode === 82 && event.metaKey)) {
     
@@ -2281,6 +2323,39 @@ function animate() {
         digsim.draggingComponent.col = col - digsim.offsetCol;
         digsim.draggingComponent.row = row - digsim.offsetRow;
         digsim.draggingComponent.draw(digsim.movingContext, 'red');
+
+        // Draw wires
+        var obj;
+        var start, target;
+        for (con in digsim.draggingComponent.prevConnect) {
+
+            obj = digsim.draggingComponent.prevConnect[con];
+            start = { 'r': Math.floor(digsim.draggingComponent.row), 'c': Math.floor(digsim.draggingComponent.col) };
+            if (obj.type === digsim.WIRE) {
+                if (($.inArray(digsim.draggingComponent.id, obj.startConnections) !== -1)) {
+                    target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                }
+                else {
+                    target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                }
+            }
+            else {
+                target = (digsim.startConnectPt.r !== -1) ? digsim.startConnectPt : digsim.startConnectPt = start;
+            }
+            path = digsim.route(start, target, true);
+
+            // Draw wire
+            if (path) {
+                context.beginPath();
+                context.moveTo((start.c + 0.5) * digsim.GRID_SIZE, (start.r + 0.5) * digsim.GRID_SIZE);
+            
+                for (var j = 0, len2 = path.length; j < len2; ++j) {
+                    context.lineTo((path[j].x + 0.5) * digsim.GRID_SIZE, (path[j].y + 0.5) * digsim.GRID_SIZE);
+                }
+                context.stroke();
+
+            }
+        }
     }
 };
 
@@ -2324,11 +2399,16 @@ function animateWire() {
                 obj = digsim.components[wire.startConnections[i]];
                 
                 start = { 'r': Math.floor(wire.row), 'c': Math.floor(wire.col) };
-                if (($.inArray(wire.id, obj.startConnections) !== -1)) {
-                    target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                if (obj.type === digsim.WIRE) {
+                    if (($.inArray(wire.id, obj.startConnections) !== -1)) {
+                        target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                    }
+                    else {
+                        target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                    }
                 }
                 else {
-                    target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                    target = (digsim.startConnectPt.r !== -1) ? digsim.startConnectPt : digsim.startConnectPt = start;
                 }
                 path = digsim.route(start, target, true);
 
@@ -2358,7 +2438,7 @@ function animateWire() {
                     }
                 }
                 else {
-                    target = (digsim.gateConnectPt.r !== -1) ? digsim.gateConnectPt : digsim.gateConnectPt = start;
+                    target = (digsim.endConnectPt.r !== -1) ? digsim.endConnectPt : digsim.endConnectPt = start;
                 }
                 path = digsim.route(start, target, true);
 
@@ -2609,6 +2689,60 @@ Digsim.prototype.utils = {
             console.log("ROW: " + conRow);
         }
         return {'conRow': conRow, 'conCol': conCol, 'cnt': cnt, 'index': index};
+    },
+
+    /*****************************************************************************
+     * UTILITY: OFFSET MATH
+     *  Used for autorouting to see if adjacent cells containing wires are valid
+     *  paths when connected to components. Returns the new start position
+     *
+     *  offset - xy offset position from top left of component
+     *  pRot   - the rotation the object came from
+     *  nRot   - the rotation the object is going to
+     ****************************************************************************/
+    offsetMath: function(offset, pRot, nRot) {
+        var temp;
+        if ((nRot - pRot == 90) || (nRot - pRot === -270)) { // rotated CW
+            switch (nRot / 90) 
+            {
+                case 0:
+                    temp = offset.x;
+                    offset.x = -1;
+                    offset.y = temp;
+                    break;
+                case 1:
+                case 3:
+                    temp = offset.x;
+                    offset.x = offset.y;
+                    offset.y = temp;
+                    break;
+                default:
+                    temp = offset.x;
+                    offset.x = digsim.draggingComponent.dimension.row;
+                    offset.y = temp;
+            }
+        }
+        else { // rotated CCW
+            switch (nRot / 90) 
+            {
+                case 0:
+                    temp = offset.y;
+                    offset.y = digsim.draggingComponent.dimension.row;
+                    offset.x = temp;
+                    break;
+                case 1:
+                case 3:
+                    temp = offset.y;
+                    offset.y = offset.x;
+                    offset.x = temp;
+                    break;
+                default:
+                    temp = offset.y;
+                    offset.y = -1;
+                    offset.x = temp;
+            }
+        }
+        return offset;
     },
 
     /*****************************************************************************
