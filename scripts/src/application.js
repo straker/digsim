@@ -1641,14 +1641,50 @@ Digsim.prototype.onGridMouseDown = function(event) {
             digsim.offsetCol = digsim.placeholder[row][col].posX;
             //digsim.deleteConnections(digsim.draggingComponent);
             digsim.deletePlaceholder(digsim.draggingComponent);
-            
+
+            var cnt = 0;
+            var utilMath, conRow, conCol, index;            
             if (digsim.draggingComponent.type < 0) {
+                for (var i = 0; i < digsim.draggingComponent.numInputs; ++i) {
+                    
+                    // Calculate positions of connections based on rotation
+                    utilMath = digsim.utils.rotationMath(digsim.draggingComponent, digsim.PREV, i, cnt); 
+                    conRow = utilMath.conRow;
+                    conCol = utilMath.conCol;
+                    cnt = utilMath.cnt;
+                    index = utilMath.index;
+                    // Now we have absolute position of connections
+                    console.log("«««««««««««««««««««««««««««\nROW: " + conRow);
+                    console.log("COL: " + conCol + "\n");
+
+                    // Prevs
+                    for (var j = 0; j < 4; ++j) {
+                        if ((j !== index) &&  (digsim.placeholder[conRow][conCol] instanceof Array) && (digsim.placeholder[conRow][conCol][j])) {
+                            digsim.compConnectPts[ digsim.components[ digsim.placeholder[conRow][conCol][j].ref ].id ] = { 'x': (conCol - digsim.draggingComponent.col), 'y': (conRow - digsim.draggingComponent.row), 'con': digsim.PREV };
+                        }
+                    }
+                }
                 for (con in digsim.draggingComponent.prevConnect) {
                     if (digsim.draggingComponent.prevConnect[con].type === digsim.WIRE) {
                         digsim.draggingComponent.prevConnect[con].drawStatic = false;
                         digsim.deletePlaceholder(digsim.draggingComponent.prevConnect[con]);
                     }
-                    // Save off offsets, start = row + offset etc...
+                }
+            }
+            // Calculate positions of connections based on rotation
+            utilMath = digsim.utils.rotationMath(digsim.draggingComponent, digsim.NEXT, 0, cnt); 
+            conRow = utilMath.conRow;
+            conCol = utilMath.conCol;
+            // cnt = utilMath.cnt;
+            index = utilMath.index;
+            // Now we have absolute position of connections
+            console.log("«««««««««««««««««««««««««««\nROW: " + conRow);
+            console.log("COL: " + conCol + "\n");
+
+            // Nexts
+            for (var j = 0; j < 4; ++j) {
+                if ((j !== index) &&  (digsim.placeholder[conRow][conCol] instanceof Array) && (digsim.placeholder[conRow][conCol][j])) {
+                    digsim.compConnectPts[ digsim.components[ digsim.placeholder[conRow][conCol][j].ref ].id ] = { 'x': (conCol - digsim.draggingComponent.col), 'y': (conRow - digsim.draggingComponent.row), 'con': digsim.NEXT };
                 }
             }
             for (con in digsim.draggingComponent.connections) {
@@ -1814,6 +1850,55 @@ Digsim.prototype.onGridMouseUp = function(event) {
                         digsim.deleteConnections(digsim.components[ array[i] ]);
                         digsim.components[ array[i] ].checkConnect();
                     }
+
+                    digsim.drawComponents();
+                }
+                else {
+                    // Draw wires
+                    var obj, comp = digsim.draggingComponent;
+                    var start, target;
+                    for (var con in digsim.compConnectPts) {
+                        console.log("CON :( " + con);
+                        obj = digsim.components[con];
+                        start = { 'r': Math.floor(comp.row + digsim.compConnectPts[con].y), 'c': Math.floor(comp.col + digsim.compConnectPts[con].x) };
+                        if (obj.type === digsim.WIRE) {
+                            if (($.inArray(comp.id, obj.startConnections) !== -1)) {
+                                target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
+                            }
+                            else {
+                                target = {'r': Math.floor(obj.row), 'c': Math.floor(obj.col) };
+                            }
+                        }
+                        else {
+                            target = (digsim.startConnectPt.r !== -1) ? digsim.startConnectPt : digsim.startConnectPt = start;
+                        }
+                        path = digsim.route(start, target, false, obj);
+                    }
+
+                    digsim.compConnectPts = [];
+
+                    // Save the id's of the connected wires to reassemble connections
+                    var array = [];
+                    for (var i = 0, len = comp.connections.length; i < len; ++i) {
+                        array.push(comp.connections[i].id);
+                    }
+
+                    if (comp.type <= 0) {
+                        for (var i = 0, len = comp.prevConnect.length; i < len; ++i) {
+                            array.push(comp.prevConnect[i].id);
+                        }
+                    }
+
+                    console.log(array);
+                    digsim.deleteConnections(comp);
+
+                    // Delete wire connections
+                    for (var i = 0, len = array.length; i < len; ++i) {
+                        digsim.deleteConnections(digsim.components[ array[i] ]);
+                        digsim.components[ array[i] ].checkConnect();
+                    }
+
+                    comp.checkConnect();
 
                     digsim.drawComponents();
                 }
@@ -2032,7 +2117,7 @@ Digsim.prototype.rotate = function(event) {
                 obj.draw(digsim.movingContext, 'red');
             }
         }
-        for (var i = 0, len = digsim.compConnectPts.length; i < len; ++i) {
+        for (var i in digsim.compConnectPts) {
             digsim.compConnectPts[i] = digsim.utils.offsetMath(digsim.compConnectPts[i], pRot, obj.rotation);
         }
     }
@@ -2312,25 +2397,28 @@ document.onkeydown = function(event) {
  *  movingContext canvas. 
  ****************************************************************************/
 function animate() {
+
+    var context = digsim.movingContext;
+    digsim.clearCanvas(context, digsim.gridWidth, digsim.gridHeight);
+    var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
+    var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
+    
     if (digsim.dragging) {
-        digsim.clearCanvas(digsim.movingContext, digsim.gridWidth, digsim.gridHeight);
-        
+
         requestAnimFrame(animate);
         
         // Draw gate
-        var col = Math.floor(digsim.mousePos.x / digsim.GRID_SIZE);
-        var row = Math.floor(digsim.mousePos.y / digsim.GRID_SIZE);
-        digsim.draggingComponent.col = col - digsim.offsetCol;
+       digsim.draggingComponent.col = col - digsim.offsetCol;
         digsim.draggingComponent.row = row - digsim.offsetRow;
         digsim.draggingComponent.draw(digsim.movingContext, 'red');
 
         // Draw wires
         var obj;
         var start, target;
-        for (con in digsim.draggingComponent.prevConnect) {
+        for (var con in digsim.compConnectPts) {
 
-            obj = digsim.draggingComponent.prevConnect[con];
-            start = { 'r': Math.floor(digsim.draggingComponent.row), 'c': Math.floor(digsim.draggingComponent.col) };
+            obj = digsim.components[con];
+            start = { 'r': Math.floor(digsim.draggingComponent.row + digsim.compConnectPts[con].y), 'c': Math.floor(digsim.draggingComponent.col + digsim.compConnectPts[con].x) };
             if (obj.type === digsim.WIRE) {
                 if (($.inArray(digsim.draggingComponent.id, obj.startConnections) !== -1)) {
                     target = { 'r': Math.floor(obj.row + obj.path.y), 'c': Math.floor(obj.col + obj.path.x) };
@@ -2702,44 +2790,104 @@ Digsim.prototype.utils = {
      ****************************************************************************/
     offsetMath: function(offset, pRot, nRot) {
         var temp;
-        if ((nRot - pRot == 90) || (nRot - pRot === -270)) { // rotated CW
-            switch (nRot / 90) 
-            {
-                case 0:
-                    temp = offset.x;
-                    offset.x = -1;
-                    offset.y = temp;
-                    break;
-                case 1:
-                case 3:
-                    temp = offset.x;
-                    offset.x = offset.y;
-                    offset.y = temp;
-                    break;
-                default:
-                    temp = offset.x;
-                    offset.x = digsim.draggingComponent.dimension.row;
-                    offset.y = temp;
+        console.log("≥≥≥≥≥≥≥≥≥≥≥≥≥≥≥≥≥≥≥≥≥≥ "+(nRot - pRot));
+        if (digsim.draggingComponent.type === digsim.LED) {
+
+            if (((nRot - pRot) === 90) || ((nRot - pRot) === -270)) { // rotated CW
+                
+                console.log("ROTATE CW");
+                switch (nRot / 90) 
+                {
+                    case 1:
+                        temp = offset.x;
+                        offset.x = -1;
+                        offset.y = temp;
+                        break;
+                    case 2:
+                    case 0:
+                        temp = offset.x;
+                        offset.x = offset.y;
+                        offset.y = temp;
+                        break;
+                    default:
+                        temp = offset.x;
+                        offset.x = digsim.draggingComponent.dimension.col;
+                        offset.y = temp;
+                }
+            }
+            else { // rotated CCW
+                console.log("ROTATE CCW");
+                switch (nRot / 90) 
+                {
+                    case 0:
+                        temp = offset.y;
+                        offset.y = digsim.draggingComponent.dimension.row;
+                        offset.x = temp;
+                        break;
+                    case 3:
+                    case 1:
+                        temp = offset.y;
+                        offset.y = offset.x;
+                        offset.x = temp;
+                        break;
+                    default:
+                        temp = offset.y;
+                        offset.y = -1;
+                        offset.x = temp;
+                }
             }
         }
-        else { // rotated CCW
-            switch (nRot / 90) 
-            {
-                case 0:
-                    temp = offset.y;
-                    offset.y = digsim.draggingComponent.dimension.row;
-                    offset.x = temp;
-                    break;
-                case 1:
-                case 3:
-                    temp = offset.y;
-                    offset.y = offset.x;
-                    offset.x = temp;
-                    break;
-                default:
-                    temp = offset.y;
-                    offset.y = -1;
-                    offset.x = temp;
+        else {
+            if (((nRot - pRot) === 90) || ((nRot - pRot) === -270)) { // rotated CW
+                // Change the cases for next connections
+                if (offset.con === digsim.NEXT) {
+                    nRot = (nRot + 180) % 360;
+                }   
+                console.log("ROTATE CW");
+                switch (nRot / 90) 
+                {
+                    case 0:
+                        temp = offset.x;
+                        offset.x = -1;
+                        offset.y = temp;
+                        break;
+                    case 1:
+                    case 3:
+                        temp = offset.x;
+                        offset.x = offset.y;
+                        offset.y = temp;
+                        break;
+                    default:
+                        temp = offset.x;
+                        offset.x = digsim.draggingComponent.dimension.row;
+                        offset.y = temp;
+                }
+            }
+            else { // rotated CCW
+                console.log("ROTATE CCW");
+                // Change the cases for next connections
+                if (offset.con === digsim.NEXT){
+                    nRot = (nRot + 180) % 360;
+                }
+
+                switch (nRot / 90) 
+                {
+                    case 3:
+                        temp = offset.y;
+                        offset.y = digsim.draggingComponent.dimension.row;
+                        offset.x = temp;
+                        break;
+                    case 0:
+                    case 2:
+                        temp = offset.y;
+                        offset.y = offset.x;
+                        offset.x = temp;
+                        break;
+                    default:
+                        temp = offset.y;
+                        offset.y = -1;
+                        offset.x = temp;
+                }
             }
         }
         return offset;
