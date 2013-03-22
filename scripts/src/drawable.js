@@ -48,81 +48,27 @@ Drawable.prototype.checkConnect = function() {
     
     console.log("SETP 0");
     console.log(this);
-    if (this.type >= 0) {
-        console.log("STEP 1");
-        var PH;
-        // Endpoint contains a wire
-        for (var i = 0; i < 4; ++i) {
-            // Output wire
-            utilMath = digsim.utils.rotationMath(this, digsim.NEXT, 0, 0);
-            conRow = utilMath.conRow;
-            conCol = utilMath.conCol;
 
-            console.log("ROW, COL: " + this.row + " " + this.col);
-            console.log("CONROW, CONCOL: " + conRow + " " + conCol);
-            if (PH = digsim.placeholder[conRow][conCol][i]) {
-                console.log(PH);
-                obj = digsim.components[PH.ref];
-                if ((obj !== this) && ($.inArray(obj, this.connections) === -1) && PH.connectable) { // connection is not part of the previous
-                    console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                    this.connections.push(obj);
-
-                    if (obj.type === digsim.WIRE) {
-                        console.log("THIS: {"+(conRow + 0.5)+","+(conCol + 0.5)+"}");
-                        console.log("OBJ: {"+obj.row+","+obj.col+"}");
-                        console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
-
-                        if (obj.row === (conRow + 0.5) && obj.col === (conCol + 0.5)) {
-                            console.log("OBJ CONNECTS AT ITS START");
-                            obj.startConnections.push(this.id);
-                        }
-                        else if (obj.row + obj.path.y === (conRow + 0.5) && obj.col + obj.path.x === (conCol + 0.5)) {
-                            console.log("OBJ CONNECTS AT ITS END");
-                            obj.endConnections.push(this.id);
-                        }
-                    }
-
-                    utilMath = digsim.utils.rotationMath(obj, digsim.PREV, 0, 0);
-                    objConRow = utilMath.conRow;
-                    objConCol = utilMath.conCol;
-                    cnt = utilMath.cnt;
-                    index = utilMath.index;
-
-                    if (obj.type < 0) {
-                        if (((obj.rotation / 90 % 2) && (conRow === objConRow)) || (((obj.rotation / 90) % 2) === 0) && (conCol === objConCol)) {
-                            obj.prevConnect.push(this);
-                        }
-                        else  {
-                            obj.connections.push(this);
-                        }
-                    }
-                    else {
-                        obj.connections.push(this);
-                    }
-
-                    this.juncts.push( { 'x': conCol, 'y': conRow } );
-                }
-            }
-        }
-    }
-    else {
+    var PH, cnt = 0, conRow, conCol;
+    if (this.type < 0) {
         console.log("STEP 1.5");
-        var PH, cnt = 0, conRow, conCol;
         var factor = Math.floor(this.numInputs / 2) || 1; 
         console.log("THIS.NUMINPUTS: " + this.numInputs);
-        // Endpoint contains a wire
+        
+
         for (var j = 0; j < this.numInputs; ++j) {
 
-            utilMath = digsim.utils.rotationMath(this, digsim.PREV, i, cnt);
+            utilMath = digsim.utils.rotationMath(this, digsim.PREV, j, cnt);
             conRow = utilMath.conRow;
             conCol = utilMath.conCol;
             cnt = utilMath.cnt;
 
             console.log("•••••••conRow: " + conRow);
             console.log("•••••••conCol: " + conCol);
-            for (var i = 1; i < 4; ++i) {
+            for (var i = 0; i < 4; ++i) {
                 if (PH = digsim.placeholder[conRow][conCol][i]) {
                     obj = digsim.components[PH.ref];
+                    console.log(obj);
                     if ((obj !== this) && ($.inArray(obj, this.prevConnect) === -1) && PH.connectable) { // connection is not part of the previous
                         console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                         this.prevConnect.push(obj);
@@ -147,41 +93,58 @@ Drawable.prototype.checkConnect = function() {
                 }
             }
         }
+    }
 
-        // Output wire
-        utilMath = digsim.utils.rotationMath(this, digsim.NEXT, i, cnt);
-        conRow = utilMath.conRow;
-        conCol = utilMath.conCol;
-        cnt = utilMath.cnt;
+    // Output wire
+    utilMath = digsim.utils.rotationMath(this, digsim.NEXT, 0, 0);
+    conRow = utilMath.conRow;
+    conCol = utilMath.conCol;
 
-        console.log("conCol:" + conCol);
-        console.log("conRow:" + conRow);
-        console.log("outPt:" + this.outPt);
-        
-        for (var i = 0; i < 4; ++i) {
-            if (PH = digsim.placeholder[conRow][conCol][i]) {
-                obj = digsim.components[PH.ref];
-                if ((obj !== this) && ($.inArray(obj, this.connections) === -1) && PH.connectable) { // connection is not part of the previous
-                    console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                    this.connections.push(obj);
-                    obj.type < 0 ? obj.prevConnect.push(this) : obj.connections.push(this);
-                    this.juncts.push( {'x': conCol, 'y': conRow} );
+    console.log("ROW, COL: " + this.row + " " + this.col);
+    console.log("CONROW, CONCOL: " + conRow + " " + conCol);
 
-                    if (obj.type === digsim.WIRE) {
-                        console.log("THIS: {"+(conRow + 0.5)+","+(conCol + 0.5)+"}");
-                        console.log("OBJ: {"+obj.row+","+obj.col+"}");
-                        console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
+    for (var i = 0; i < 4; ++i) {
+        if (PH = digsim.placeholder[conRow][conCol][i]) {
+            console.log(PH);
+            obj = digsim.components[PH.ref];
+            if ((obj !== this) && ($.inArray(obj, this.connections) === -1) && PH.connectable) { // connection is not part of the previous
+                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                this.connections.push(obj);
 
-                        if (obj.row === (conRow + 0.5) && obj.col === (conCol + 0.5)) {
-                            console.log("OBJ CONNECTS AT ITS START");
-                            obj.startConnections.push(this.id);
-                        }
-                        else if (obj.row + obj.path.y === (conRow + 0.5) && obj.col + obj.path.x === (conCol + 0.5)) {
-                            console.log("OBJ CONNECTS AT ITS END");
-                            obj.endConnections.push(this.id);
-                        }
+                if (obj.type === digsim.WIRE) {
+                    console.log("THIS: {"+(conRow + 0.5)+","+(conCol + 0.5)+"}");
+                    console.log("OBJ: {"+obj.row+","+obj.col+"}");
+                    console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
+
+                    if (obj.row === (conRow + 0.5) && obj.col === (conCol + 0.5)) {
+                        console.log("OBJ CONNECTS AT ITS START");
+                        obj.startConnections.push(this.id);
+                    }
+                    else if (obj.row + obj.path.y === (conRow + 0.5) && obj.col + obj.path.x === (conCol + 0.5)) {
+                        console.log("OBJ CONNECTS AT ITS END");
+                        obj.endConnections.push(this.id);
                     }
                 }
+
+                utilMath = digsim.utils.rotationMath(obj, digsim.PREV, 0, 0);
+                objConRow = utilMath.conRow;
+                objConCol = utilMath.conCol;
+                cnt = utilMath.cnt;
+                index = utilMath.index;
+
+                if (obj.type < 0) {
+                    if (((obj.rotation / 90 % 2) && (conRow === objConRow)) || (((obj.rotation / 90) % 2) === 0) && (conCol === objConCol)) {
+                        obj.prevConnect.push(this);
+                    }
+                    else  {
+                        obj.connections.push(this);
+                    }
+                }
+                else {
+                    obj.connections.push(this);
+                }
+
+                this.juncts.push( { 'x': conCol, 'y': conRow } );
             }
         }
     }

@@ -1603,18 +1603,35 @@ Digsim.prototype.onGridMouseDown = function(event) {
         
         // Here's where the magic happens
         console.log("ROW: " + row + ", COL: " + col);
-        if (digsim.placeholder[row][col] instanceof Array) { // wire 
-            
+        var ph; 
+
+        if (digsim.placeholder[row][col] instanceof Array) {
             digsim.dragging = true;
-            var index = digsim.utils.getWireIndex(mouseX, mouseY);
+            index = digsim.utils.getWireIndex(mouseX, mouseY);
             console.warn(index);
             
             if (index !== -1 && digsim.placeholder[row][col][index]) {
-                var ref = digsim.placeholder[row][col][index].ref;                
-                digsim.selectedComponent = digsim.components[ref];
-                digsim.draggingComponent = digsim.components[ref];
-                digsim.draggingComponent.drawStatic = false;
-                digsim.deletePlaceholder(digsim.selectedComponent);
+                PH = digsim.placeholder[row][col][index];
+                digsim.draggingComponent = digsim.components[PH.ref];
+            }
+        }
+        else if (digsim.placeholder[row][col]) {
+            digsim.dragging = true;
+            
+            console.log("digsim.placeholder[row][col]: ");
+            console.log(digsim.placeholder[row][col]);
+            console.log("");
+
+            PH = digsim.placeholder[row][col];
+            digsim.draggingComponent = digsim.components[PH.ref];
+        }
+
+        if (digsim.draggingComponent) {
+             digsim.draggingComponent.drawStatic = false;
+             digsim.deletePlaceholder(digsim.draggingComponent);
+
+            if (digsim.draggingComponent.type === digsim.WIRE) {
+                digsim.selectedComponent = digsim.components[PH.ref];
 
                 for (con in digsim.selectedComponent.connections) {
                     if (digsim.selectedComponent.connections[con].type === digsim.WIRE) {
@@ -1625,76 +1642,64 @@ Digsim.prototype.onGridMouseDown = function(event) {
                 digsim.drawComponents();
                 animateWire();
             }
-        }
-        else if (digsim.placeholder[row][col]) {
-            
-            digsim.dragging = true;
-            
-            console.log("digsim.placeholder[row][col]: ");
-            console.log(digsim.placeholder[row][col]);
-            console.log("");
-            var ref = digsim.placeholder[row][col].ref;
-            console.log("REF: " + ref + "\n");
-            digsim.draggingComponent = digsim.components[ref];
-            digsim.draggingComponent.drawStatic = false;
-            digsim.offsetRow = digsim.placeholder[row][col].posY;
-            digsim.offsetCol = digsim.placeholder[row][col].posX;
-            //digsim.deleteConnections(digsim.draggingComponent);
-            digsim.deletePlaceholder(digsim.draggingComponent);
+            else {
+                digsim.offsetRow = PH.posY;
+                digsim.offsetCol = PH.posX;
+                
+                var cnt = 0;
+                var utilMath, conRow, conCol, index;            
+                if (digsim.draggingComponent.type < 0) {
+                    for (var i = 0; i < digsim.draggingComponent.numInputs; ++i) {
+                        
+                        // Calculate positions of connections based on rotation
+                        utilMath = digsim.utils.rotationMath(digsim.draggingComponent, digsim.PREV, i, cnt); 
+                        conRow = utilMath.conRow;
+                        conCol = utilMath.conCol;
+                        cnt = utilMath.cnt;
+                        index = utilMath.index;
+                        // Now we have absolute position of connections
+                        console.log("«««««««««««««««««««««««««««\nROW: " + conRow);
+                        console.log("COL: " + conCol + "\n");
 
-            var cnt = 0;
-            var utilMath, conRow, conCol, index;            
-            if (digsim.draggingComponent.type < 0) {
-                for (var i = 0; i < digsim.draggingComponent.numInputs; ++i) {
-                    
-                    // Calculate positions of connections based on rotation
-                    utilMath = digsim.utils.rotationMath(digsim.draggingComponent, digsim.PREV, i, cnt); 
-                    conRow = utilMath.conRow;
-                    conCol = utilMath.conCol;
-                    cnt = utilMath.cnt;
-                    index = utilMath.index;
-                    // Now we have absolute position of connections
-                    console.log("«««««««««««««««««««««««««««\nROW: " + conRow);
-                    console.log("COL: " + conCol + "\n");
-
-                    // Prevs
-                    for (var j = 0; j < 4; ++j) {
-                        if ((j !== index) &&  (digsim.placeholder[conRow][conCol] instanceof Array) && (digsim.placeholder[conRow][conCol][j])) {
-                            digsim.compConnectPts[ digsim.components[ digsim.placeholder[conRow][conCol][j].ref ].id ] = { 'x': (conCol - digsim.draggingComponent.col), 'y': (conRow - digsim.draggingComponent.row), 'con': digsim.PREV };
+                        // Prevs
+                        for (var j = 0; j < 4; ++j) {
+                            if ((j !== index) &&  (digsim.placeholder[conRow][conCol] instanceof Array) && (digsim.placeholder[conRow][conCol][j])) {
+                                digsim.compConnectPts[ digsim.components[ digsim.placeholder[conRow][conCol][j].ref ].id ] = { 'x': (conCol - digsim.draggingComponent.col), 'y': (conRow - digsim.draggingComponent.row), 'con': digsim.PREV };
+                            }
+                        }
+                    }
+                    for (con in digsim.draggingComponent.prevConnect) {
+                        if (digsim.draggingComponent.prevConnect[con].type === digsim.WIRE) {
+                            digsim.draggingComponent.prevConnect[con].drawStatic = false;
+                            digsim.deletePlaceholder(digsim.draggingComponent.prevConnect[con]);
                         }
                     }
                 }
-                for (con in digsim.draggingComponent.prevConnect) {
-                    if (digsim.draggingComponent.prevConnect[con].type === digsim.WIRE) {
-                        digsim.draggingComponent.prevConnect[con].drawStatic = false;
-                        digsim.deletePlaceholder(digsim.draggingComponent.prevConnect[con]);
+                // Calculate positions of connections based on rotation
+                utilMath = digsim.utils.rotationMath(digsim.draggingComponent, digsim.NEXT, 0, cnt); 
+                conRow = utilMath.conRow;
+                conCol = utilMath.conCol;
+                // cnt = utilMath.cnt;
+                index = utilMath.index;
+                // Now we have absolute position of connections
+                console.log("«««««««««««««««««««««««««««\nROW: " + conRow);
+                console.log("COL: " + conCol + "\n");
+
+                // Nexts
+                for (var j = 0; j < 4; ++j) {
+                    if ((j !== index) &&  (digsim.placeholder[conRow][conCol] instanceof Array) && (digsim.placeholder[conRow][conCol][j])) {
+                        digsim.compConnectPts[ digsim.components[ digsim.placeholder[conRow][conCol][j].ref ].id ] = { 'x': (conCol - digsim.draggingComponent.col), 'y': (conRow - digsim.draggingComponent.row), 'con': digsim.NEXT };
                     }
                 }
-            }
-            // Calculate positions of connections based on rotation
-            utilMath = digsim.utils.rotationMath(digsim.draggingComponent, digsim.NEXT, 0, cnt); 
-            conRow = utilMath.conRow;
-            conCol = utilMath.conCol;
-            // cnt = utilMath.cnt;
-            index = utilMath.index;
-            // Now we have absolute position of connections
-            console.log("«««««««««««««««««««««««««««\nROW: " + conRow);
-            console.log("COL: " + conCol + "\n");
-
-            // Nexts
-            for (var j = 0; j < 4; ++j) {
-                if ((j !== index) &&  (digsim.placeholder[conRow][conCol] instanceof Array) && (digsim.placeholder[conRow][conCol][j])) {
-                    digsim.compConnectPts[ digsim.components[ digsim.placeholder[conRow][conCol][j].ref ].id ] = { 'x': (conCol - digsim.draggingComponent.col), 'y': (conRow - digsim.draggingComponent.row), 'con': digsim.NEXT };
+                for (con in digsim.draggingComponent.connections) {
+                    if (digsim.draggingComponent.connections[con].type === digsim.WIRE) {
+                        digsim.draggingComponent.connections[con].drawStatic = false;
+                        digsim.deletePlaceholder(digsim.draggingComponent.connections[con]);
+                    }
                 }
+                digsim.drawComponents();
+                animate();
             }
-            for (con in digsim.draggingComponent.connections) {
-                if (digsim.draggingComponent.connections[con].type === digsim.WIRE) {
-                    digsim.draggingComponent.connections[con].drawStatic = false;
-                    digsim.deletePlaceholder(digsim.draggingComponent.connections[con]);
-                }
-            }
-            digsim.drawComponents();
-            animate();
         }
         else {
             // There's nothing where you clicked, dude. 
@@ -1969,16 +1974,23 @@ Digsim.prototype.onGridMouseMove = function(event) {
         var row = Math.floor(mouseY / digsim.GRID_SIZE);
         var col = Math.floor(mouseX / digsim.GRID_SIZE);
         var PH = digsim.placeholder[row][col];
-        
+
         if (PH instanceof Array) {
             var index = digsim.utils.getWireIndex(mouseX, mouseY);
 
-            if (index != -1 && digsim.placeholder[row][col][index]) {
-                if (digsim.components[ digsim.placeholder[row][col][index].ref ].dx) {
-                    $("canvas").css('cursor','row-resize');
+            if (index != -1 && digsim.placeholder[row][col][index]) { // Could be a wire or a component
+                var obj = digsim.components[ digsim.placeholder[row][col][index].ref ]
+
+                if (obj.type === digsim.WIRE) { // Wire
+                    if (obj.dx) {
+                        $("canvas").css('cursor','row-resize');
+                    }
+                    else {
+                        $("canvas").css('cursor','col-resize');
+                    }
                 }
-                else {
-                    $("canvas").css('cursor','col-resize');
+                else { // Component
+                     $("canvas").css('cursor','move');
                 }
             }
             else {
