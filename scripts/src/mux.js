@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 function MUX(numInputs) {
-    this.type = undefined;
+    this.type = digsim.MUX;
     this.name = 'MUX';
 
     this.next = [];
@@ -40,7 +40,6 @@ MUX.prototype.changeSize = function() {
 MUX.prototype.draw = function(context, lineColor) {
 
 //    var factor = Math.floor(this.numInputs / 2); ?????
-    
     context.save();
     context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
@@ -49,12 +48,12 @@ MUX.prototype.draw = function(context, lineColor) {
     context.lineWidth = 2;
     
     var offsetH = 0, offsetV = 0;
-    if (this.rotation == 90) {
-        offsetV = -0.5;
-    }
-    else if (this.rotation === 270) {
-        offsetH = 0.5;
-    }
+    // if (this.rotation == 90) {
+    //     offsetV = -0.5;
+    // }
+    // else if (this.rotation === 270) {
+    //     offsetH = 0.5;
+    // }
     
     var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.GRID_SIZE,
         'col': (this.dimension.col / 2 + offsetH) * digsim.GRID_SIZE};

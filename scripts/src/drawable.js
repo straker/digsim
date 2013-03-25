@@ -218,8 +218,14 @@ Drawable.prototype.drawWires = function(context, lineColor) {
             context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + 1.5));
         }
         
-        context.moveTo(((factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
-        context.lineTo(((factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
+        if (this.name == "MUX") {
+            context.moveTo(digsim.GRID_SIZE * 2, (this.numInputs / 2 + 0.5) * digsim.GRID_SIZE);
+            context.lineTo(digsim.GRID_SIZE * 2.5, (this.numInputs / 2 + 0.5) * digsim.GRID_SIZE);
+        }
+        else {
+            context.moveTo(((factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
+            context.lineTo(((factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
+        }    
     }
     else {
         if (this.name == "JKFF") {

@@ -383,7 +383,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             if (!(tempPlaceholders[tempRow] instanceof Array)) {
                 tempPlaceholders[tempRow] = [];
             }
-            tempPlaceholders[tempRow][tempCol] = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row);
+            tempPlaceholders[tempRow][tempCol] = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
         }
     } 
 
@@ -418,7 +418,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
         if (!(tempPlaceholders[conRow][conCol] instanceof Array)) { // If it's not a 3D array, make it a 3D array (for wires only)
             tempPlaceholders[conRow][conCol] = [];
         }
-        tempPlaceholders[conRow][conCol][index] = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+        tempPlaceholders[conRow][conCol][index] = new Placeholder(obj.id, conCol - obj.col, conRow - obj.row, obj.dimension.col, obj.dimension.row);
     }
 
     // Nexts
@@ -446,7 +446,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
     if (!(tempPlaceholders[conRow][conCol] instanceof Array)) { // If it's not a 3D array, make it a 3D array
         tempPlaceholders[conRow][conCol] = [];
     }
-    tempPlaceholders[conRow][conCol][index] = new Placeholder(obj.id, obj.col + 1, obj.row + 1, obj.dimension.col, obj.dimension.row);
+    tempPlaceholders[conRow][conCol][index] = new Placeholder(obj.id, conCol - obj.col, conRow - obj.row, obj.dimension.col, obj.dimension.row);
 
     // Additional placeholers for Not gate, Switch, and Clock
     if (obj.type === digsim.NOT) {
@@ -497,7 +497,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
             if (!(tempPlaceholders[row][col] instanceof Array)) { // If it's not a 3D array, make it so
                 tempPlaceholders[row][col] = [];
             }
-            tempPlaceholders[row][col][index] = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
+            tempPlaceholders[row][col][index] = new Placeholder(obj.id, col - obj.col, row - obj.row, obj.dimension.col, obj.dimension.row, false);
         }
     }
     else if (obj.type === digsim.SWITCH || obj.type === digsim.CLOCK) {
@@ -543,7 +543,7 @@ Digsim.prototype.setPlaceholders = function(obj) {
                 if (!(tempPlaceholders[row][col] instanceof Array)) { // If it's not 3D, make it so
                     tempPlaceholders[row][col] = [];
                 }
-                tempPlaceholders[row][col][index] = new Placeholder(obj.id, col, row, obj.dimension.col, obj.dimension.row, false);
+                tempPlaceholders[row][col][index] = new Placeholder(obj.id, col - obj.col, row - obj.row, obj.dimension.col, obj.dimension.row, false);
             }
             if (obj.rotation === 90 || obj.rotation === 270) {
                 ++row;
@@ -974,11 +974,14 @@ Digsim.prototype.deletePlaceholder = function(obj) {
         cnt = utilMath.cnt;
         index = utilMath.index;
 
+        console.log("LED");
+        var noneFound = true;
         for (var j = 0; j < 4; ++j) {
             if (j != index && this.placeholder[conRow][conCol][j]) {
                 noneFound = false;
             }
         }
+        console.log("NONEFOUND: " + noneFound + " AT {" + row + "," + col + "}");
         if (noneFound) {
             delete this.placeholder[conRow][conCol]; // = undefined;
         }
@@ -1600,17 +1603,18 @@ Digsim.prototype.onGridMouseDown = function(event) {
             return;
         }
         digsim.dragging = false;
-        
+        digsim.draggingComponent = undefined;
+
         // Here's where the magic happens
         console.log("ROW: " + row + ", COL: " + col);
         var ph; 
 
         if (digsim.placeholder[row][col] instanceof Array) {
-            digsim.dragging = true;
             index = digsim.utils.getWireIndex(mouseX, mouseY);
             console.warn(index);
             
             if (index !== -1 && digsim.placeholder[row][col][index]) {
+                digsim.dragging = true;
                 PH = digsim.placeholder[row][col][index];
                 digsim.draggingComponent = digsim.components[PH.ref];
             }
