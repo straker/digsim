@@ -331,6 +331,11 @@ Digsim.prototype.deleteConnections = function(obj) {
                 wire.endConnections.splice(wire.endConnections.indexOf(obj.id),1);
             }
         }
+        // Remove object from gate connections
+        else if (obj.connections[i].type < 0) {
+            connections = obj.connections[i].prevConnect;
+            connections.splice(connections.indexOf(obj),1);
+        }
     }
 
     // Remove connetions to gates - must be used because gates use
@@ -583,15 +588,11 @@ Digsim.prototype.setPlaceholders = function(obj) {
  *  identifier. 
  *
  * wire    - the wire object
- * dx      - indicates a horizontal wire
- * dy      - indicates a vertical wire
  * nocheck - autorouting already does placeholder checking, so we can skip 
  *           this step in some instances
  ****************************************************************************/
 Digsim.prototype.setWirePlaceholders = function(wire, nocheck) {
-    //console.log("row: " + row + "\ncol: " + col);
     
-    console.log(wire);
     var dx = wire.dx;
     var dy = wire.dy;
     var endRow = wire.path.y + wire.row; 
@@ -1210,7 +1211,7 @@ Digsim.prototype.onGridClicked = function(event) {
                         return;
                     }
                     
-                    var validPlacement = digsim.setWirePlaceholders(wire, dx, dy);
+                    var validPlacement = digsim.setWirePlaceholders(wire);
                     
                     if (validPlacement) {
                         console.log("WE HAVE A VALID PLACEMENT!");
@@ -2499,6 +2500,7 @@ function animateWire() {
             var start, target, path, obj;
             context.strokeStyle = '#3399FF';
 
+            // Animate wires connected to the front of the wire
             for (var i = 0, len = wire.startConnections.length; i < len; ++i) {
                 obj = digsim.components[wire.startConnections[i]];
                 
@@ -2529,6 +2531,8 @@ function animateWire() {
                 }
 
             }
+
+            // Animate wire connected to the end of the wire 
             for (var i = 0, len = wire.endConnections.length; i < len; ++i) {
                 obj = digsim.components[wire.endConnections[i]];
                 
@@ -3049,6 +3053,15 @@ Digsim.prototype.utils = {
         digsim.drawGrid(digsim.gridContext);
 
         var row = 0; col = 0;
+            digsim.movingContext.fillStyle = 'black';
+            digsim.movingContext.font = "10pt Calibri";
+        for (row = 0; row < digsim.NUM_ROWS; row++) {
+            digsim.movingContext.fillText(row, digsim.GRID_SIZE / 2 - 10, row * digsim.GRID_SIZE + digsim.GRID_SIZE / 2 + 10);
+        }
+        for (col = 0; col < digsim.NUM_COLS; col++) {
+            digsim.movingContext.fillText(col, col * digsim.GRID_SIZE + digsim.GRID_SIZE / 2 - 10, digsim.GRID_SIZE / 2 + 10);
+        }
+
         for (row = 0; row < digsim.NUM_ROWS; row++) {
             for (col = 0; col < digsim.NUM_COLS; col++) {
                 if (digsim.placeholder[row][col] instanceof Array) {
@@ -3072,8 +3085,8 @@ Digsim.prototype.utils = {
                             digsim.gridContext.fill();
                             digsim.gridContext.restore();
 
-                            digsim.movingContext.fillStyle = 'black';
                             digsim.movingContext.font = "10pt Calibri";
+                            digsim.movingContext.fillStyle = 'black';
                             digsim.movingContext.fillText(digsim.placeholder[row][col][z].ref, col * digsim.GRID_SIZE + digsim.GRID_SIZE / 2 - (z % 2 * 10), row * digsim.GRID_SIZE + digsim.GRID_SIZE / 2 + (z % 2 * 10));
                         }
                     }
@@ -3081,7 +3094,6 @@ Digsim.prototype.utils = {
                 else if (digsim.placeholder[row][col]) {
                     digsim.gridContext.fillStyle = 'orange';
                     digsim.gridContext.fillRect(col * digsim.GRID_SIZE + 1, row * digsim.GRID_SIZE + 1, digsim.GRID_SIZE - 1, digsim.GRID_SIZE - 1);
-                    digsim.movingContext.fillStyle = 'black';
                     digsim.movingContext.font = "18pt Calibri";
                     digsim.movingContext.fillText(digsim.placeholder[row][col].ref, col * digsim.GRID_SIZE + digsim.GRID_SIZE / 2 - 10, row * digsim.GRID_SIZE + digsim.GRID_SIZE / 2 + 10);
                 }
