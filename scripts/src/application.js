@@ -10,8 +10,9 @@
  *  A fully functional circuit simulation program. 
  *
  * To-do:
- * pick up wires
  * Panning
+ * fix merging
+ * fix junctions
  * Implement touch controls
  * D flip flop, JK flip flop, 2/4 to 1 MUX
  * Save and load schematics/files
@@ -243,7 +244,7 @@ Digsim.prototype.drawGrid = function(context) {
         
         // Draw the columns
         for (var col = 1; col < this.NUM_COLS; col++) {
-            context.moveTo(col * this.GRID_SIZE, 0);
+            context.moveTo(col * this.GRID_SIZE, 0.5);
             context.lineTo(col * this.GRID_SIZE, this.gridHeight-1);
         }
         // Draw the rows
@@ -2394,9 +2395,10 @@ document.onkeydown = function(event) {
     if (keyCode === 9) {
         event.preventDefault();
     }
+    // Make delete key acutally delete components and not go to previous page
     if (keyCode === 8) {
         window.event.keyCode = 46; 
-        window.onbeforeunload = function() {return "If you're trying to delete a componenet, use the delete key instead of the backspace key."};
+        event.preventDefault();
     }
     // Don't do anything when mac user refresh
     if (!(keyCode === 82 && event.metaKey)) {

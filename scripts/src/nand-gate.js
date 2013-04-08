@@ -112,7 +112,7 @@ NAND.prototype.draw = function(context, lineColor) {
 NAND.prototype.computeLogic = function() {
     var computedState = this.prev[0].state; 
     
-    for (var i = 1; i < this.numInputs; ++i) {
+    for (var i = 1; i < this.prev.length; ++i) {
         computedState = computedState && (this.prev[i] ? this.prev[i].state : 0);
         console.log("PREV["+i+"].state: " + (this.prev[i] ? this.prev[i].state : 0));
     }
