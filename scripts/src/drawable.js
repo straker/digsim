@@ -151,43 +151,6 @@ Drawable.prototype.checkConnect = function() {
 };
 
 /******************************************************************************
- * PASS STATE
- *  Passes the state of the current object to the next object (be it a wire, 
- *  gate, LED, etc). 
- *****************************************************************************/
-Drawable.prototype.passState = function(pState) {
-    if (this.type < 0) {
-        this.computeLogic();
-    }
-    else {
-        this.state = pState;            
-    }
-
-    if (typeof this.next[0] !== "undefined") {
-        console.log("this.next.length = " + this.next.length);
-        for (var i = 0, len = this.next.length; i < len; ++i) {
-            console.log("");
-            console.log(this);
-            console.log("THIS.ID: " + this.id);
-            console.log("THIS.NEXT[0]:");
-            console.log(this.next[0]);
-            console.log("THIS.NEXT[0].ID: " + this.next[0].id);
-            console.log("PASSES STATE: " + pState);
-            
-            if (this.next[i].type < 0 || this.next[i].state !== this.state) {
-                this.next[i].passState(this.state);
-            }
-        }
-    }
-    else if (this.type !== digsim.LED) {
-        console.error("ERROR! Multiple drivers on 1 wire [passState()]");
-        if (this.type === digsim.WIRE) {
-            digsim.utils.addMessage(digsim.WARNING, "[14]Warning: Unexpected end of wire.");
-        }
-    }
-};
-
-/******************************************************************************
  * DRAW WIRES
  *  Draws..... wires?
  *****************************************************************************/
@@ -274,6 +237,48 @@ Drawable.prototype.setNext = function(obj) {
 Drawable.prototype.setPrev = function(obj) {
     this.prev.push(obj);
     obj.next.push(this);
+};
+
+/******************************************************************************
+ * PASS STATE
+ *  Passes the state of the current object to the next object (be it a wire, 
+ *  gate, LED, etc). 
+ *****************************************************************************/
+Drawable.prototype.passState = function(pState) {
+    if (this.type < 0) {
+        this.computeLogic();
+    }
+    else {
+        this.state = pState;            
+    }
+
+    if (typeof this.next[0] !== "undefined") {
+        console.log("this.next.length = " + this.next.length);
+        for (var i = 0, len = this.next.length; i < len; ++i) {
+            console.log("");
+            console.log(this);
+            console.log("THIS.ID: " + this.id);
+            console.log("THIS.NEXT[0]:");
+            console.log(this.next[0]);
+            console.log("THIS.NEXT[0].ID: " + this.next[0].id);
+            console.log("PASSES STATE: " + pState);
+            
+            if ((this.next[i].type < 0 || this.next[i].state !== this.state) && digsim.passCounter < digsim.maxSchematicLoop) {
+                digsim.passCounter++;
+                this.next[i].passState(this.state);
+            }
+            if (digsim.passCounter === digsim.maxSchematicLoop) {
+                digsim.utils.addMessage(digsim.ERROR, "ERROR: Schematic contains an infinite loop caused by an unstable state.");
+                digsim.passCounter++;
+            }
+        }
+    }
+    else if (this.type !== digsim.LED) {
+        console.error("ERROR! Multiple drivers on 1 wire [passState()]");
+        if (this.type === digsim.WIRE) {
+            digsim.utils.addMessage(digsim.WARNING, "[14]Warning: Unexpected end of wire.");
+        }
+    }
 };
 
 /******************************************************************************

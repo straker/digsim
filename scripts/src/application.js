@@ -70,8 +70,8 @@ function Digsim() {
         startY: -1, 
         startPos: -1, 
     };
-    this.dragging = false;  // When this is true, we are dragging a wire
-    this.draggingComponent;      // When this is true, we are dragging a gate
+    this.dragging = false;  // Flagged used to detect when a component is being dragged
+    this.draggingComponent; // The component that is being dragged
     this.lockH = 0;         // Locks the wire horizontally (non-autorouting)
     this.lockV = 0;         // Locks the wire vertically (non-autorouting)
     this.clkCnt = 0;        // This will count to digsim.CLK_FREQ before it resets and changes states
@@ -99,6 +99,8 @@ function Digsim() {
     this.startConnectPt = {'r': -1, 'c': -1}; // Tells where the wire must connect to when dragging around wires. 
     this.compConnectPts = []; // Tells us which input to connect to
     this.backspace2delete = false;
+    this.maxSchematicLoop;  // Used to prevent infinite loops (such as NOT gate looped back on itself)
+    this.passCounter = 0;   // Counter used to prevent infinite loops
 
     // Flip flop simulation
     this.RISING_EDGE = false;   // Used to simulate the rising edge of the clock
@@ -321,7 +323,11 @@ Digsim.prototype.deleteConnections = function(obj) {
     // First, remove the object from its connections' list of connections
     for (var i = 0; i < obj.connections.length; ++i) {
         connections = obj.connections[i].connections;
-        connections.splice(connections.indexOf(obj),1);
+        index = connections.indexOf(obj);
+        if (index >= 0) {
+            connections.splice(index,1);
+        }
+
         if (obj.connections[i].type === digsim.WIRE) {
             wire = obj.connections[i]
             if ($.inArray(obj.id, wire.startConnections) !== -1) {
@@ -334,7 +340,10 @@ Digsim.prototype.deleteConnections = function(obj) {
         // Remove object from gate connections
         else if (obj.connections[i].type < 0) {
             connections = obj.connections[i].prevConnect;
-            connections.splice(connections.indexOf(obj),1);
+            index = connections.indexOf(obj);
+            if (index >= 0) {
+                connections.splice(index,1);
+            }
         }
     }
 
@@ -1065,16 +1074,31 @@ Digsim.prototype.onButtonClicked = function (event) {
             $('#messages').html('');
             digsim.mode = digsim.SIM_MODE;
 
-            // Clear the next/prev list for each item
+            // Clear the next/prev list for each item and count the max pass throughs
+            var obj;
+            digsim.maxSchematicLoop = 0;
             for (var j = 0, len = digsim.components.length; j < len; ++j) {
-                if (typeof digsim.components[j] !== 'undefined') {
-                    digsim.components[j].next = [];
-                    digsim.components[j].prev = [];
+                obj = digsim.components[j];
+                if (typeof obj !== 'undefined') {
+                    obj.next = [];
+                    obj.prev = [];
+
+                    // Count the number of possible pass throughs the curren schematic could have
+                    if (obj.type >= 0) {
+                        digsim.maxSchematicLoop++;
+                    }
+                    else {
+                        digsim.maxSchematicLoop += obj.numInputs;
+                    }
                 }
             }
+            // Define a safety buffer to pass through
+            digsim.maxSchematicLoop *= 3;
+
             // Loop through each driver and pass state
             for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
-                var obj = digsim.components[ digsim.drivers[i] ];
+                obj = digsim.components[ digsim.drivers[i] ];
+                digsim.passCounter = 0;
                 if (obj.traverse()) {
                     console.log("");
                     console.log("");
@@ -1736,6 +1760,7 @@ Digsim.prototype.onGridMouseDown = function(event) {
             setTimeout("digsim.stopRisingEdge()", 20);
 
             if (obj.type === digsim.SWITCH) {
+                digsim.passCounter = 0;
                 console.log("");
                 console.log("");
                 console.log("");
@@ -2479,7 +2504,8 @@ function animateWire() {
     if (digsim.dragging) {
         requestAnimFrame(animateWire);
 
-        if (wire = digsim.selectedComponent) {
+        if (digsim.selectedComponent) {
+            wire = digsim.selectedComponent;
             //console.log("test");
             if (wire.dx) {
                 wire.row = row + 0.5; // Move to center of grid. 
@@ -2631,6 +2657,7 @@ function cycleClock() {
             for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
                 var driver = digsim.components[ digsim.drivers[i] ];
                 if (driver.type === digsim.CLOCK) {
+                    digsim.passCounter = 0;
                     console.log("");
                     console.log("");
                     console.log("");
