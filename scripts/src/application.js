@@ -33,7 +33,7 @@ function Digsim() {
     this.HIT_RADIUS = .73333333;
     this.NUM_COLS = Math.floor((window.innerWidth - $('.canvases').position().left) / this.GRID_SIZE);
     this.NUM_ROWS = Math.floor((window.innerHeight - $('.canvases').position().top) / this.GRID_SIZE);
-    this.CLK_FREQ = 60; // This number divided by 60 is delay (in seconds) between changes in the clock state
+    this.CLK_FREQ = 2; // This number divided by 60 is delay (in seconds) between changes in the clock state
     
     // Type identifiers
     this.AND = -1;  // Gates are negative because they have a special
@@ -170,6 +170,9 @@ Digsim.prototype.run = function() {
         $("canvas").on("mouseup", this.onGridMouseUp);
         $("canvas").on("click", this.onGridClicked);
         $("canvas").on("mousemove", this.onGridMouseMove);
+        $("canvas").on("touchstart", this.onGridMouseDown);
+        $("canvas").on("touchmove", this.onGridMouseMove);
+        $("canvas").on("touchend", this.onGridMouseUp);
         $(".gates>ul>li>a, .io a, .modes a").on("click", this.onButtonClicked);
         $("#New").on("click", this.newFile);
         $("#Toggle_Grid").on("click", this.toggleGrid);
@@ -1041,6 +1044,14 @@ Digsim.prototype.deletePlaceholder = function(obj) {
   ============================================================================
   ============================================================================*/
 
+/*****************************************************************************
+ * ON TOUCH DOWN
+ *  When the screen is touched, this function is called. We are simulating
+ *  on mouse down.
+ ****************************************************************************/
+Digsim.prototype.onTouchDown = function(event) {
+    setTimeout()    
+}
 /*****************************************************************************
  * ON BUTTON CLICKED
  *  When a button is clicked, do this. Creates a gate when button is clicked. 
@@ -2654,7 +2665,7 @@ function cycleClock() {
     if (digsim.mode === digsim.SIM_MODE) {
         ++digsim.clkCnt;
         requestAnimFrame(cycleClock);
-        if (digsim.clkCnt > digsim.CLK_FREQ) { // FPS is approximately 60 Hz
+        if (digsim.clkCnt > 60 / digsim.CLK_FREQ ) { // FPS is approximately 60 Hz
             
             digsim.clkCnt = 0;
             for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
