@@ -22,6 +22,8 @@ function XOR(numInputs) {
 
     this.outPt = 2;
 };
+
+// Create a new XOR from the Drawable
 XOR.prototype = new Drawable();
 
 /*****************************************************************************

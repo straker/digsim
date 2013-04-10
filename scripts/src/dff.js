@@ -54,38 +54,7 @@ DFF.prototype.draw = function(context, lineColor) {
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
-/** TESTING TO FIND THE ROTATIONAL CENTER OF THE LETTERS ***
 
-    var deleteMe = 'D'
-    center[deleteMe] = { 'x': 0.35 * digsim.GRID_SIZE, 'y': 0.36 * digsim.GRID_SIZE};
-    /**
-    context.translate(center['D'].x, center['D'].y);
-    context.rotate(this.rotation * Math.PI / -180);
-    context.translate(-center['D'].x, -center['D'].y);
-    /**
-    context.font =  (digsim.GRID_SIZE / 2) + "px Arial";
-    context.font = "50px Arial";
-    context.fontWidth = digsim.GRID_SIZE / 4;
-    context.fillStyle = lineColor || 'black';
-    context.fillText(deleteMe, 0,0);
-    var x = 35;
-    var y = 36;
-    context.moveTo(0,0);
-    context.lineTo(0,-y);
-    context.lineTo(x,-y);
-    context.lineTo(x,0);
-    context.lineTo(0,0);
-    context.lineWidth = 1;
-    context.strokeStyle = 'lime';
-    context.moveTo(center[deleteMe].x - 1, -(center[deleteMe].y - 1));
-    context.lineTo(center[deleteMe].x + 1, -(center[deleteMe].y + 1));
-    context.moveTo(center[deleteMe].x - 1, -(center[deleteMe].y + 1));
-    context.lineTo(center[deleteMe].x + 1, -(center[deleteMe].y - 1));
-    context.moveTo(0, -y/2);
-    context.lineTo(x, -y/2);
-    context.moveTo(x/2, 0);
-    context.lineTo(x/2, -y);
-/**/
     this.drawWires(context, lineColor);
 
     // Draw gate
@@ -99,22 +68,19 @@ DFF.prototype.draw = function(context, lineColor) {
     context.fontWidth = digsim.GRID_SIZE / 4;
     context.fillStyle = lineColor || 'black';
 
-
+    // Font position based on bottom left of letter
     context.fillText("D", digsim.GRID_SIZE / 6, digsim.GRID_SIZE * 0.75);
-
-
     context.fillText("Q", digsim.GRID_SIZE * 1.375, digsim.GRID_SIZE * 0.75);
-    
-
     context.fillText("Q", digsim.GRID_SIZE * 1.375, digsim.GRID_SIZE * 2.75);
+
     // Draw Q's bar
     context.moveTo(digsim.GRID_SIZE * 1.4, digsim.GRID_SIZE * 2.3);
     context.lineTo(digsim.GRID_SIZE * 1.75, digsim.GRID_SIZE * 2.3);
-    // Draw Clock
+
+    // Draw Clock triangle
     context.moveTo(0, digsim.GRID_SIZE * 1.25);
     context.lineTo(digsim.GRID_SIZE / 4, digsim.GRID_SIZE * 1.5);
     context.lineTo(0, digsim.GRID_SIZE * 1.75);
-/**/
     context.stroke();
     context.restore();
 

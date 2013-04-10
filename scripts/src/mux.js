@@ -33,9 +33,9 @@ MUX.prototype.changeSize = function() {
 
 /*****************************************************************************
  * DRAW
- *  This will draw the mux on the screen. Totally scalable, and able to 
- *  handle any number of inputs. Props to Steven Lambert for figuring out how
- *  to draw a half circle with the bezierCurveTo method. 
+ *  This will draw the mux on the screen. THIS IS STILL INCOMPLETE! The 
+ *  rotations are not consistent, and we dont have a means of knowing which 
+ *  input is which yet. 
  ****************************************************************************/
 MUX.prototype.draw = function(context, lineColor) {
 
@@ -48,15 +48,15 @@ MUX.prototype.draw = function(context, lineColor) {
     context.lineWidth = 2;
     
     var offsetH = 0, offsetV = 0;
-    // if (this.rotation == 90) {
-    //     offsetV = -0.5;
-    // }
-    // else if (this.rotation === 270) {
-    //     offsetH = 0.5;
-    // }
+    if (this.rotation == 90) {
+        offsetV = 0.5;
+    }
+    else if (this.rotation === 270) {
+        offsetH = -0.5;
+    }
     
-    var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.GRID_SIZE,
-        'col': (this.dimension.col / 2 + offsetH) * digsim.GRID_SIZE};
+    var center = {'row': ((this.numInputs + 1) / 2 + offsetV) * digsim.GRID_SIZE,
+        'col': (1 + offsetH) * digsim.GRID_SIZE};
 
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
@@ -66,13 +66,30 @@ MUX.prototype.draw = function(context, lineColor) {
     // Draw body
     context.beginPath();
     context.moveTo(0, 0);
-    context.lineTo(0, this.dimension.row * digsim.GRID_SIZE);
-    context.lineTo(digsim.GRID_SIZE * 2, (this.dimension.row - this.numInputs / 4) * digsim.GRID_SIZE);
+    context.lineTo(0, (this.numInputs + 1) * digsim.GRID_SIZE);
+    context.lineTo(digsim.GRID_SIZE * 2, ((this.numInputs + 1) - this.numInputs / 4) * digsim.GRID_SIZE);
     context.lineTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * this.numInputs / 4);
- 
     context.closePath();   
     context.fill();
     context.stroke();
+    
+    // Select Line text
+    context.moveTo(0,0);
+    context.font =  (digsim.GRID_SIZE / 2) + "px Arial";
+    context.fontWidth = digsim.GRID_SIZE / 4;
+    var textX, textY;
+    if (this.numInputs == 4)
+    {
+        textX = digsim.GRID_SIZE * 7 / 6;
+        textY = digsim.GRID_SIZE * 4;
+        context.fillText("S1", textX - digsim.GRID_SIZE, textY + digsim.GRID_SIZE * .5);
+    }
+    else
+    {
+        textX = digsim.GRID_SIZE / 6;
+        textY = digsim.GRID_SIZE * 2.5;
+    }
+    context.fillText("S0", textX, textY);
     context.restore();
     
     for (var i = 0; i < this.juncts.length; ++i) {

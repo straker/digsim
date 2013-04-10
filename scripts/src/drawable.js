@@ -207,8 +207,8 @@ Drawable.prototype.drawWires = function(context, lineColor) {
 
     // Draw select wires for MUX
     if (this.name == "MUX") {
-        context.moveTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.dimension.row + 0.5));
-        context.lineTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.dimension.row - 1));
+        context.moveTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.numInputs + 1.5));
+        context.lineTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.numInputs));
         if (this.numInputs == 4) {
             context.moveTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 5.5);
             context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 4.5);
@@ -275,9 +275,6 @@ Drawable.prototype.passState = function(pState) {
     }
     else if (this.type !== digsim.LED) {
         console.error("ERROR! Multiple drivers on 1 wire [passState()]");
-        if (this.type === digsim.WIRE) {
-            digsim.utils.addMessage(digsim.WARNING, "[14]Warning: Unexpected end of wire.");
-        }
     }
 };
 
