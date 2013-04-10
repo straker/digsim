@@ -2112,16 +2112,18 @@ Digsim.prototype.open = function(event) {
     // Use reflection to dynamically create gate based on id
     digsim.loadTest = [];
     for (var i in components) {
-        var id = components[i].name
-        var Class = window[id];
-        var comp = new Class(components[i].numInputs);
+        if (components[i] !== null) {
+            var id = components[i].name
+            var Class = window[id];
+            var comp = new Class(components[i].numInputs);
 
-        // Copy properties from compoenets into new compoenents
-        for (var j in digsim.loadComponents[i]) {
-            comp[j] = components[i][j];
+            // Copy properties from compoenets into new compoenents
+            for (var j in digsim.loadComponents[i]) {
+                comp[j] = components[i][j];
+            }
+
+            newComponents[i] = comp;
         }
-
-        newComponents[i] = comp;
     }
 
     // Fix connection arrays
