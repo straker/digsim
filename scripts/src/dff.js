@@ -7,7 +7,7 @@
  *  Zack Sheffield
  ******************************************************************************/
 
-function DFF(numInputs) {
+function DFF(numInputs) { 
     this.type = undefined; //digsim.DFF;
     this.name = 'DFF';
     

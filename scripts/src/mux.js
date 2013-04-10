@@ -46,6 +46,9 @@ MUX.prototype.draw = function(context, lineColor) {
     context.fillStyle = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
+    context.font = (digsim.GRID_SIZE / 2) + "px Arial";
+    context.fontWidth = digsim.GRID_SIZE / 4;
+
     
     var offsetH = 0, offsetV = 0;
     if (this.rotation == 90) {
@@ -71,25 +74,17 @@ MUX.prototype.draw = function(context, lineColor) {
     context.lineTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * this.numInputs / 4);
     context.closePath();   
     context.fill();
-    context.stroke();
-    
+
     // Select Line text
-    context.moveTo(0,0);
-    context.font =  (digsim.GRID_SIZE / 2) + "px Arial";
-    context.fontWidth = digsim.GRID_SIZE / 4;
-    var textX, textY;
-    if (this.numInputs == 4)
-    {
-        textX = digsim.GRID_SIZE * 7 / 6;
-        textY = digsim.GRID_SIZE * 4;
-        context.fillText("S1", textX - digsim.GRID_SIZE, textY + digsim.GRID_SIZE * .5);
+    var textX = digsim.GRID_SIZE * 7 / 6;
+    var textY = digsim.GRID_SIZE * (this.numInputs == 4 ? 4 : 2.5);
+    context.fillStyle = context.strokeStyle;
+    if (this.numInputs == 4) {
+        context.fillText("S1", textX - digsim.GRID_SIZE, textY);
     }
-    else
-    {
-        textX = digsim.GRID_SIZE / 6;
-        textY = digsim.GRID_SIZE * 2.5;
-    }
+
     context.fillText("S0", textX, textY);
+    context.stroke();
     context.restore();
     
     for (var i = 0; i < this.juncts.length; ++i) {
