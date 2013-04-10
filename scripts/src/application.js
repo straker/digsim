@@ -16,7 +16,6 @@
  * Implement touch controls
  * D flip flop, JK flip flop, 2/4 to 1 MUX
  * Save and load schematics/files
- * Testing merging and branching in git
  * 
  ****************************************************************************/
 
@@ -176,6 +175,8 @@ Digsim.prototype.run = function() {
         $("#Zoom_In").on("click", this.zoomIn);
         $("#Zoom_Out").on("click", this.zoomOut);
         $('#2-input, #3-input, #4-input').on("click", this.changeNumInputs);
+        $('#Save').on("click", this.save);
+        $('#Open').on("click", this.open);
         $('#Cut').on("click", this.cut);
         $('#Copy').on("click", this.copy);
         $('#Paste').on("click", this.paste);
@@ -193,17 +194,10 @@ Digsim.prototype.run = function() {
             }
         });
 
-        /*** Temporary disable buttons as functionality is being worked out ****/
-        this.disableButton("Open");
-        this.disableButton("Save");
+        // Disable buttons on start
         this.disableButton("Submit");
         this.disableButton("Empty");
-        this.disableButton("Delete");
-        this.disableButton("Rotate_CW");
-        this.disableButton("Rotate_CCW");
-        this.disableButton("Cut");
-        this.disableButton("Copy");
-        this.disableButton("Paste");
+        this.disableControls();
 
         this.drawGrid(this.gridContext);
     }
@@ -1027,7 +1021,7 @@ Digsim.prototype.deletePlaceholder = function(obj) {
     if (id == "Run" || prev_mode === this.SIM_MODE) {
         console.log("done running");
         for (var i in this.components) {
-                this.components[i].state = 0;
+            this.components[i].state = 0;
         }
         this.drawComponents();
     }
@@ -2063,6 +2057,98 @@ Digsim.prototype.changeNumInputs = function(event) {
 };
 
 /*****************************************************************************
+ * SAVE
+ *  Save the schematic to a JSON object
+ ****************************************************************************/
+Digsim.prototype.save = function(event) {
+    var components = [], comp, connections;
+    // Create a new array that will be turned into the JSON object
+    for (var i in digsim.components)  {
+        components[i] = $.extend(true, {}, digsim.components[i]);
+    }
+
+    // Loop through the componenets array
+    for (var i in components) {
+        var comp = components[i];
+
+        // Change all connection objects into ids for stringification
+        for (var j in comp.connections) {
+            comp.connections[j] = comp.connections[j].id;
+        }
+
+        // Delete all arrays
+        comp.prev = comp.next = [];
+        if (comp.type < 0) {
+            comp.prevConnect = [];
+        }
+    }
+
+    // Stringify the array
+    digsim.saveJson = JSON.stringify(components);
+ };
+
+/*****************************************************************************
+ * LOAD
+ *  Load a schematic into the program
+ ****************************************************************************/
+Digsim.prototype.open = function(event) {
+    // Parse the JSON object
+    var components = $.parseJSON(digsim.saveJson);
+    var newComponents = [], comp;
+    digsim.loadComponents = components;
+    console.log(components);
+
+    // Use reflection to dynamically create gate based on id
+    digsim.loadTest = [];
+    for (var i in components) {
+        var id = components[i].name
+        var Class = window[id];
+        var comp = new Class(components[i].numInputs);
+
+        // Copy properties from compoenets into new compoenents
+        for (var j in digsim.loadComponents[i]) {
+            comp[j] = components[i][j];
+        }
+
+        newComponents[i] = comp;
+    }
+
+    // Fix connection arrays
+    for (var i in newComponents) {
+        var comp = newComponents[i];
+
+        // Change all connections into the object
+        for (var j in comp.connections) {
+            comp.connections[j] = newComponents[ comp.connections[j] ];
+        }
+    }
+
+    digsim.newFile();
+
+    for (var i in newComponents) {
+        digsim.components[i] = newComponents[i];
+        comp = digsim.components[i]
+
+        if (comp.type === digsim.WIRE) {
+            digsim.setWirePlaceholders(comp, true);
+        }
+        else {
+            digsim.setPlaceholders(comp);
+        }
+
+        if (comp.type === digsim.SWITCH || comp.type === digsim.CLOCK) {
+            digsim.drivers.push(comp.id);
+        }
+    }
+    digsim.iComp = digsim.components.length;
+
+    digsim.drawComponents();
+
+    digsim.loadTest = newComponents;
+    console.log(digsim.loadTest);
+ };
+
+/*****************************************************************************
  * COPY
  *  Copy a component into the clipboard
  ****************************************************************************/
@@ -2188,6 +2274,12 @@ Digsim.prototype.disableControls = function() {
     digsim.disableButton('Rotate_CCW');
     digsim.disableButton('Rotate_CW');
     
+    // Disable the paste button if nothing has been copied
+    if (!digsim.clipboard) {
+        digsim.disableButton('Paste');
+    }
+
+    // Draw the selected component before reseting
     if (digsim.selectedComponent) {
         digsim.selectedComponent.draw(digsim.staticContext);
     }
