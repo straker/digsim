@@ -16,6 +16,7 @@
  * Implement touch controls
  * D flip flop, JK flip flop, 2/4 to 1 MUX
  * Save and load schematics/files
+ * Testing merging and branching in git
  * 
  ****************************************************************************/
 
