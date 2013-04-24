@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Program: 
  *  xor-gate.js
- *
+ * 
  * Authors:
  *  Steven Lambert
  *  Zack Sheffield
