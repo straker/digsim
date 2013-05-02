@@ -69,7 +69,7 @@ function Digsim() {
     this.wirePos = {        // When drawing wires, this will contain the 
         startX: -1,         // starting position information
         startY: -1, 
-        startPos: -1, 
+        startPos: -1
     };
     this.dragging = false;  // Flagged used to detect when a component is being dragged
     this.draggingComponent; // The component that is being dragged
