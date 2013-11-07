@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Program: 
+ * Program:
  *  wire.js
  *
  * Authors:
@@ -10,7 +10,7 @@
 function Wire() {
     this.type = digsim.WIRE;
     this.name = 'Wire';
-    
+
     this.numInputs = 0;
     this.next = [];
     this.prev = [];
@@ -29,34 +29,34 @@ Wire.prototype = new Drawable();
  *  Checks adjacent spaces for other objects to connect to
  ****************************************************************************/
 Wire.prototype.checkConnect = function() {
-    
+
     console.log("CHECKING CONNECTION!åß¨∑∫∂¬˚¨ß¬∂¥¬˚∆∂…øß∂ˆå¨•••••••••••••••••••••")
-    var row = Math.floor(this.row); 
+    var row = Math.floor(this.row);
     var col = Math.floor(this.col);
     this.checkJunction(row, col, "start");
 
-    row = Math.floor(this.path.y + this.row); 
+    row = Math.floor(this.path.y + this.row);
     col = Math.floor(this.path.x + this.col);
     this.checkJunction(row, col, "end");
 };
 
 /*****************************************************************************
  * CHECK JUNCTION
- *  Checks connections for junctions so we can add aesthetic dots. 
+ *  Checks connections for junctions so we can add aesthetic dots.
  ****************************************************************************/
 Wire.prototype.checkJunction = function(row, col, pos) {
     var PH, obj, wireCnt = 0, dot = 0;
     // Endpoint contains a wire
     console.log("CHECK JUNCT " + pos);
     if (digsim.placeholder[row][col] instanceof Array) {
-        // We want to connect. 
+        // We want to connect.
         var array = digsim.placeholder[row][col];
         for (var i = 0; i < 4; ++i) {
             if (PH = array[i]) {
                 obj = digsim.components[PH.ref];
                 if (PH.connectable) {
                     ++wireCnt;
-                    if (obj !== this) { 
+                    if (obj !== this) {
 
                         // Wire merging and spliting
                         if (obj.type === digsim.WIRE) {
@@ -96,7 +96,7 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                                 // Split a wire if it goes through the new connction
                                 if (array[(i+2)%4] && obj.id === array[(i+2)%4].ref) {
                                     console.log("´∑´®†¥¨ˆøπ“ SPLIT œ∑´®†¥¨ˆø");
-                                    
+
                                     // Update first wire
                                     console.log("{"+col+", "+row+"}");
                                     var endpoint = {'x': Math.floor(obj.col + obj.path.x - col), 'y': Math.floor(obj.row + obj.path.y - row)};
@@ -128,7 +128,7 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                         if (($.inArray(obj, this.connections) === -1)) {
                             console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
                             this.connections.push(obj);
-                            
+
                             if (pos === "start") {
                                 this.startConnections.push(obj.id);
                                 if (this.id === 3) {
@@ -157,6 +157,11 @@ Wire.prototype.checkJunction = function(row, col, pos) {
                                     console.log("OBJ CONNECTS AT ITS END");
                                     obj.endConnections.push(this.id);
                                 }
+                            }
+
+                            // Special connections
+                            if (obj.type === digsim.DFF || obj.type === digsim.JKFF) {
+                                obj.namedConnections[PH.name] = this;
                             }
 
                             utilMath = digsim.utils.rotationMath(obj, digsim.PREV, 0, 0);
@@ -238,6 +243,4 @@ Wire.prototype.draw = function(context, lineColor) {
         context.fill();
         context.stroke();
     }
-
 };
-

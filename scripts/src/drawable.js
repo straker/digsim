@@ -1,5 +1,5 @@
  /******************************************************************************
- * Program: 
+ * Program:
  *  drawable.js
  *
  * Authors:
@@ -7,7 +7,7 @@
  *  Zack Sheffield
  *
  * Summary:
- *  Mother class for all objects drawable. 
+ *  Mother class for all objects drawable.
  *****************************************************************************/
 
 function Drawable() {
@@ -20,6 +20,7 @@ function Drawable() {
     this.row = 0;
     this.state = 0;
     this.type = 0;
+    this.label = "";
 };
 
 /******************************************************************************
@@ -37,24 +38,47 @@ Drawable.prototype.init = function (col, row, rot, id) {
         this.dimension.col = this.dimension.row ^ this.dimension.col;
         this.dimension.row = this.dimension.row ^ this.dimension.col;
     }
-    this.row = row;    
+    this.row = row;
+    this.label = this.name + id;
 };
+
+/******************************************************************************
+ * DRAW LABEL
+ *  Draws the label for the component
+ *****************************************************************************/
+Drawable.prototype.drawLabel = function(context, lineColor) {
+    context.font = "10pt Calibri";
+    context.fillStyle = lineColor || 'black';
+    context.textAlign = 'center';
+    var x = (this.dimension.col / 2) * digsim.GRID_SIZE;
+    var y = -0.25 * digsim.GRID_SIZE;
+
+    if (this.type === digsim.SWITCH || this.type === digsim.CLOCK) {
+        context.textAlign = 'right';
+        x = -0.25 * digsim.GRID_SIZE;
+        y = 0.5 * digsim.GRID_SIZE;
+    }
+
+    context.fillText(this.label, x, y);
+}
 
 /*****************************************************************************
  * CHECK CONNECTION
  *  Checks adjacent spaces for other objects to connect to
  ****************************************************************************/
 Drawable.prototype.checkConnect = function() {
-    
+
     console.log("SETP 0");
     console.log(this);
 
     var PH, cnt = 0, conRow, conCol;
-    if (this.type < 0) {
+
+    // Input wire
+    if (this.numInputs) {
         console.log("STEP 1.5");
-        var factor = Math.floor(this.numInputs / 2) || 1; 
+        var factor = Math.floor(this.numInputs / 2) || 1;
         console.log("THIS.NUMINPUTS: " + this.numInputs);
-        
+
 
         for (var j = 0; j < this.numInputs; ++j) {
 
@@ -65,13 +89,31 @@ Drawable.prototype.checkConnect = function() {
 
             console.log("•••••••conRow: " + conRow);
             console.log("•••••••conCol: " + conCol);
+
+            var savePH = {}, saveConnection = [], special = false;
             for (var i = 0; i < 4; ++i) {
                 if (PH = digsim.placeholder[conRow][conCol][i]) {
                     obj = digsim.components[PH.ref];
                     console.log(obj);
-                    if ((obj !== this) && ($.inArray(obj, this.prevConnect) === -1) && PH.connectable) { // connection is not part of the previous
+                    var inConnections = (this.type < 0) ? ($.inArray(obj, this.prevConnect) === -1) : ($.inArray(obj, this.connections) === -1);
+
+                    // Save connections for DFF and DKFF
+                    if (obj === this && (obj.type === digsim.DFF || obj.type === digsim.JKFF)) {
+                        savePH = PH;
+                        special = true;
+                    }
+                    else if (obj !== this) {
+                        saveConnection.push(obj);
+                    }
+
+                    if ((obj !== this) && inConnections && PH.connectable) { // connection is not part of the previous
                         console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                        this.prevConnect.push(obj);
+                        if (this.type < 0) {
+                            this.prevConnect.push(obj);
+                        }
+                        else {
+                            this.connections.push(obj);
+                        }
                         obj.connections.push(this);
                         this.juncts.push( {'x': conCol, 'y': conRow} );
 
@@ -89,62 +131,101 @@ Drawable.prototype.checkConnect = function() {
                                 obj.endConnections.push(this.id);
                             }
                         }
+
+                        // Special connections
+                        if (obj.type === digsim.DFF || obj.type === digsim.JKFF) {
+                            obj.namedConnections[PH.name] = this;
+                        }
                     }
+                }
+            }
+
+            if (special) {
+                for (var i = 0, len = saveConnection.length; i < len; i++) {
+                    this.namedConnections[savePH.name] = saveConnection[i];
                 }
             }
         }
     }
 
     // Output wire
-    utilMath = digsim.utils.rotationMath(this, digsim.NEXT, 0, 0);
-    conRow = utilMath.conRow;
-    conCol = utilMath.conCol;
+    if (this.numOutputs) {
+        cnt = 0;
+        for (var j = 0; j < this.numOutputs; ++j) {
+            utilMath = digsim.utils.rotationMath(this, digsim.NEXT, j, cnt);
+            conRow = utilMath.conRow;
+            conCol = utilMath.conCol;
+            cnt = utilMath.cnt;
 
-    console.log("ROW, COL: " + this.row + " " + this.col);
-    console.log("CONROW, CONCOL: " + conRow + " " + conCol);
+            console.log("ROW, COL: " + this.row + " " + this.col);
+            console.log("CONROW, CONCOL: " + conRow + " " + conCol);
 
-    for (var i = 0; i < 4; ++i) {
-        if (PH = digsim.placeholder[conRow][conCol][i]) {
-            console.log(PH);
-            obj = digsim.components[PH.ref];
-            if ((obj !== this) && ($.inArray(obj, this.connections) === -1) && PH.connectable) { // connection is not part of the previous
-                console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
-                this.connections.push(obj);
+            var savePH = {}, saveConnection = [], special = false;
+            for (var i = 0; i < 4; ++i) {
+                if (PH = digsim.placeholder[conRow][conCol][i]) {
+                    console.log(PH);
+                    obj = digsim.components[PH.ref];
 
-                if (obj.type === digsim.WIRE) {
-                    console.log("THIS: {"+(conRow + 0.5)+","+(conCol + 0.5)+"}");
-                    console.log("OBJ: {"+obj.row+","+obj.col+"}");
-                    console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
-
-                    if (obj.row === (conRow + 0.5) && obj.col === (conCol + 0.5)) {
-                        console.log("OBJ CONNECTS AT ITS START");
-                        obj.startConnections.push(this.id);
+                    // Save connections for DFF and DKFF
+                    if (obj === this && (obj.type === digsim.DFF || obj.type === digsim.JKFF)) {
+                        savePH = PH;
+                        special = true;
                     }
-                    else if (obj.row + obj.path.y === (conRow + 0.5) && obj.col + obj.path.x === (conCol + 0.5)) {
-                        console.log("OBJ CONNECTS AT ITS END");
-                        obj.endConnections.push(this.id);
+                    else if (obj !== this) {
+                        saveConnection.push(obj);
+                    }
+
+                    if ((obj !== this) && ($.inArray(obj, this.connections) === -1) && PH.connectable) { // connection is not part of the previous
+                        console.log("(*&$%($%)*&CONNECTION∂∆ƒ˙∂ƒ¬˚ß¨∂∫´");
+                        this.connections.push(obj);
+
+                        if (obj.type === digsim.WIRE) {
+                            console.log("THIS: {"+(conRow + 0.5)+","+(conCol + 0.5)+"}");
+                            console.log("OBJ: {"+obj.row+","+obj.col+"}");
+                            console.log("OBJ: {"+(obj.row + obj.path.y)+","+(obj.col + obj.path.x)+"}");
+
+                            if (obj.row === (conRow + 0.5) && obj.col === (conCol + 0.5)) {
+                                console.log("OBJ CONNECTS AT ITS START");
+                                obj.startConnections.push(this.id);
+                            }
+                            else if (obj.row + obj.path.y === (conRow + 0.5) && obj.col + obj.path.x === (conCol + 0.5)) {
+                                console.log("OBJ CONNECTS AT ITS END");
+                                obj.endConnections.push(this.id);
+                            }
+                        }
+
+                        // Special connections
+                        if (obj.type === digsim.DFF || obj.type === digsim.JKFF) {
+                            obj.namedConnections[PH.name] = this;
+                        }
+
+                        utilMath = digsim.utils.rotationMath(obj, digsim.PREV, 0, 0);
+                        objConRow = utilMath.conRow;
+                        objConCol = utilMath.conCol;
+                        cnt = utilMath.cnt;
+                        index = utilMath.index;
+
+                        if (obj.type < 0) {
+                            if (((obj.rotation / 90 % 2) && (conRow === objConRow)) || (((obj.rotation / 90) % 2) === 0) && (conCol === objConCol)) {
+                                obj.prevConnect.push(this);
+                            }
+                            else  {
+                                obj.connections.push(this);
+                            }
+                        }
+                        else {
+                            obj.connections.push(this);
+                        }
+
+                        this.juncts.push( { 'x': conCol, 'y': conRow } );
                     }
                 }
+            }
 
-                utilMath = digsim.utils.rotationMath(obj, digsim.PREV, 0, 0);
-                objConRow = utilMath.conRow;
-                objConCol = utilMath.conCol;
-                cnt = utilMath.cnt;
-                index = utilMath.index;
-
-                if (obj.type < 0) {
-                    if (((obj.rotation / 90 % 2) && (conRow === objConRow)) || (((obj.rotation / 90) % 2) === 0) && (conCol === objConCol)) {
-                        obj.prevConnect.push(this);
-                    }
-                    else  {
-                        obj.connections.push(this);
-                    }
+            if (special) {
+                for (var i = 0, len = saveConnection.length; i < len; i++) {
+                    this.namedConnections[savePH.name] = saveConnection[i];
                 }
-                else {
-                    obj.connections.push(this);
-                }
-
-                this.juncts.push( { 'x': conCol, 'y': conRow } );
             }
         }
     }
@@ -160,10 +241,26 @@ Drawable.prototype.drawWires = function(context, lineColor) {
     context.fillStyle = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
     context.lineWidth = 2;
-    
+
     var factor = Math.floor(this.numInputs / 2) || 1;
     var cnt = 0;
-    if (this.type || this.name == "MUX") {
+
+    // Input wires
+    if(this.type === digsim.DFF || this.type === digsim.JKFF) {
+        if (this.name == "JKFF") {
+            context.moveTo(0, digsim.GRID_SIZE * 1.5);
+            context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * 1.5);
+        }
+        context.moveTo(0, digsim.GRID_SIZE / 2);
+        context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE / 2);
+        context.moveTo(0, digsim.GRID_SIZE * 2.5);
+        context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * 2.5);
+        context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE / 2);
+        context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE / 2);
+        context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 2.5);
+        context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE * 2.5);
+    }
+    else {
         if (this.type != digsim.NOT) {
             for (var i = 0; i < this.numInputs; ++i) {
                 if (i % 2) {
@@ -180,40 +277,23 @@ Drawable.prototype.drawWires = function(context, lineColor) {
             context.moveTo(digsim.GRID_SIZE, digsim.GRID_SIZE * (cnt + 1.5));
             context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * (cnt + 1.5));
         }
-        
+
+        // Output wires
         if (this.name == "MUX") {
             context.moveTo(digsim.GRID_SIZE * 2, (this.numInputs / 2 + 0.5) * digsim.GRID_SIZE);
             context.lineTo(digsim.GRID_SIZE * 2.5, (this.numInputs / 2 + 0.5) * digsim.GRID_SIZE);
+
+            context.moveTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.numInputs + 1.5));
+            context.lineTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.numInputs));
+            if (this.numInputs == 4) {
+                context.moveTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 5.5);
+                context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 4.5);
+            }
         }
         else {
             context.moveTo(((factor * 2) + this.outPt) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
             context.lineTo(((factor * 2) + this.outPt + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE * (factor + .5));
-        }    
-    }
-    else {
-        if (this.name == "JKFF") {
-            context.moveTo(0, digsim.GRID_SIZE * 2.5);
-            context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * 2.5);
         }
-        context.moveTo(0, digsim.GRID_SIZE / 2);
-        context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE / 2);
-        context.moveTo(0, digsim.GRID_SIZE * 1.5);
-        context.lineTo(digsim.GRID_SIZE / -2, digsim.GRID_SIZE * 1.5);
-        context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE / 2);
-        context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE / 2);
-        context.moveTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 2.5);
-        context.lineTo(digsim.GRID_SIZE * 2.5, digsim.GRID_SIZE * 2.5);   
-    }
-
-    // Draw select wires for MUX
-    if (this.name == "MUX") {
-        context.moveTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.numInputs + 1.5));
-        context.lineTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE * (this.numInputs));
-        if (this.numInputs == 4) {
-            context.moveTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 5.5);
-            context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 4.5);
-        }
-
     }
 
     context.stroke();
@@ -221,7 +301,7 @@ Drawable.prototype.drawWires = function(context, lineColor) {
 
 /******************************************************************************
  * SET NEXT
- *  Objects are doubly linked. Called when an object is dragged into place 
+ *  Objects are doubly linked. Called when an object is dragged into place
  *  and connected with another object.
  *****************************************************************************/
 Drawable.prototype.setNext = function(obj) {
@@ -231,7 +311,7 @@ Drawable.prototype.setNext = function(obj) {
 
 /******************************************************************************
  * SET PREVIOUS
- *  Objects are doubly linked. Called when an object is dragged into place 
+ *  Objects are doubly linked. Called when an object is dragged into place
  *  and connected with another object.
  *****************************************************************************/
 Drawable.prototype.setPrev = function(obj) {
@@ -241,35 +321,56 @@ Drawable.prototype.setPrev = function(obj) {
 
 /******************************************************************************
  * PASS STATE
- *  Passes the state of the current object to the next object (be it a wire, 
- *  gate, LED, etc). 
+ *  Passes the state of the current object to the next object (be it a wire,
+ *  gate, LED, etc).
  *****************************************************************************/
 Drawable.prototype.passState = function(pState) {
     if (this.type < 0) {
         this.computeLogic();
     }
     else {
-        this.state = pState;            
+        this.state = pState;
     }
 
     if (typeof this.next[0] !== "undefined") {
         console.log("this.next.length = " + this.next.length);
-        for (var i = 0, len = this.next.length; i < len; ++i) {
-            console.log("");
-            console.log(this);
-            console.log("THIS.ID: " + this.id);
-            console.log("THIS.NEXT[0]:");
-            console.log(this.next[0]);
-            console.log("THIS.NEXT[0].ID: " + this.next[0].id);
-            console.log("PASSES STATE: " + pState);
-            
-            if ((this.next[i].type < 0 || this.next[i].state !== this.state) && digsim.passCounter < digsim.maxSchematicLoop) {
-                digsim.passCounter++;
-                this.next[i].passState(this.state);
+
+        if (this.type === digsim.DFF || this.type === digsim.JKFF) {
+            var outputs = ['Q', 'Qnot'];
+            for (out in outputs) {
+                var output = outputs[out];
+                var next = this.namedConnections[output];
+
+                // Ensure we have the named connection to work with
+                if (next && (next.type < 0 || next.state !== this.state[output]) && digsim.passCounter < digsim.maxSchematicLoop) {
+                    digsim.passCounter++;
+                    next.passState(this.state[output]);
+                }
+                if (digsim.passCounter === digsim.maxSchematicLoop) {
+                    digsim.utils.addMessage(digsim.ERROR, "ERROR: Schematic contains an infinite loop caused by an unstable state.");
+                    digsim.passCounter++;
+                }
             }
-            if (digsim.passCounter === digsim.maxSchematicLoop) {
-                digsim.utils.addMessage(digsim.ERROR, "ERROR: Schematic contains an infinite loop caused by an unstable state.");
-                digsim.passCounter++;
+        }
+
+        else {
+            for (var i = 0, len = this.next.length; i < len; ++i) {
+                console.log("");
+                console.log(this);
+                console.log("THIS.ID: " + this.id);
+                console.log("THIS.NEXT[0]:");
+                console.log(this.next[0]);
+                console.log("THIS.NEXT[0].ID: " + this.next[0].id);
+                console.log("PASSES STATE: " + pState);
+
+                if ((this.next[i].type < 0 || this.next[i].state !== this.state) && digsim.passCounter < digsim.maxSchematicLoop) {
+                    digsim.passCounter++;
+                    this.next[i].passState(this.state);
+                }
+                if (digsim.passCounter === digsim.maxSchematicLoop) {
+                    digsim.utils.addMessage(digsim.ERROR, "ERROR: Schematic contains an infinite loop caused by an unstable state.");
+                    digsim.passCounter++;
+                }
             }
         }
     }
@@ -281,12 +382,12 @@ Drawable.prototype.passState = function(pState) {
 /******************************************************************************
  * TRAVERSE
  *  Iterate through each connection and set it's nexts and prevs to what they
- *  need to be. Called before sim-mode. 
+ *  need to be. Called before sim-mode.
  *****************************************************************************/
 Drawable.prototype.traverse = function() {
-    
+
     var conQueue = [];
-    
+
     for (var i = 0, len = this.connections.length; i < len; ++i) {
         conQueue.push(this.connections[i]);
         this.setNext(this.connections[i]);
@@ -296,24 +397,24 @@ Drawable.prototype.traverse = function() {
         console.log("\n======START=====");
         console.log(conQueue[0]);
         for (var i = 0, len = conQueue[0].connections.length; i < len; ++i) {
-            
+
             var currObject = conQueue[0];
             var con = currObject.connections[i];
-            
+
             console.log("THIS.CONNECTIONS[" + i + "]: ");
             console.log(currObject.connections[i]);
-            
+
             console.log("THIS.PREV:");
             console.log(currObject.prev);
-            
+
             console.log("$.inArray(con, conQueue[0].prev) = " + ($.inArray(con, currObject.prev)));
-            
-            //  $ <- jquery stuff
-            if ($.inArray(con, currObject.prev) === -1) { // connection is not part of the previous
-                                                          // don't set its next to its previous
+
+            // Check to make sure that the con object isn't the current objects previous connection and check
+            // to make sure the object hasn't already been added to the next list
+            if ($.inArray(con, currObject.prev) === -1 && $.inArray(currObject, con.prev) === -1) {
                 console.log("CON.TYPE: " + con.type);
                 console.log(con);
-                
+
                 var found = false;
                 for (var x = 0; x < con.prev.length; ++x) {
                     if ($.inArray(con.prev[x], currObject.prev) !== -1) {
@@ -323,40 +424,38 @@ Drawable.prototype.traverse = function() {
                 }
                 if (con.type === digsim.SWITCH || con.type === digsim.CLOCK) {
                     console.error("ERROR! Multiple switches driving one wire [traverse()]");
-                    digsim.utils.addMessage(digsim.ERROR, "[16]Error: Multiple switches driving one wire.");
+                    digsim.utils.addMessage(digsim.ERROR, "[16]Error: Switches '" + this.label + "' and '" + con.label + "' are driving one wire.");
                     return false;
                 }
                 else if (con.type === digsim.LED) {
                     currObject.setNext(con);
-                    //con.state = currObject.state;
                     console.log("CURRObject.setNext(con)");
                 }
                 else if (con.type === digsim.WIRE) {
 
                     if (typeof con.next[0] === "undefined" && !found) {
                         currObject.setNext(con);
-                        //con.state = currObject.state;
                         conQueue.splice(1, 0, con);
                         console.log("conQueue.push(con)");
                     }
                 }
                 else if (con.type < 0) {// Gates have a negative index
-                    
+
                     if ($.inArray(currObject, con.connections) !== -1) {
                         console.error("ERROR! Driver connected to gate output [traverse()]");
-                        digsim.utils.addMessage(digsim.ERROR, "[17]Error: Switch connected to the output of a gate.");
-                        // Need to go back through the circuit and undo any nexts already set. 
+                        digsim.utils.addMessage(digsim.ERROR, "[17]Error: Switch '" + this.label + "' connected to the output of Gate '" + con.label + ".");
+                        // Need to go back through the circuit and undo any nexts already set.
                         return false;
                     }
                     else {
                         currObject.setNext(con);
-                       // con.computeLogic();
+
                         if (typeof con.next[0] === "undefined") {
                             conQueue.splice(1, 0, con); // push_font()
                             console.log("conQueue.push(con):: (NEXT OF GATE NOT SET)");
                         }
                     }
-                }           
+                }
                 else {
                     console.log("UNKNOWN CASE IN TRAVERSE() FUNCTION");
                 }
@@ -365,5 +464,5 @@ Drawable.prototype.traverse = function() {
         }
         conQueue.shift();
     }
-    return true;    
+    return true;
 };

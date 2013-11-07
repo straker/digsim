@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Program: 
+ * Program:
  *  and-gate.js
  *
  * Authors:
@@ -17,6 +17,7 @@ function AND(numInputs) {
     this.connections = [];
     this.juncts = [];
     this.numInputs = numInputs || 2;
+    this.numOutputs = 1;
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': size};
 
@@ -35,12 +36,12 @@ AND.prototype.changeSize = function() {
 
 /*****************************************************************************
  * DRAW
- *  This will draw the and gate on the screen. Totally scalable, and able to 
+ *  This will draw the and gate on the screen. Totally scalable, and able to
  *  handle any number of inputs. Props to Steven Lambert for figuring out how
- *  to draw a half circle with the bezierCurveTo method. 
+ *  to draw a half circle with the bezierCurveTo method.
  ****************************************************************************/
 AND.prototype.draw = function(context, lineColor) {
-        
+
     context.save();
     context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
@@ -53,16 +54,16 @@ AND.prototype.draw = function(context, lineColor) {
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
-    
+
     this.drawWires(context, lineColor);
 
     // Draw gate
-    var factor = Math.floor(this.numInputs / 2); 
+    var factor = Math.floor(this.numInputs / 2);
     var gsf = digsim.GRID_SIZE * factor;
-    
+
     context.moveTo(0, 0);
-    context.lineTo(gsf,  0);            
-    
+    context.lineTo(gsf,  0);
+
     // var P0x = gsf;
     // var P0y = 0;
     // var P1x = gsf;
@@ -78,6 +79,9 @@ AND.prototype.draw = function(context, lineColor) {
     context.closePath();
     context.stroke();
     context.fill();
+
+    this.drawLabel(context, lineColor);
+
     context.restore();
 
     for (var i = 0; i < this.juncts.length; ++i) {
@@ -96,11 +100,11 @@ AND.prototype.draw = function(context, lineColor) {
 
 /*****************************************************************************
  * COMPUTE LOGIC
- *  ANDs all the input wires together to set the current state of the gate. 
+ *  ANDs all the input wires together to set the current state of the gate.
  ****************************************************************************/
 AND.prototype.computeLogic = function() {
-    var computedState = this.prev[0].state; 
-    
+    var computedState = this.prev[0].state;
+
     for (var i = 1; i < this.numInputs; ++i) {
         computedState = computedState && (this.prev[i] ? this.prev[i].state : 0);
         console.log("PREV["+i+"].state: " + (this.prev[i] ? this.prev[i].state : 0));

@@ -12,6 +12,7 @@
 	    document.write(unescape("%3Cscript src='scripts/src/jquery-1.8.3.min.js' type='text/javascript'%3E%3C/script%3E"));
 	}
   </script>
+  <script src="scripts/src/jquery-ui-1.10.3.draggable.min.js" type="text/javascript"></script>
 </head>
 <body onload="digsim.run()">
 	<div class="row header main">&nbsp;</div>
@@ -22,30 +23,30 @@
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="New" title="New File"><div class="button New"></div>New</a>
+					<a href="#" class="disabled" tabindex="-1"><div class="button"></div>&nbsp;</a>
 				</li>
 				<li>
-					<a href="#" id="Open" title="Open"><div class="button Open"></div>Open</a>
+					<a href="#" id="New" title="New File" tabindex="-1"><div class="button New"></div>New</a>
 				</li>
 				<li>
-					<a href="#" id="Save" title="Save"><div class="button Save"></div>Save</a>
+					<a href="#" id="Open" title="Open" tabindex="-1"><div class="button Open"></div>Open</a>
 				</li>
 				<li>
-					<a href="#" id="Submit" title="Submit"><div class="button Submit"></div>Submit</a>
+					<a href="#" id="Save" title="Save" tabindex="-1"><div class="button Save"></div>Save</a>
 				</li>
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" class="disabled"><div class="button"></div>&nbsp;</a>
+					<a href="#" class="disabled" tabindex="-1"><div class="button"></div>&nbsp;</a>
 				</li>
 				<li>
-					<a href="#" id="Toggle_Grid" title="Toggle Grid"><div class="button Toggle_Grid"></div>Grid</a>
+					<a href="#" id="Toggle_Grid" title="Toggle Grid" tabindex="-1"><div class="button Toggle_Grid"></div>Grid</a>
 				</li>
 				<li>
-					<a href="#" id="Zoom_Out" title="Zoom Out"><div class="button Zoom_Out"></div>Zoom</a>
+					<a href="#" id="Zoom_Out" title="Zoom Out" tabindex="-1"><div class="button Zoom_Out"></div>Zoom</a>
 				</li>
 				<li>
-					<a href="#" id="Zoom_In" title="Zoom In"><div class="button Zoom_In"></div>Zoom</a>
+					<a href="#" id="Zoom_In" title="Zoom In" tabindex="-1"><div class="button Zoom_In"></div>Zoom</a>
 				</li>
 			</ul>
 		</div>
@@ -55,47 +56,44 @@
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="AND" title="AND"><div class="button AND"></div>AND</a>
+					<a href="#" id="AND" title="AND" tabindex="-1"><div class="button AND"></div>AND</a>
 				</li>
 				<li>
-					<a href="#" id="OR" title="OR"><div class="button OR"></div>OR</a>
+					<a href="#" id="OR" title="OR" tabindex="-1"><div class="button OR"></div>OR</a>
 				</li>
 				<li>
-					<a href="#" id="NOT" title="NOT"><div class="button NOT"></div>NOT</a>
+					<a href="#" id="NOT" title="NOT" tabindex="-1"><div class="button NOT"></div>NOT</a>
 				</li>
 				<li>
-					<a href="#" id="DFF" title="DFF"><div class="button DFF"></div>DFF</a>
-				</li>
-				<li>
-					<a href="#" id="MUX" title="MUX"><div class="button MUX"></div>MUX</a>
+					<a href="#" id="DFF" title="DFF" tabindex="-1"><div class="button DFF"></div>DFF</a>
 				</li>
                 <li class="num-inputs">
-                    <a href="#" class="disabled"><div class="button"></div></a>
+                    <a href="#" class="disabled" tabindex="-1"><div class="button"></div></a>
                 </li>
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="NAND" title="NAND"><div class="button NAND"></div>NAND</a>
+					<a href="#" id="NAND" title="NAND" tabindex="-1"><div class="button NAND"></div>NAND</a>
 				</li>
 				<li>
-					<a href="#" id="NOR" title="NOR"><div class="button NOR"></div>NOR</a>
+					<a href="#" id="NOR" title="NOR" tabindex="-1"><div class="button NOR"></div>NOR</a>
 				</li>
 				<li>
-					<a href="#" id="XOR" title="XOR"><div class="button XOR"></div>XOR</a>
+					<a href="#" id="XOR" title="XOR" tabindex="-1"><div class="button XOR"></div>XOR</a>
 				</li>
-                <li>
-					<a href="#" id="JKFF" title="JKFF"><div class="button JKFF"></div>JKFF</a>
+				<li>
+					<a href="#" id="MUX" title="MUX" tabindex="-1"><div class="button MUX"></div>MUX</a>
 				</li>
 				<li class="num-inputs">
-                    <a href="#" class="disabled"><div class="button"></div></a>
+                    <a href="#" class="disabled" tabindex="-1"><div class="button"></div></a>
                 </li>
 			</ul>
 			<div class="input-col">
 		        <ul class="num-inputs input-list">
 		            <li>Num Inputs</li>
-		            <li><a href="#" id="2-input" title="2 Inputs" class="active" data-inputs="2">2</a></li>
-		            <li><a href="#" id="3-input" title="3 Inputs" data-inputs="3">3</a></li>
-		            <li><a href="#" id="4-input" title="4 Inputs" data-inputs="4">4</a></li>
+		            <li><a href="#" id="2-input" title="2 Inputs" class="active" data-inputs="2" tabindex="-1">2</a></li>
+		            <li><a href="#" id="3-input" title="3 Inputs" data-inputs="3" tabindex="-1">3</a></li>
+		            <li><a href="#" id="4-input" title="4 Inputs" data-inputs="4" tabindex="-1">4</a></li>
 		        </ul>
 		    </div>
 		</div>
@@ -105,15 +103,15 @@
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="Switch" title="Switch"><div class="button Switch"></div>Switch</a>
+					<a href="#" id="Switch" title="Switch" tabindex="-1"><div class="button Switch"></div>Switch</a>
 				</li>
 				<li>
-					<a href="#" id="Clock" title="Clock"><div class="button Clock"></div>Clock</a>
+					<a href="#" id="Clock" title="Clock" tabindex="-1"><div class="button Clock"></div>Clock</a>
 				</li>
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="LED" title="LED"><div class="button LED"></div>LED</a>
+					<a href="#" id="LED" title="LED" tabindex="-1"><div class="button LED"></div>LED</a>
 				</li>
 			</ul>
 		</div>
@@ -123,12 +121,12 @@
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="Wire" title="Wire"><div class="button Wire"></div>Wire</a>
+					<a href="#" id="Wire" title="Wire" tabindex="-1"><div class="button Wire"></div>Wire</a>
 				</li>
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="Run" title="Run"><div class="button Run"></div>Run</a>
+					<a href="#" id="Run" title="Run" tabindex="-1"><div class="button Run"></div>Run</a>
 				</li>
 			</ul>
 		</div>
@@ -138,24 +136,24 @@
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="Delete" title="Delete"><div class="button Delete"></div>Delete</a>
+					<a href="#" id="Delete" title="Delete" tabindex="-1"><div class="button Delete"></div>Delete</a>
 				</li>
 				<li>
-					<a href="#" id="Rotate_CCW" title="Rotate CCW"><div class="button Rotate_Left"></div>Rotate</a>
+					<a href="#" id="Rotate_CCW" title="Rotate CCW" tabindex="-1"><div class="button Rotate_Left"></div>Rotate</a>
 				</li>
 				<li>
-					<a href="#" id="Rotate_CW" title="Rotate CW"><div class="button Rotate_Right"></div>Rotate</a>
+					<a href="#" id="Rotate_CW" title="Rotate CW" tabindex="-1"><div class="button Rotate_Right"></div>Rotate</a>
 				</li>
 			</ul>
 			<ul class="row">
 				<li>
-					<a href="#" id="Cut" title="Cut"><div class="button Cut"></div>Cut</a>
+					<a href="#" id="Cut" title="Cut" tabindex="-1"><div class="button Cut"></div>Cut</a>
 				</li>
 				<li>
-					<a href="#" id="Copy" title="Copy"><div class="button Copy"></div>Copy</a>
+					<a href="#" id="Copy" title="Copy" tabindex="-1"><div class="button Copy"></div>Copy</a>
 				</li>
 				<li>
-					<a href="#" id="Paste" title="Paste"><div class="button Paste"></div>Paste</a>
+					<a href="#" id="Paste" title="Paste" tabindex="-1"><div class="button Paste"></div>Paste</a>
 				</li>
 			</ul>
 		</div>
@@ -172,18 +170,37 @@
 		<canvas id="static"></canvas>
 		<canvas id="moving"></canvas>
 	</div>
+	<div class="component-menu">
+		<div id="component-name">2-input AND</div>
+		<div class="component-inputs">
+			<p>
+				<label for="label">Label:</label>
+				<input type="text" name="label" id="component-label" autocomplete="off"/>
+			</p>
+			<div class="clock-freq">
+				<p>
+					<label for="clock">Frequency:</label>
+					<input type="text" name="clock" id="clock-freq" maxlength="3" size="3" autocomplete="off"/>&nbsp;Hz.
+				</p>
+			</div>
+		</div>
+		<div class="component-options">
+			<a href="#" class="save" id="component-save">Save</a>
+			<a href="#" class="cancel" id="component-cancel">Cancel</a>
+		</div>
+	</div>
 	<!--<embed height="50" width="1000" src="song.m4a">-->
     <script type="text/javascript" src="scripts/src/application.js"></script>
-    <script type="text/javascript" src="scripts/src/drawable.js"></script>  
-    <script type="text/javascript" src="scripts/src/and-gate.js"></script>  
-	<script type="text/javascript" src="scripts/src/wire.js"></script>  
-	<script type="text/javascript" src="scripts/src/placeholder.js"></script> 
-	<script type="text/javascript" src="scripts/src/switch.js"></script> 
-	<script type="text/javascript" src="scripts/src/led.js"></script> 
-	<script type="text/javascript" src="scripts/src/nand-gate.js"></script> 
-	<script type="text/javascript" src="scripts/src/nor-gate.js"></script> 
-	<script type="text/javascript" src="scripts/src/not-gate.js"></script> 
-	<script type="text/javascript" src="scripts/src/or-gate.js"></script> 
+    <script type="text/javascript" src="scripts/src/drawable.js"></script>
+    <script type="text/javascript" src="scripts/src/and-gate.js"></script>
+	<script type="text/javascript" src="scripts/src/wire.js"></script>
+	<script type="text/javascript" src="scripts/src/placeholder.js"></script>
+	<script type="text/javascript" src="scripts/src/switch.js"></script>
+	<script type="text/javascript" src="scripts/src/led.js"></script>
+	<script type="text/javascript" src="scripts/src/nand-gate.js"></script>
+	<script type="text/javascript" src="scripts/src/nor-gate.js"></script>
+	<script type="text/javascript" src="scripts/src/not-gate.js"></script>
+	<script type="text/javascript" src="scripts/src/or-gate.js"></script>
 	<script type="text/javascript" src="scripts/src/xor-gate.js"></script>
 	<script type="text/javascript" src="scripts/src/clock.js"></script>
 	<script type="text/javascript" src="scripts/src/jkff.js"></script>

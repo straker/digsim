@@ -1,5 +1,5 @@
 /***************************************************************************
- * Program: 
+ * Program:
  *  led.js
  *
  * Authors:
@@ -11,7 +11,8 @@ function LED() {
     this.type = digsim.LED;
     this.name = 'LED';
 
-    this.numInputs = 0;
+    this.numInputs = 1;
+    this.numOutputs = 0;
     this.prev = [];
     this.connections = [];
     this.juncts = [];
@@ -41,7 +42,7 @@ LED.prototype.draw = function(context, lineColor) {
     else if (this.rotation === 270) {
         offsetH = -0.5;
     }
-    
+
     var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.GRID_SIZE,
         'col': (this.dimension.col / 2 + offsetH) * digsim.GRID_SIZE};
 
@@ -60,10 +61,10 @@ LED.prototype.draw = function(context, lineColor) {
     var C0x = P0x;
     var Cy = (4 * My - P0y) / 3;
     var C1x = P1x;
-    
+
     context.moveTo(P0x, P0y);
-    context.bezierCurveTo(C0x, Cy, C1x, Cy, P1x, P1y); 
-    
+    context.bezierCurveTo(C0x, Cy, C1x, Cy, P1x, P1y);
+
     if (this.state && digsim.mode === digsim.SIM_MODE) {
         context.fillStyle = '#FF0000';
     }
@@ -73,12 +74,12 @@ LED.prototype.draw = function(context, lineColor) {
     // Bottom part
     context.beginPath();
     context.fillStyle = '#FFFFFF';
-    
+
     context.moveTo(0, 4 / 3 * digsim.GRID_SIZE);
     context.lineTo(digsim.GRID_SIZE, 4 / 3 * digsim.GRID_SIZE);
-    
+
     context.stroke();
-    
+
     context.beginPath();
     context.moveTo(digsim.GRID_SIZE * 7 / 8, 4 / 3 * digsim.GRID_SIZE);
     context.lineTo(digsim.GRID_SIZE * 7 / 8, digsim.GRID_SIZE * 2);
@@ -87,12 +88,13 @@ LED.prototype.draw = function(context, lineColor) {
     context.closePath();
     context.stroke();
     context.fill();
-    
+
     context.moveTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 2);
-    //context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE * 5 / 3);
     context.lineTo(digsim.GRID_SIZE / 2, 5 / 2 * digsim.GRID_SIZE);
     context.stroke();
-    
+
+    this.drawLabel(context, lineColor);
+
     context.restore();
 
     for (var i = 0; i < this.juncts.length; ++i) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Program: 
+ * Program:
  *  xor-gate.js
  *
  * Authors:
@@ -10,13 +10,14 @@
 function XOR(numInputs) {
     this.type = digsim.XOR;
     this.name = 'XOR';
-    
+
     this.next = [];
     this.prev = [];
     this.prevConnect = [];
     this.connections = [];
     this.juncts = [];
     this.numInputs = numInputs || 2;
+    this.numOutputs = 1;
     var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
     this.dimension = {'row': size, 'col': (size + 1)};
 
@@ -37,12 +38,12 @@ XOR.prototype.changeSize = function() {
 
 /*****************************************************************************
  * DRAW
- *  This will draw the and gate on the screen. Totally scalable, and able to 
+ *  This will draw the and gate on the screen. Totally scalable, and able to
  *  handle any number of inputs. Props to Steven Lambert for figuring out how
- *  to draw a half circle with the bezierCurveTo method. 
+ *  to draw a half circle with the bezierCurveTo method.
  ****************************************************************************/
 XOR.prototype.draw = function(context, lineColor) {
-    
+
     context.save();
     context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
     context.beginPath();
@@ -57,25 +58,25 @@ XOR.prototype.draw = function(context, lineColor) {
     else if (this.rotation === 270) {
         offsetH = 0.5;
     }
-    
+
     var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.GRID_SIZE,
         'col': (this.dimension.col / 2 + offsetH) * digsim.GRID_SIZE};
-    
+
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
-    
+
     this.drawWires(context, lineColor);
-    
+
     // Draw gate
-    var factor = Math.floor(this.numInputs / 2); 
+    var factor = Math.floor(this.numInputs / 2);
     var gsf = digsim.GRID_SIZE * factor;
-    
+
     context.moveTo(0, 0);
-    context.lineTo(gsf,  0);            
-    
+    context.lineTo(gsf,  0);
+
     // VECTOR CALCULUS... good luck. :)
-    
+
     var t = 0.28;               // SET THIS TO CHANGE CURVATURE
     var baseCurveature = 1.15;  // SET THIS TO CHANGE BASE CURVATURE
     var height = 2 * factor + 1;
@@ -87,9 +88,9 @@ XOR.prototype.draw = function(context, lineColor) {
     var yc = (y0 + y1) / 2;
     var x = (y1 - y0) * t + xc;
     var y = (x0 - x1) * t + yc;
-    
+
     context.quadraticCurveTo(x, y, x1, y1);
-    
+
     x0 = x1;
     y0 = y1;
     x1 = gsf;
@@ -98,13 +99,13 @@ XOR.prototype.draw = function(context, lineColor) {
     yc = (y0 + y1) / 2;
     x = (y1 - y0) * t + xc;
     y = (x0 - x1) * t + yc;
-    
+
     context.quadraticCurveTo(x, y, x1, y1);
-    
+
     context.lineTo(0, y1);
-    
+
     context.lineWidth = 1;
-    context.quadraticCurveTo(digsim.GRID_SIZE * baseCurveature, y1 / 2, 
+    context.quadraticCurveTo(digsim.GRID_SIZE * baseCurveature, y1 / 2,
                              0, 0);
     context.stroke();
     context.fill();
@@ -114,8 +115,11 @@ XOR.prototype.draw = function(context, lineColor) {
     context.moveTo(digsim.GRID_SIZE / -4, y1);
     context.quadraticCurveTo(digsim.GRID_SIZE * baseCurveature - digsim.GRID_SIZE / 4, y1 / 2, digsim.GRID_SIZE / -4, 0);
     context.stroke();
+
+    this.drawLabel(context, lineColor);
+
     context.restore();
-    
+
     for (var i = 0; i < this.juncts.length; ++i) {
         // console.log(".onSjunct:…………………………………………");
         // console.log("ROW: " + this.row + " COL: " + this.col);
@@ -126,15 +130,15 @@ XOR.prototype.draw = function(context, lineColor) {
         context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
         context.fill();
         context.stroke();
-    }    
+    }
 };
 
 // Infallable logic function
 /*******************************************************************************
  * COMPUTE LOGIC
- *  ORs all the input wires together to set the current state of the gate. 
+ *  ORs all the input wires together to set the current state of the gate.
  ******************************************************************************/
-XOR.prototype.computeLogic = function() {  
+XOR.prototype.computeLogic = function() {
 
     var cnt = 0;
     for (var i = 0; i < this.numInputs; ++i) {

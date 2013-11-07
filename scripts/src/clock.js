@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Program: 
+ * Program:
  *  clock.js
  *
  * Authors:
@@ -10,8 +10,10 @@
 function Clock() {
     this.type = digsim.CLOCK;
     this.name = 'Clock';
+    this.frequency = 2;
 
     this.numInputs = 0;
+    this.numOutputs = 1;
     this.next = [];
     this.connections = [];
     this.juncts = [];
@@ -32,13 +34,13 @@ Clock.prototype.draw = function(context, lineColor) {
 
     context.save();
     context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
-    
+
     context.beginPath();
     context.fillStyle = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
     context.lineCap = 'round';
     context.lineWidth = 2;
-    
+
     // Rotatation
     var offsetH = 0, offsetV = 0;
     if (this.rotation == 90) {
@@ -47,7 +49,7 @@ Clock.prototype.draw = function(context, lineColor) {
     else if (this.rotation === 270) {
         offsetH = 0.5;
     }
-    
+
     var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.GRID_SIZE,
         'col': (this.dimension.col / 2 + offsetH) * digsim.GRID_SIZE};
 
@@ -85,6 +87,9 @@ Clock.prototype.draw = function(context, lineColor) {
     context.moveTo(digsim.GRID_SIZE * 2    , digsim.GRID_SIZE * 0.5);
     context.lineTo(digsim.GRID_SIZE * 2.5  , digsim.GRID_SIZE * 0.5);
     context.stroke();
+
+    this.drawLabel(context, lineColor);
+
     context.restore();
 
     for (var i = 0; i < this.juncts.length; ++i) {

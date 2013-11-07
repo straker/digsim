@@ -1,0 +1,28 @@
+{
+  "name": "digsim",
+  "version": "0.0.0",
+  "description": "A digital cirtuit simulator",
+  "main": "DigSim.html",
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.6.3",
+    "grunt-contrib-nodeunit": "~0.2.0",
+    "grunt-contrib-uglify": "~0.2.2"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/straker/digsim.git"
+  },
+  "author": "Steven Lambert, Zack Sheffield",
+  "license": "BSD",
+  "gitHead": "a47d50a51e4f10a16072524530f03ed42fa0f819",
+  "bugs": {
+    "url": "https://github.com/straker/digsim/issues"
+  }
+}
