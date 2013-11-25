@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Program: 
+ * Program:
  *  mux.js
  *
  * Authors:
@@ -7,49 +7,61 @@
  *  Zack Sheffield
  ****************************************************************************/
 
+/*****************************************************************************
+ * MUX
+ * @constructor
+ * @extends Component
+ * @param {number} numInputs - Number of input connections.
+ ****************************************************************************/
 function MUX(numInputs) {
-    this.type = digsim.MUX;
-    this.name = 'MUX';
+    this.type        = digsim.MUX;
+    this.name        = 'MUX';
 
-    this.next = [];
-    this.prev = [];
-    this.prevConnect = [];
-    this.connections = [];
-    this.juncts = [];
-    this.numInputs = (numInputs != 3) ? numInputs : 2;
-    this.dimension = {'row': (this.numInputs + 1), 'col': 2};
-
-    this.outPt = 2;
-};
-MUX.prototype = new Drawable();
+    this.numInputs   = (numInputs != 3) ? numInputs : 2;
+    this.numOutputs  = 0;
+    this.dimension   = {'row': (this.numInputs + 1), 'col': 2};  // Height and width of component
+}
+MUX.prototype = new Component();
 
 /*****************************************************************************
- * CHANGE SIZE
- *  Changes the size of the gate based on numInputs
+ * CHANGE NUM INPUTS
+ *  Changes the number of inputs and the size of the Component.
+ * @param {number} numInputs - Number of inputs to change to.
  ****************************************************************************/
-MUX.prototype.changeSize = function() {
-    this.dimension = {'row': this.numInputs + 1, 'col': 2};
-}
+MUX.prototype.changeNumInputs = function(numInputs) {
+    if (numInputs % 2 === 0) {
+        this.numInputs = numInputs;
+        this.dimension = {'row': this.numInputs + 1, 'col': 2};
+    }
+};
+
+/******************************************************************************
+ * IS A GATE
+ *  Return true if the component is a gate.
+ * @return {boolean}
+ *****************************************************************************/
+MUX.prototype.isAGate = function() {
+    return true;
+};
 
 /*****************************************************************************
  * DRAW
- *  This will draw the mux on the screen. THIS IS STILL INCOMPLETE! The 
- *  rotations are not consistent, and we dont have a means of knowing which 
- *  input is which yet. 
+ *  Draw the MUX to the context.
+ * @param {CanvasRenderingContext2D} context   - Context to draw to.
+ * @param {string}                   lineColor - Color of the gate.
  ****************************************************************************/
 MUX.prototype.draw = function(context, lineColor) {
-
-//    var factor = Math.floor(this.numInputs / 2); ?????
     context.save();
-    context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
-    context.beginPath();
-    context.fillStyle = '#FFFFFF';
-    context.strokeStyle = lineColor || 'black';
-    context.lineWidth = 2;
-    context.font = (digsim.GRID_SIZE / 2) + "px Arial";
-    context.fontWidth = digsim.GRID_SIZE / 4;
+    context.translate(this.col * digsim.gridSize, this.row * digsim.gridSize);
 
-    
+    context.beginPath();
+    context.fillStyle   = '#FFFFFF';
+    context.strokeStyle = lineColor || 'black';
+    context.lineWidth   = 2;
+    context.font        = (digsim.gridSize / 2) + "px Arial";
+    context.fontWidth   = digsim.gridSize / 4;
+
+    // Rotation
     var offsetH = 0, offsetV = 0;
     if (this.rotation == 90) {
         offsetV = 0.5;
@@ -57,55 +69,43 @@ MUX.prototype.draw = function(context, lineColor) {
     else if (this.rotation === 270) {
         offsetH = -0.5;
     }
-    
-    var center = {'row': ((this.numInputs + 1) / 2 + offsetV) * digsim.GRID_SIZE,
-        'col': (1 + offsetH) * digsim.GRID_SIZE};
+
+    var center = {'row': ((this.numInputs + 1) / 2 + offsetV) * digsim.gridSize,
+        'col': (1 + offsetH) * digsim.gridSize};
 
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
+
     this.drawWires(context, lineColor);
-    
+
     // Draw body
     context.beginPath();
     context.moveTo(0, 0);
-    context.lineTo(0, (this.numInputs + 1) * digsim.GRID_SIZE);
-    context.lineTo(digsim.GRID_SIZE * 2, ((this.numInputs + 1) - this.numInputs / 4) * digsim.GRID_SIZE);
-    context.lineTo(digsim.GRID_SIZE * 2, digsim.GRID_SIZE * this.numInputs / 4);
-    context.closePath();   
+    context.lineTo(0, (this.numInputs + 1) * digsim.gridSize);
+    context.lineTo(digsim.gridSize * 2, ((this.numInputs + 1) - this.numInputs / 4) * digsim.gridSize);
+    context.lineTo(digsim.gridSize * 2, digsim.gridSize * this.numInputs / 4);
+    context.closePath();
     context.fill();
 
     // Select Line text
-    var textX = digsim.GRID_SIZE * 7 / 6;
-    var textY = digsim.GRID_SIZE * (this.numInputs == 4 ? 4 : 2.5);
+    var textX = digsim.gridSize * 7 / 6;
+    var textY = digsim.gridSize * (this.numInputs == 4 ? 4 : 2.5);
     context.fillStyle = context.strokeStyle;
     if (this.numInputs == 4) {
-        context.fillText("S1", textX - digsim.GRID_SIZE, textY);
+        context.fillText("S1", textX - digsim.gridSize, textY);
     }
 
     context.fillText("S0", textX, textY);
     context.stroke();
     context.restore();
-    
-    for (var i = 0; i < this.juncts.length; ++i) {
-        context.beginPath();
-        context.strokeStyle = '#000000';
-        context.fillStyle = '#000000';
-        context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
-        context.fill();
-        context.stroke();
-    }    
 };
 
 /*****************************************************************************
  * COMPUTE LOGIC
- *  MUXs all the input wires together to set the current state of the gate. 
+ *  MUXs all the input wires together to set the current state of the gate.
  ****************************************************************************/
 MUX.prototype.computeLogic = function() {
-    var i = this.sel0 + this.sel1 * 2
+    var i = this.sel0 + this.sel1 * 2;
     this.state = inputWire[i];
 };
-
-
-
-

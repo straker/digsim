@@ -7,50 +7,64 @@
  *  Zack Sheffield
  ****************************************************************************/
 
+/*****************************************************************************
+ * AND
+ * @constructor
+ * @extends Component
+ * @param {number} numInputs - Number of input connections.
+ ****************************************************************************/
 function NAND(numInputs) {
-    this.type = digsim.NAND;
-    this.name = 'NAND';
+    this.type        = digsim.NAND;
+    this.name        = 'NAND';
 
-    this.next = [];
-    this.prev = [];
-    this.prevConnect = [];
-    this.connections = [];
-    this.juncts = [];
-    this.numInputs = numInputs || 2;
-    this.numOutputs = 1;
-    var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
-    this.dimension = {'row': size, 'col': size};
-
-    this.outPt = 1;
-};
-NAND.prototype = new Drawable();
+    this.numInputs   = numInputs || 2;
+    this.numOutputs  = 1;
+    var size         = (2 * (Math.floor(this.numInputs / 2))) + 1;
+    this.dimension   = {'row': size, 'col': size};  // Height and width of component
+}
+NAND.prototype = new Component();
 
 /*****************************************************************************
- * CHANGE SIZE
- *  Changes the size of the gate based on numInputs
+ * CHANGE NUM INPUTS
+ *  Changes the number of inputs and the size of the Component.
+ * @param {number} numInputs - Number of inputs to change to.
  ****************************************************************************/
-NAND.prototype.changeSize = function() {
-    var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
-    this.dimension = {'row': size, 'col': size};
-}
+NAND.prototype.changeNumInputs = function(numInputs) {
+    if (numInputs >= 2) {
+        this.numInputs = numInputs;
+        var size = (2 * (Math.floor(this.numInputs / 2))) + 1;
+        this.dimension = {'row': size, 'col': size};
+        this.zeroDimension = {'row': size, 'col': size};
+    }
+};
+
+/******************************************************************************
+ * IS A GATE
+ *  Return true if the component is a gate.
+ * @return {boolean}
+ *****************************************************************************/
+NAND.prototype.isAGate = function() {
+    return true;
+};
 
 /*****************************************************************************
  * DRAW
- *  This will draw the and gate on the screen. Totally scalable, and able to
- *  handle any number of inputs. Props to Steven Lambert for figuring out how
- *  to draw a half circle with the bezierCurveTo method.
+ *  Draw the NAND gate to the context.
+ * @param {CanvasRenderingContext2D} context   - Context to draw to.
+ * @param {string}                   lineColor - Color of the gate.
  ****************************************************************************/
 NAND.prototype.draw = function(context, lineColor) {
-
     context.save();
-    context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
-    context.beginPath();
-    context.fillStyle = '#FFFFFF';
-    context.strokeStyle = lineColor || 'black';
-    context.lineWidth = 2;
+    context.translate(this.col * digsim.gridSize, this.row * digsim.gridSize);
 
-    var center = {'row': (this.dimension.row / 2) * digsim.GRID_SIZE,
-        'col': (this.dimension.col / 2) * digsim.GRID_SIZE };
+    context.beginPath();
+    context.fillStyle   = '#FFFFFF';
+    context.strokeStyle = lineColor || 'black';
+    context.lineWidth   = 2;
+
+    // Rotation
+    var center = {'row': (this.dimension.row / 2) * digsim.gridSize,
+        'col': (this.dimension.col / 2) * digsim.gridSize };
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
@@ -59,12 +73,12 @@ NAND.prototype.draw = function(context, lineColor) {
 
     // Draw gate
     var factor = Math.floor(this.numInputs / 2);
-    var gsf = digsim.GRID_SIZE * factor;
+    var gsf = digsim.gridSize * factor;
 
     context.moveTo(0, 0);
     context.lineTo(gsf,  0);
 
-    var P1y = gsf * 2 + digsim.GRID_SIZE;
+    var P1y = gsf * 2 + digsim.gridSize;
     var Cx = (4 * P1y - gsf) / 3;
 
     context.bezierCurveTo(Cx, 0, Cx, P1y, gsf, P1y);
@@ -74,11 +88,11 @@ NAND.prototype.draw = function(context, lineColor) {
     context.stroke();
     context.fill();
 
-    context.moveTo(digsim.GRID_SIZE * 10 / 3, digsim.GRID_SIZE * 1.5);
+    context.moveTo(digsim.gridSize * 10 / 3, digsim.gridSize * 1.5);
     context.beginPath();
 
-    context.arc(digsim.GRID_SIZE / 6 + (2 * factor + 1) * digsim.GRID_SIZE, (factor + 0.5) * digsim.GRID_SIZE,  // center
-                digsim.GRID_SIZE / 6, 0,
+    context.arc(digsim.gridSize / 6 + (2 * factor + 1) * digsim.gridSize, (factor + 0.5) * digsim.gridSize,  // center
+                digsim.gridSize / 6, 0,
                 2 * Math.PI);
     context.fill();
     context.stroke();
@@ -86,32 +100,19 @@ NAND.prototype.draw = function(context, lineColor) {
     this.drawLabel(context, lineColor);
 
     context.restore();
-
-    for (var i = 0; i < this.juncts.length; ++i) {
-        // console.log(".onSjunct:…………………………………………");
-        // console.log("ROW: " + this.row + " COL: " + this.col);
-
-        context.beginPath();
-        context.strokeStyle = '#000000';
-        context.fillStyle = '#000000';
-        context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
-        context.fill();
-        context.stroke();
-    }
 };
 
-// Infallable logic function
 /*****************************************************************************
  * COMPUTE LOGIC
  *  ANDs all the input wires together and then inverts that to set the
- * current state of the gate.
+ *  current state of the gate.
  ****************************************************************************/
 NAND.prototype.computeLogic = function() {
-    var computedState = this.prev[0].state;
+    var ins = this.inputs.get();
+    var computedState = ins[0].state;
 
-    for (var i = 1; i < this.prev.length; ++i) {
-        computedState = computedState && (this.prev[i] ? this.prev[i].state : 0);
-        console.log("PREV["+i+"].state: " + (this.prev[i] ? this.prev[i].state : 0));
+    for (var i = 1, len = ins.length; i < len; ++i) {
+        computedState = computedState && ins[i].state;
     }
-    this.state = !computedState;
+    this.state = (!computedState ? 1 : 0);
 };

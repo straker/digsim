@@ -7,41 +7,65 @@
  *  Zack Sheffield
  ****************************************************************************/
 
+/*****************************************************************************
+ * CLOCK
+ * @constructor
+ * @extends Component
+ ****************************************************************************/
 function Clock() {
-    this.type = digsim.CLOCK;
-    this.name = 'Clock';
-    this.frequency = 2;
+    this.type        = digsim.CLOCK;
+    this.name        = 'Clock';
+    this.frequency   = 2;   // in Hz
 
-    this.numInputs = 0;
-    this.numOutputs = 1;
-    this.next = [];
-    this.connections = [];
-    this.juncts = [];
-    this.dimension = {'row': 1, 'col': 2};
+    this.numInputs   = 0;
+    this.numOutputs  = 1;
+    this.dimension   = {'row': 1, 'col': 2};  // Height and width of component
+}
+Clock.prototype = new Component();
 
-    this.conRow = 0;
-    this.conCol = 2;
-    this.conIndex = 3;
+/******************************************************************************
+ * IS A DRIVER
+ *  Return true if the component is a driver.
+ * @return {boolean}
+ *****************************************************************************/
+Clock.prototype.isADriver = function() {
+    return true;
 };
 
-Clock.prototype = new Drawable();
+/******************************************************************************
+ * GET COMPONENT SPACE
+ *  Return every {row, col, index} that the component fills. Helpful for setting
+ *  and deleting placeholders.
+ * @return {Array} array of objects of {row, col, index}. Index is
+ *                 only present if space is a wire.
+ *****************************************************************************/
+Clock.prototype.getComponentSpace = function() {
+    // Call parent implementations
+    var space = Component.prototype.getComponentSpace.call(this);
+
+    // Combine the arrays
+    space = space.concat(Component.prototype.getExtraComponentSpace.call(this, 2));
+
+    return space;
+};
 
 /****************************************************************************
  * DRAW
- *  Draws a wire on a grid space
+ *  Draw the clock to the context.
+ * @param {CanvasRenderingContext2D} context   - Context to draw to.
+ * @param {string}                   lineColor - Color of the gate.
  ***************************************************************************/
 Clock.prototype.draw = function(context, lineColor) {
-
     context.save();
-    context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
+    context.translate(this.col * digsim.gridSize, this.row * digsim.gridSize);
 
     context.beginPath();
-    context.fillStyle = '#FFFFFF';
+    context.fillStyle   = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
-    context.lineCap = 'round';
-    context.lineWidth = 2;
+    context.lineCap     = 'round';
+    context.lineWidth   = 2;
 
-    // Rotatation
+    // Rotation
     var offsetH = 0, offsetV = 0;
     if (this.rotation == 90) {
         offsetV = -0.5;
@@ -50,8 +74,8 @@ Clock.prototype.draw = function(context, lineColor) {
         offsetH = 0.5;
     }
 
-    var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.GRID_SIZE,
-        'col': (this.dimension.col / 2 + offsetH) * digsim.GRID_SIZE};
+    var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.gridSize,
+        'col': (this.dimension.col / 2 + offsetH) * digsim.gridSize};
 
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
@@ -60,49 +84,35 @@ Clock.prototype.draw = function(context, lineColor) {
     context.moveTo(0, 0);
 
     // Outside rectangle
-    context.rect(0, digsim.GRID_SIZE * -0.25, digsim.GRID_SIZE * 2, digsim.GRID_SIZE * 1.5);
+    context.rect(0, digsim.gridSize * -0.25, digsim.gridSize * 2, digsim.gridSize * 1.5);
     context.fill();
     context.stroke();
 
     // Inside triangle
     context.beginPath();
-    context.moveTo(digsim.GRID_SIZE * 2    , digsim.GRID_SIZE * 0.25);
-    context.lineTo(digsim.GRID_SIZE * 1.75 , digsim.GRID_SIZE * 0.5);
-    context.lineTo(digsim.GRID_SIZE * 2    , digsim.GRID_SIZE * 0.75);
+    context.moveTo(digsim.gridSize * 2    , digsim.gridSize * 0.25);
+    context.lineTo(digsim.gridSize * 1.75 , digsim.gridSize * 0.5);
+    context.lineTo(digsim.gridSize * 2    , digsim.gridSize * 0.75);
     context.stroke();
 
     // Clock signal
     context.beginPath();
-    context.moveTo(digsim.GRID_SIZE * 5 / 3, 0);
-    context.lineTo(digsim.GRID_SIZE * 5 / 3, digsim.GRID_SIZE);
-    context.lineTo(digsim.GRID_SIZE        , digsim.GRID_SIZE);
-    context.lineTo(digsim.GRID_SIZE        , 0);
-    context.lineTo(digsim.GRID_SIZE / 3    , 0);
-    context.lineTo(digsim.GRID_SIZE / 3    , digsim.GRID_SIZE);
+    context.moveTo(digsim.gridSize * 5 / 3, 0);
+    context.lineTo(digsim.gridSize * 5 / 3, digsim.gridSize);
+    context.lineTo(digsim.gridSize        , digsim.gridSize);
+    context.lineTo(digsim.gridSize        , 0);
+    context.lineTo(digsim.gridSize / 3    , 0);
+    context.lineTo(digsim.gridSize / 3    , digsim.gridSize);
     context.fill();
     context.stroke();
 
     // Connection
     context.beginPath();
-    context.moveTo(digsim.GRID_SIZE * 2    , digsim.GRID_SIZE * 0.5);
-    context.lineTo(digsim.GRID_SIZE * 2.5  , digsim.GRID_SIZE * 0.5);
+    context.moveTo(digsim.gridSize * 2    , digsim.gridSize * 0.5);
+    context.lineTo(digsim.gridSize * 2.5  , digsim.gridSize * 0.5);
     context.stroke();
 
     this.drawLabel(context, lineColor);
 
     context.restore();
-
-    for (var i = 0; i < this.juncts.length; ++i) {
-        // console.log(".onSjunct:…………………………………………");
-        // console.log("ROW: " + this.row + " COL: " + this.col);
-
-        context.beginPath();
-        context.strokeStyle = '#000000';
-        context.fillStyle = '#000000';
-        context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
-        context.fill();
-        context.stroke();
-    }
 };
-
-

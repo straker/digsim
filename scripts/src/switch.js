@@ -7,40 +7,65 @@
  *  Zack Sheffield
  ****************************************************************************/
 
+/*****************************************************************************
+ * SWITCH
+ * @constructor
+ * @extends Component
+ ****************************************************************************/
 function Switch() {
-    this.type = digsim.SWITCH;
-    this.name = 'Switch';
+    this.type        = digsim.SWITCH;
+    this.name        = 'Switch';
 
-    this.numInputs = 0;
-    this.numOutputs = 1;
-    this.next = [];
-    this.connections = [];
-    this.juncts = [];
-    this.dimension = {'row': 1, 'col': 1};
+    this.numInputs   = 0;
+    this.numOutputs  = 1;
+    this.dimension   = {'row': 1, 'col': 1};  // Height and width of component
+}
+Switch.prototype = new Component();
 
-    this.conRow = 0;
-    this.conCol = 1;
-    this.conIndex = 3;
+/******************************************************************************
+ * IS A DRIVER
+ *  Return true if the component is a driver.
+ * @return {boolean}
+ *****************************************************************************/
+Switch.prototype.isADriver = function() {
+    return true;
 };
-Switch.prototype = new Drawable();
 
-/****************************************************************************
+/******************************************************************************
+ * GET COMPONENT SPACE
+ *  Return every {row, col, index} that the component fills. Helpful for setting
+ *  and deleting placeholders.
+ * @return {Array} array of objects of {row, col, index}. Index is
+ *                 only present if space is a wire.
+ *****************************************************************************/
+Switch.prototype.getComponentSpace = function() {
+    // Call parent implementations
+    var space = Component.prototype.getComponentSpace.call(this);
+
+    // Combine the arrays
+    space = space.concat(Component.prototype.getExtraComponentSpace.call(this, 1));
+
+    return space;
+};
+
+/*****************************************************************************
  * DRAW
- *  Draws a wire on a grid space
- ***************************************************************************/
+ *  Draw the Switch to the context.
+ * @param {CanvasRenderingContext2D} context   - Context to draw to.
+ * @param {string}                   lineColor - Color of the gate.
+ ****************************************************************************/
 Switch.prototype.draw = function(context, lineColor) {
-
     context.save();
-    context.translate(this.col * digsim.GRID_SIZE, this.row * digsim.GRID_SIZE);
+    context.translate(this.col * digsim.gridSize, this.row * digsim.gridSize);
 
     context.beginPath();
-    context.fillStyle = '#FFFFFF';
+    context.fillStyle   = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
-    context.lineWidth = 2;
+    context.lineWidth   = 2;
 
-    // Rotatation
-    var center = {'row': (this.dimension.row / 2) * digsim.GRID_SIZE,
-        'col': (this.dimension.col / 2) * digsim.GRID_SIZE };
+    // Rotation
+    var center = {'row': (this.dimension.row / 2) * digsim.gridSize,
+        'col': (this.dimension.col / 2) * digsim.gridSize };
     context.translate(center.col, center.row);
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
@@ -48,51 +73,37 @@ Switch.prototype.draw = function(context, lineColor) {
     context.moveTo(0, 0);
 
     // Draw 1
-    context.moveTo(digsim.GRID_SIZE / 4, -digsim.GRID_SIZE / 4);
-    context.lineTo(digsim.GRID_SIZE / 4, digsim.GRID_SIZE / 4);
-    context.moveTo(digsim.GRID_SIZE / 4, 0);
-    context.lineTo(digsim.GRID_SIZE * 3 / 4, 0);
+    context.moveTo(digsim.gridSize / 4, -digsim.gridSize / 4);
+    context.lineTo(digsim.gridSize / 4, digsim.gridSize / 4);
+    context.moveTo(digsim.gridSize / 4, 0);
+    context.lineTo(digsim.gridSize * 3 / 4, 0);
 
     // Draw connection to 1 or 0
     if (this.state && digsim.mode === digsim.SIM_MODE) {
-        context.lineTo(digsim.GRID_SIZE / 4 * 5, digsim.GRID_SIZE / 2);
-        context.moveTo(digsim.GRID_SIZE * 3 / 4 , digsim.GRID_SIZE);
+        context.lineTo(digsim.gridSize / 4 * 5, digsim.gridSize / 2);
+        context.moveTo(digsim.gridSize * 3 / 4 , digsim.gridSize);
 
     }
     else {
-        context.moveTo(digsim.GRID_SIZE / 4 * 5, digsim.GRID_SIZE / 2);
-        context.lineTo(digsim.GRID_SIZE * 3 / 4, digsim.GRID_SIZE);
+        context.moveTo(digsim.gridSize / 4 * 5, digsim.gridSize / 2);
+        context.lineTo(digsim.gridSize * 3 / 4, digsim.gridSize);
     }
-    context.lineTo(digsim.GRID_SIZE / 2, digsim.GRID_SIZE);
+    context.lineTo(digsim.gridSize / 2, digsim.gridSize);
     context.stroke();
 
     // Draw 0
     context.beginPath();
-    context.arc(digsim.GRID_SIZE / 3, digsim.GRID_SIZE, digsim.GRID_SIZE / 5, 0, 2 * Math.PI);
+    context.arc(digsim.gridSize / 3, digsim.gridSize, digsim.gridSize / 5, 0, 2 * Math.PI);
     context.stroke();
     context.fill();
 
     // Connection
     context.beginPath();
-    context.moveTo(digsim.GRID_SIZE / 4 * 5, digsim.GRID_SIZE / 2);
-    context.lineTo(digsim.GRID_SIZE * 1.5, digsim.GRID_SIZE / 2);
+    context.moveTo(digsim.gridSize / 4 * 5, digsim.gridSize / 2);
+    context.lineTo(digsim.gridSize * 1.5, digsim.gridSize / 2);
     context.stroke();
 
     this.drawLabel(context, lineColor);
 
     context.restore();
-
-    for (var i = 0; i < this.juncts.length; ++i) {
-        // console.log(".onSjunct:…………………………………………");
-        // console.log("ROW: " + this.row + " COL: " + this.col);
-
-        context.beginPath();
-        context.strokeStyle = '#000000';
-        context.fillStyle = '#000000';
-        context.arc((this.juncts[i].x + 0.5) * digsim.GRID_SIZE, (this.juncts[i].y + 0.5) * digsim.GRID_SIZE, digsim.GRID_SIZE / 10, 0, 2 * Math.PI);
-        context.fill();
-        context.stroke();
-    }
 };
-
-

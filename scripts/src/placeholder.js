@@ -1,6 +1,6 @@
 /*****************************************************************************
  * Program:
- *  placehoder.js
+ *  placeholder.js
  *
  * Authors:
  *  Steven Lambert
@@ -9,13 +9,18 @@
  * Summary:
  *  Outline of a placeholder object used to keep track of which grids have
  *  components in them
+ * @deprecated
  ****************************************************************************/
-function Placeholder(id, col, row, endCol, endRow, connect, name) {
-    this.ref = id;
-    this.posX = col;
-    this.posY = row;
-    this.width = endCol;
-    this.height = endRow;
-    this.connectable = (typeof connect === 'undefined' ? true : connect);
-    this.name = name;  // Special property for keeping track of where connections occur for DFF, JKFF, and MUX
-};
+
+/*****************************************************************************
+ * Placeholder
+ * @constructor
+ * @param {number}  id     - Unique id of the component whose placeholder this is.
+ * @param {boolean} con    - If the placeholder can be used for determining connections.
+ * @param {number}  name   - Name of the connection (DFF)
+ ****************************************************************************/
+function Placeholder(ref, connectable, name) {
+    this.ref         = ref;
+    this.connectable = (typeof connectable === 'undefined' ? true : connectable);
+    this.name        = name;
+}
