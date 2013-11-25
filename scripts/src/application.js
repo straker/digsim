@@ -1220,30 +1220,43 @@ Digsim.prototype.openFile = function() {
  ****************************************************************************/
 Digsim.prototype.saveFile = function() {
     if (!$('#Save').hasClass('disabled')) {
-        var components = [], comp;
+        var components = [];
+        var comps, comp, i, j, inputs, outputs, cons;
+
         // Create a new array that will be turned into the JSON object
-        for (var i in digsim.components)  {
-          if (digsim.components.hasOwnProperty(i))
-            components[i] = $.extend(true, {}, digsim.components[i]);
+        // Copy so we don't modify any of the existing Components
+        comps = digsim.components.get();
+        for (i = 0; i < comps.length; i++)  {
+            components[i] = $.extend(true, {}, comps[i]);
         }
 
         // Loop through the components array
-        for (i in components) {
-          if (components.hasOwnProperty(i)) {
+        for (i = 0; i < components.length; i++) {
             comp = components[i];
 
-            // Change all connection objects into ids for stringification
-            for (var j in comp.connections) {
-              if (comp.connections.hasOwnProperty(j))
-                comp.connections[j] = comp.connections[j].id;
+            // Change all connection objects into arrays
+            inputs = comp.inputs.get();
+            outputs = comp.outputs.get();
+            comp.inputs = [];
+            comp.outputs = [];
+
+            // Add connections by id
+            for (j = 0; j < inputs.length; j++) {
+                comp.inputs.push(inputs[j].id);
+            }
+            for (j = 0; j < outputs.length; j++) {
+                comp.outputs.push(outputs[j].id);
             }
 
-            // Delete all arrays
-            comp.prev = comp.next = [];
-            if (comp.isAGate()) {
-                comp.prevConnect = [];
+            // Wire
+            if (comp.connections) {
+                cons = comp.connections.get();
+                comp.connections = [];
+
+                for (j = 0; j < cons.length; j++) {
+                    comp.connections.push(cons[j].id);
+                }
             }
-          }
         }
 
         // Stringify the array
@@ -2393,73 +2406,104 @@ Digsim.prototype.debug = {
      * @param {string} truthTable -
      ****************************************************************************/
     validateSchematic: function(truthTable) {
+        var comps = digsim.components.get();
         var labels = {};
         var array = [];
         var component = {};
+        var i, j, comp, rows, headers, cols;
 
         digsim.mode = digsim.SIM_MODE;
 
-        // Clear the next/prev list for each item and count the max pass throughs
+        // Count the number of connections, inputs, and outputs of the schematic
         digsim.maxSchematicLoop = 0;
-        var comps = digsim.components.get();
-        var comp;
         for (j = 0, len = comps.length; j < len; ++j) {
             comp = comps[j];
-            if (typeof comp !== 'undefined') {
-                if (comp.type === digsim.DFF) {
-                    comp.state = {'Q': false, 'Qnot': false};
-                }
-                else {
-                    comp.state = -1;
-                }
 
-                // Count the number of possible pass through the current schematic could have
-                if (comp.type === digsim.WIRE)
-                    digsim.maxSchematicLoop += comp.connections.length();
-                else
-                    digsim.maxSchematicLoop += comp.numInputs + comp.numOutputs;
+            if (comp.type === digsim.DFF) {
+                comp.state = {'Q': false, 'Qnot': false};
             }
+            else {
+                comp.state = -1;
+            }
+
+            // Count the number of possible pass through the current schematic could have
+            if (comp.type === digsim.WIRE) {
+                digsim.maxSchematicLoop += comp.connections.length();
+
+                // Reset input/output connections for a Wire
+                comp.inputs.clear(false);
+                comp.outputs.clear(false);
+            }
+            else
+                digsim.maxSchematicLoop += comp.numInputs + comp.numOutputs;
 
             labels[comp.label] = comp.id;
         }
         // Define a safety buffer to pass through
         digsim.maxSchematicLoop *= 3;
 
-        var rows = truthTable.split(/\r?\n/);
-        var headers = rows[0].split(' ');
+        rows = truthTable.split(/\r?\n/);
+        headers = rows[0].split(' ');
 
-        for (var i = 0; i < headers.length; i++) {
+        // Get the Component associated with the header label
+        for (i = 0; i < headers.length; i++) {
             component = digsim.components.getComponent(labels[headers[i]]);
-            array.push(component);
-            if (component.type !== digsim.LED) {
-                component.traverseConnections();
+
+            if (component) {
+                array.push(component);
+
+                if (component.isADriver()) {
+                    component.traverseConnections();
+                }
             }
         }
 
-        for (var i = 1; i < rows.length; i++) {
-            var cols = rows[i].split(' ');
+        // If we don't have all the components, through an error
+        if (headers.length !== array.length) {
+            // Find each header that is missing
+            var found;
+            for (i = 0; i < headers.length; i++) {
+                found = false;
+                for (j = 0; j < array.length; j++) {
+                    if (headers[i] === array[j].label) {
+                        found = true;
+                    }
+                }
+
+                if (!found)
+                    console.warn("Cannot validate schematic; No Component labeled " + headers[i]);
+            }
+
+            digsim.mode = digsim.DEFAULT_MODE;
+            return;
+        }
+
+        // Loop through each row of the truth table
+        for (i = 1; i < rows.length; i++) {
+            cols = rows[i].split(' ');
 
             // Reset all switches
-            for (var j = 0; j < array.length; j++) {
-                if (array[j].type !== digsim.LED) {
+            for (j = 0; j < array.length; j++) {
+                if (array[j] && array[j].isADriver()) {
                     array[j].passState(0);
                 }
             }
 
-            for (var j = 0; j < cols.length; j++) {
+            // Pass state of each column
+            for (j = 0; j < cols.length; j++) {
                 component = array[j];
                 digsim.passCounter = 0;
 
-                if (component.type !== digsim.LED) {
+                if (component && component.isADriver()) {
                     component.passState(parseInt(cols[j], 10));
                 }
-                else {
+                else if (component && component.type === digsim.LED) {
                     console.warn("ROW " + i + ": " + (component.state == parseInt(cols[j], 10)) );
-                    //alert("ROW " + i + ": " + (component.state === cols[j]));
                 }
             }
         }
 
+        digsim.mode = digsim.DEFAULT_MODE;
     },
 
     /*****************************************************************************
