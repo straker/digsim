@@ -19,7 +19,7 @@ function MUX(numInputs) {
 
     this.numInputs   = (numInputs != 3) ? numInputs : 2;
     this.numOutputs  = 0;
-    this.dimension   = {'row': (this.numInputs + 1), 'col': 2};  // Height and width of component
+    this.dimension   = {'row': this.numInputs + 1, 'col': this.numInputs / 2};  // Height and width of component
 }
 MUX.prototype = new Component();
 
@@ -31,7 +31,7 @@ MUX.prototype = new Component();
 MUX.prototype.changeNumInputs = function(numInputs) {
     if (numInputs % 2 === 0) {
         this.numInputs = numInputs;
-        this.dimension = {'row': this.numInputs + 1, 'col': 2};
+        this.dimension = {'row': this.numInputs + 1, 'col': this.numInputs / 2};
     }
 };
 
@@ -83,8 +83,8 @@ MUX.prototype.draw = function(context, lineColor) {
     context.beginPath();
     context.moveTo(0, 0);
     context.lineTo(0, (this.numInputs + 1) * digsim.gridSize);
-    context.lineTo(digsim.gridSize * 2, ((this.numInputs + 1) - this.numInputs / 4) * digsim.gridSize);
-    context.lineTo(digsim.gridSize * 2, digsim.gridSize * this.numInputs / 4);
+    context.lineTo(digsim.gridSize * this.dimension.col, ((this.numInputs + 1) - this.numInputs / 4) * digsim.gridSize);
+    context.lineTo(digsim.gridSize * this.dimension.col, digsim.gridSize * this.numInputs / 4);
     context.closePath();
     context.fill();
 

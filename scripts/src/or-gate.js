@@ -83,7 +83,7 @@ OR.prototype.draw = function(context, lineColor) {
     context.rotate(this.rotation * Math.PI / 180);
     context.translate(-center.col, -center.row);
 
-    this.drawWires(context, lineColor);
+    this.drawWires(context, lineColor, 2);
 
     // Draw gate
     var factor = Math.floor(this.numInputs / 2);

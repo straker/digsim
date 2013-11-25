@@ -7,11 +7,7 @@
  *  Zack Sheffield
  *
  * Summary:
- *  A fully functional circuit simulation program.
- *
- * To-do:
- * Panning row and col correctly (can't get the correct row and col when panned)
- *
+ *  A fully functional digital circuit simulation program.
  ****************************************************************************/
 
 /*****************************************************************************
@@ -20,147 +16,139 @@
  * @constructor
  ****************************************************************************/
 function Digsim() {
-    // Constants
-    this.GRID_ZOOM          = 5;      // Added or subtracted to GRID_SIZE when zooming
-    this.MAX_GRID_SIZE      = 40;     // The max zoom level
-    this.MIN_GRID_SIZE      = 10;     // The min zoom level
-    this.HIT_RADIUS         = 0.733;  // The size (as a percent) around a wire that will respond to a click
-    this.NUM_COLS           = 200;
-    this.NUM_ROWS           = 200;
+    /* Constants */
+    this.GRID_ZOOM         = 5;                     // Added or subtracted to gridSize when zooming
+    this.MAX_GRID_SIZE     = 40;                    // Max zoom level
+    this.MIN_GRID_SIZE     = 10;                    // Min zoom level
+    this.HIT_RADIUS        = 0.733;                 // The size (as a percent) around a wire that will respond to a click
+    this.NUM_COLS          = 200;                   // Number of columns in the application
+    this.NUM_ROWS          = 200;                   // Number of rows in the application
 
     // Type identifiers
-    this.AND                = 1;
-    this.NAND               = 2;
-    this.OR                 = 3;
-    this.NOR                = 4;
-    this.XOR                = 5;
-    this.NOT                = 6;
-    this.DFF                = 7;
-    this.JKFF               = 8;
-    this.MUX                = 9;
-    this.CLOCK              = 10;
-    this.WIRE               = 11;
-    this.SWITCH             = 12;
-    this.LED                = 13;
+    this.AND               = 1;
+    this.NAND              = 2;
+    this.OR                = 3;
+    this.NOR               = 4;
+    this.XOR               = 5;
+    this.NOT               = 6;
+    this.DFF               = 7;
+    this.JKFF              = 8;
+    this.MUX               = 9;
+    this.CLOCK             = 10;
+    this.WIRE              = 11;
+    this.SWITCH            = 12;
+    this.LED               = 13;
 
-    this.DEFAULT_MODE       = 0;
-    this.WIRE_MODE          = 1;      // For placing wires
-    this.SIM_MODE           = 2;      // For simulation
-    this.PLACE_MODE         = 3;      // Placing components
-    this.EDIT_MODE          = 4;      // Editing component properties
+    this.DEFAULT_MODE      = 0;                     // Default application mode
+    this.WIRE_MODE         = 1;                     // Placing wires
+    this.SIM_MODE          = 2;                     // Simulation
+    this.PLACE_MODE        = 3;                     // Placing Components
+    this.EDIT_MODE         = 4;                     // Editing Component properties
 
-    this.WARNING            = 0;      // Orange(ish) warning messages - simulation will still run
-    this.ERROR              = 1;      // Red error messages - will not simulate
+    this.WARNING           = 0;                     // Orange(ish) warning messages - simulation will still run
+    this.ERROR             = 1;                     // Red error messages - will not simulate
 
-    this.TL                 = 0;      // Top, bottom, left, right selection of wires in grids
-    this.TR                 = 1;
-    this.BR                 = 2;
-    this.BL                 = 3;
+    this.TL                = 0;                     // Top, bottom, left, right selection of wires in grids
+    this.TR                = 1;
+    this.BR                = 2;
+    this.BL                = 3;
 
-    // Animation variables
-    this.dragging           = false;  // Flagged used to detect when a component is being dragged
-    this.clkCnt             = 0;      // This will count to digsim.CLK_FREQ before it resets and changes states
-    this.rotation           = 0;      // Gives the rotation of the current selected object in degrees - resets when
-                                      // entering new modes
-    // Grid variables
-    this.gridSize          = 20;      // The size (in pixels) of a grid square
-    this.gridWidth          = window.innerWidth - $('.canvases').position().left;
-    this.gridHeight         = window.innerHeight - $('.canvases').position().top;
-    this.mousePos           = { x: -1, y: -1 };
-    this.dragStart          = {'row': 0, 'col': 0};
-    this.dragOffset         = {'row': 0, 'col': 0}
-    this.wireStart          = {'row': 0, 'col': 0};
-    this.offsetCol          = 0;      // "Global" variable needed for even functions
-    this.offsetRow          = 0;      // "Global" variable needed for even functions
-    this.gridToggle         = 0;      // Toggles the grid (tri-state)
+    /* Animation variables */
+    this.dragging          = false;                 // Know when a component is being dragged
+    this.clkCnt            = 0;                     // Will count to digsim.CLK_FREQ before it resets and changes states
+    this.rotation          = 0;                     // Rotation of the currently selected Component (in degrees)
+    /* Grid variables */
+    this.gridSize          = 20;                    // The size (in pixels) of a grid square
+    this.gridWidth         = window.innerWidth - $('.canvases').position().left;
+    this.gridHeight        = window.innerHeight - $('.canvases').position().top;
+    this.mousePos          = { x: -1, y: -1 };      // Current position of the mouse on the Canvas
+    this.dragStart         = {'row': 0, 'col': 0};  // Keep track of the row/col of a click to know when we should drag
+    this.dragOffset        = {'row': 0, 'col': 0};  // Keep track of how far from the top-left corner the a click is for dragging
+    this.wireStart         = {'row': 0, 'col': 0};  // Keep track of where a wire starts for wire placement
+    this.gridToggle        = 0;                     // Toggles the grid (tri-state)
 
     // Gate identifier
-    this.iComp              = 0;      // Gives each component a new unique identifier
-    this.numGateInputs      = 2;      // Number of inputs - attached to the user interface selection
+    this.iComp             = 0;                     // Gives each component a unique identifier
+    this.numGateInputs     = 2;                     // Number of inputs - attached to the user interface selection
 
     // Misc
-    this.clipboard          = undefined;     // Used for cut/copy/paste
-    this.selectedComponent  = undefined;     // Used for selecting components
-    this.mode               = 0;      // The current mode
-    this.connectionStarts   = {};     // Absolute row/col of a connection for wire routing
-    this.connectionTargets  = {};     // Relative row/col of the Component for wire routing
-    this.backspace2delete   = false;
-    this.maxSchematicLoop   = 0;      // Used to prevent infinite loops (such as NOT gate looped back on itself)
-    this.passCounter        = 0;      // Counter used to prevent infinite loops
-    this.endRoute           = false;  // Used to know when to stop wire routing
-    this.mouseDown          = false;  // Tell if the mouse is currently held down for dragging
+    this.clipboard         = undefined;             // Used for cut/copy/paste
+    this.selectedComponent = undefined;             // The currently selected Component
+    this.mode              = 0;                     // The current mode
+    this.connectionStarts  = {};                    // Absolute row/col of a connection for wire routing
+    this.connectionTargets = {};                    // Relative row/col of the Component for wire routing
+    this.maxSchematicLoop  = 0;                     // Prevent infinite loops (such as NOT gate looped back on itself)
+    this.passCounter       = 0;                     // Counter used to prevent infinite loops
+    this.endRoute          = false;                 // Know when to stop wire routing
+    this.mouseDown         = false;                 // Know if the mouse is currently held down for dragging
 
     // Data arrays
-    this.components         = new ComponentList();     // Holds all placed Components
-    this.drivers            = [];     // Holds the place of the logic drivers in components[].
-    this.placeholders       = [];     // Holds component positions on grid
+    this.components        = new ComponentList();   // Holds all placed Components
+    this.drivers           = [];                    // Holds the id of the logic drivers
+    this.placeholders      = [];                    // Holds Component positions on grid
     for (var i = 0; i < this.NUM_COLS; ++i) {
-        this.placeholders[i] = [];     // Set placeholder to a 2D array
+        this.placeholders[i] = [];                  // Set placeholder to a 2D array
     }
 
     // Key codes and hot keys
-    this.KEY_CODES          = {       // Key code to button HTML ID dictionary.
-        27: 'esc',                    // 's' and 'c' refer to a 'shift' and 'ctrl' respectively.
-        's65': 'NAND',
-        's82': 'NOR',
-        65: 'AND',
-        69: 'LED',
-        84: 'NOT',
-        82: 'OR',
-        83: 'Switch',
-        85: 'Run',
-        87: 'Wire',
-        88: 'XOR',
-        71: 'Toggle_Grid',
-        90: 'Zoom_In',
-        's90': 'Zoom_Out',
-        46: 'Delete',
-        8: 'Delete',
-        'c88': 'Cut',
-        'c67': 'Copy',
-        'c86': 'Paste',
-        50: '2-input',
-        51: '3-input',
-        52: '4-input',
-        67: 'Clock',
-        9: 'Rotate_CW',
-        's9': 'Rotate_CCW',
-        68: 'DFF',
-        's70': 'JKFF'
+    this.KEY_CODES          = {                     // Key code to button HTML ID dictionary.
+        27    : 'esc',                              // 's' and 'c' refer to a 'shift' and 'ctrl' respectively.
+        's65' : 'NAND',
+        's82' : 'NOR',
+        65    : 'AND',
+        69    : 'LED',
+        84    : 'NOT',
+        82    : 'OR',
+        83    : 'Switch',
+        85    : 'Run',
+        87    : 'Wire',
+        88    : 'XOR',
+        71    : 'Toggle_Grid',
+        90    : 'Zoom_In',
+        's90' : 'Zoom_Out',
+        46    : 'Delete',
+        8     : 'Delete',
+        'c88' : 'Cut',
+        'c67' : 'Copy',
+        'c86' : 'Paste',
+        50    : '2-input',
+        51    : '3-input',
+        52    : '4-input',
+        67    : 'Clock',
+        9     : 'Rotate_CW',
+        's9'  : 'Rotate_CCW',
+        68    : 'DFF',
+        77    : 'MUX'
+
     };
-    this.HOT_KEYS           = {       // The hot key text to show for each button (by button HTML ID)
-        'AND': 'A',
-        'OR': 'R',
-        'NOT': 'T',
-        'NAND': 'shift+A',
-        'NOR': 'shift+R',
-        'XOR': 'X',
-        'Switch': 'S',
-        'LED': 'E',
-        'Wire': 'W',
-        'Run': 'U',
-        'Toggle_Grid': 'G',
-        'Zoom_In': 'Z',
-        'Zoom_Out': 'shift+Z',
-        'Delete': 'del',
-        'Cut': 'ctrl+X',
-        'Copy': 'ctrl+C',
-        'Paste': 'ctrl+V',
-        '2-input': '2',
-        '3-input': '3',
-        '4-input': '4',
-        'Clock': 'C',
-        'Rotate_CW': 'Tab',
-        'Rotate_CCW': 'shift+Tab',
-        'DFF': 'D',
-        'JKFF': 'shift+F'
+    this.HOT_KEYS           = {                     // The hot key text to show for each button (by button HTML ID)
+        'AND'         : 'A',
+        'OR'          : 'R',
+        'NOT'         : 'T',
+        'NAND'        : 'shift+A',
+        'NOR'         : 'shift+R',
+        'XOR'         : 'X',
+        'Switch'      : 'S',
+        'LED'         : 'E',
+        'Wire'        : 'W',
+        'Run'         : 'U',
+        'Toggle_Grid' : 'G',
+        'Zoom_In'     : 'Z',
+        'Zoom_Out'    : 'shift+Z',
+        'Delete'      : 'del',
+        'Cut'         : 'ctrl+X',
+        'Copy'        : 'ctrl+C',
+        'Paste'       : 'ctrl+V',
+        '2-input'     : '2',
+        '3-input'     : '3',
+        '4-input'     : '4',
+        'Clock'       : 'C',
+        'Rotate_CW'   : 'Tab',
+        'Rotate_CCW'  : 'shift+Tab',
+        'DFF'         : 'D',
+        'MUX'         : 'M'
     };
 }
-
-// Confirm reloading the page or accidentally navigating back to the previous page.
-/*window.onbeforeunload = function() {
-    return 'You are probably trying to delete something. You must use the "delete" key instead of the "backspace" key.'
-};*/
 
 /*****************************************************************************
  * INIT
@@ -227,7 +215,7 @@ Digsim.prototype.run = function() {
         $('#Cut'        ).on(  "click",                  this.cut);
         $('#Copy'       ).on(  "click",                  this.copy);
         $('#Paste'      ).on(  "click",                  this.paste);
-        $(".gates>ul>li>a, .io a, .modes a").on("click", this.onButtonClicked);
+        $(".gates > ul a, .io a, .modes a").on("click",  this.onButtonClicked);
         $('#2-input, #3-input, #4-input').on("click",    this.changeNumInputs);
 
         // Component menu events
@@ -400,7 +388,7 @@ Digsim.prototype.getComponent = function() {
 
     // Get the Component
     if (ph instanceof Array) {
-        index = digsim.utils.getWireIndex(digsim.mousePos.x, digsim.mousePos.y);
+        index = digsim.getWireIndex();
         if (index != -1 && ph[index])
             comp = digsim.components.getComponent(ph[index].ref);
     }
@@ -446,20 +434,20 @@ Digsim.prototype.setPlaceholders = function(comp, nocheck) {
                 // If grid space is not an array and already contains a placeholder
                 if (!(this.placeholders[space[i].row][space[i].col] instanceof Array) &&
                     this.placeholders[space[i].row][space[i].col]) {
-                    digsim.utils.addMessage(digsim.WARNING, "[1]Collision detected! Unable to place component.");
+                    digsim.addMessage(digsim.WARNING, "[1]Collision detected! Unable to place component.");
                     return false;
                 }
                 // If grid space is an array and already contains a placeholder
                 else if ((this.placeholders[space[i].row][space[i].col] instanceof Array) &&
                         this.placeholders[space[i].row][space[i].col][space[i].index]) {
-                    digsim.utils.addMessage(digsim.WARNING, "[2]Collision detected! Unable to place component.");
+                    digsim.addMessage(digsim.WARNING, "[2]Collision detected! Unable to place component.");
                     return false;
                 }
             }
             else {
                 // If gird space already contains a placeholder
                 if (this.placeholders[space[i].row][space[i].col]) {
-                    digsim.utils.addMessage(digsim.WARNING, "[3]Collision detected! Unable to place component. ");
+                    digsim.addMessage(digsim.WARNING, "[3]Collision detected! Unable to place component. ");
                     return false;
                 }
             }
@@ -1022,7 +1010,7 @@ Digsim.prototype.onButtonClicked = function(event) {
         else if (id == "Run") {
             // Error if there are no drivers in the schematic
             if (digsim.drivers.length === 0) {
-                digsim.utils.addMessage(digsim.ERROR, "[16]Error: No drivers in schematic!");
+                digsim.addMessage(digsim.ERROR, "[16]Error: No drivers in schematic!");
                 return;
             }
 
@@ -1088,8 +1076,6 @@ Digsim.prototype.onButtonClicked = function(event) {
             Class = window[id];
             comp = new Class(digsim.numGateInputs);
             digsim.rotation = 0;
-            digsim.offsetRow = 0;
-            digsim.offsetCol = 0;
 
             // Initialize the new object at the mouse position
             row = digsim.getMouseRow();
@@ -1556,6 +1542,66 @@ Digsim.prototype.getMouseCol = function() {
 };
 
 /*****************************************************************************
+ * GET WIRE INDEX
+ *  Returns the index of the where the user clicks inside a wire array
+ *  placeholder cell.
+ ****************************************************************************/
+Digsim.prototype.getWireIndex = function() {
+    var mousePos  = this.getMousePos;
+    var row       = this.getMouseRow();
+    var col       = this.getMouseCol();
+    var relX      = mousePos.x % digsim.gridSize;
+    var relY      = mousePos.y % digsim.gridSize;
+
+    var leftVert  = topHor = Math.ceil(digsim.gridSize * (1 - digsim.HIT_RADIUS) / 2);
+    var rightVert = bottomHor = digsim.gridSize - topHor;
+    var diagSep   = digsim.gridSize - relX;
+    var vert      = (relX >= topHor) && (relX <= bottomHor);
+    var hor       = (relY >= leftVert) && (relY <= rightVert);
+    var index     = -1;
+    var array     = digsim.placeholders[row][col];
+
+    if (vert && hor && (array[0] || array[2]) && (array[1] || array[3])) {
+        // mid click and multiple wires
+        // Determine grid snap for wires not connecting to other wires.
+        if (relY < relX) {  // top
+            if (relY < diagSep) {  // top-left
+                index = digsim.TL;
+            }
+            else { // top-right
+                index = digsim.TR;
+            }
+        }
+        else { // bottom
+            if (relY < diagSep) { // bottom-left
+                index = digsim.BL;
+            }
+            else { // bottom-right
+                index = digsim.BR;
+            }
+        }
+    }
+    else if (hor && (array[1] || array[3]) && relY >= topHor && relY <= bottomHor) {
+        if (relX <= digsim.gridSize / 2) {
+            index = 3;
+        }
+        else {
+            index = 1;
+        }
+    }
+    else if (vert && relX >= leftVert && relX <= rightVert) {
+        if (relY <= digsim.gridSize / 2) {
+            index = 0;
+        }
+        else {
+            index = 2;
+        }
+    }
+
+    return index;
+};
+
+/*****************************************************************************
  * PREP DRAGGING
  *  Prepare a Component for dragging.
  ****************************************************************************/
@@ -1778,9 +1824,56 @@ Digsim.prototype.onSaveComponentEdit = function() {
 };
 
 /*****************************************************************************
+ * ADD MESSAGE
+ *  Adds error and warning messages to the message window.
+ * @param {number} type - Type of message.
+ * @param {string} msg  - Message to display.
+ ****************************************************************************/
+Digsim.prototype.addMessage = function(type, msg) {
+    if (type === digsim.ERROR) {
+        $('#messages').append("<span class='error'>" + msg + "</span><br>");
+        $("#messages").scrollTop($("#messages")[0].scrollHeight);
+        digsim.deactivateButtons();
+    }
+    else if (type === digsim.WARNING) {
+        $('#messages').append("<span class='warning'>" + msg + "</span><br>");
+        $("#messages").scrollTop($("#messages")[0].scrollHeight);
+    }
+};
+
+/**************************************************************************************************************
+ *     /$$      /$$ /$$
+ *    | $$  /$ | $$|__/
+ *    | $$ /$$$| $$ /$$  /$$$$$$   /$$$$$$
+ *    | $$/$$ $$ $$| $$ /$$__  $$ /$$__  $$
+ *    | $$$$_  $$$$| $$| $$  \__/| $$$$$$$$
+ *    | $$$/ \  $$$| $$| $$      | $$_____/
+ *    | $$/   \  $$| $$| $$      |  $$$$$$$
+ *    |__/     \__/|__/|__/       \_______/
+ *
+ *
+ *
+ *     /$$$$$$$                        /$$     /$$
+ *    | $$__  $$                      | $$    |__/
+ *    | $$  \ $$  /$$$$$$  /$$   /$$ /$$$$$$   /$$ /$$$$$$$   /$$$$$$
+ *    | $$$$$$$/ /$$__  $$| $$  | $$|_  $$_/  | $$| $$__  $$ /$$__  $$
+ *    | $$__  $$| $$  \ $$| $$  | $$  | $$    | $$| $$  \ $$| $$  \ $$
+ *    | $$  \ $$| $$  | $$| $$  | $$  | $$ /$$| $$| $$  | $$| $$  | $$
+ *    | $$  | $$|  $$$$$$/|  $$$$$$/  |  $$$$/| $$| $$  | $$|  $$$$$$$
+ *    |__/  |__/ \______/  \______/    \___/  |__/|__/  |__/ \____  $$
+ *                                                           /$$  \ $$
+ *                                                          |  $$$$$$/
+ *                                                           \______/
+ ***************************************************************************************************************/
+
+/*****************************************************************************
  * ROUTE
  *  Route a path from start to target and adds placeholders too.
  *  Dijkstra pathfinding algorithm - www.zsheffield.net/dijkstra-pathfinding
+ * @param {Object}  startRef   - Staring {row, col}.
+ * @param {Object}  targetRef  - Ending {row, col}.
+ * @param {boolean} returnPath - Return the path array.
+ * @param {Wire}    obj        - Wire to update path (instead of creating a new one).
  ****************************************************************************/
 Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
     var start = {'c': startRef.c, 'r': startRef.r};     // JSON objects are pass by reference, and we don't want
@@ -1802,16 +1895,20 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
     // console.log("START: r:" + start.r + " c:" + start.c);
     // console.log("TARGET: r:" + target.r + " c:" + target.c);
 
-    var neighbors = [];
-    var u;
-    var pathfound = false;
-    var alt;
-    var index = 0;
+    /**
+     * Node object
+     */
     function node(r, c, p) {
         this.r = r || 0;
         this.c = c || 0;
         this.p = p || undefined;
     };
+
+    var neighbors = [];
+    var u;
+    var pathfound = false;
+    var alt;
+    var index = 0;
     var dist = [];
     var Q = [];
     var prev = [];
@@ -1845,7 +1942,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
         }
 
         if (dist[u.r][u.c] === Infinity) { // Nowhere to go
-            digsim.utils.addMessage(digsim.WARNING, "[17]Unable to find valid path for autoroute");
+            digsim.addMessage(digsim.WARNING, "[17]Unable to find valid path for autoroute");
             pathfound = false;
             break;
         }
@@ -1859,7 +1956,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
                 neighbors.push( {'r': u.r - 1, 'c': u.c} );
             }
             else if (digsim.placeholders[u.r - 1][u.c] instanceof Array) {
-                if (digsim.utils.checkAdj(u, 0, target)) {
+                if (digsim.checkAdj(u, 0, target)) {
                     neighbors.push( {'r': u.r - 1, 'c': u.c} );
                 }
             }
@@ -1872,7 +1969,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
                 neighbors.push( {'r': u.r, 'c': u.c + 1} );
             }
             else if (digsim.placeholders[u.r][u.c + 1] instanceof Array) {
-                if (digsim.utils.checkAdj(u, 1, target)) {
+                if (digsim.checkAdj(u, 1, target)) {
                     neighbors.push( {'r': u.r, 'c': u.c + 1} );
                 }
             }
@@ -1885,7 +1982,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
                     neighbors.push( {'r': u.r + 1, 'c': u.c} );
             }
             else if (digsim.placeholders[u.r + 1][u.c] instanceof Array) {
-                if (digsim.utils.checkAdj(u, 2, target)) {
+                if (digsim.checkAdj(u, 2, target)) {
                     neighbors.push( {'r': u.r + 1, 'c': u.c} );
                 }
             }
@@ -1898,7 +1995,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
                     neighbors.push( {'r': u.r, 'c': u.c - 1} );
             }
             else if (digsim.placeholders[u.r][u.c - 1] instanceof Array) {
-                if (digsim.utils.checkAdj(u, 3, target)) {
+                if (digsim.checkAdj(u, 3, target)) {
                     neighbors.push( {'r': u.r, 'c': u.c - 1} );
                 }
             }
@@ -1921,7 +2018,7 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
     }
     u = prev[prev.length - 1]; // This is the target
     if (u.r !== target.r || u.c !== target.c) { // no path
-        digsim.utils.addMessage(digsim.WARNING, "[18]Unable to find valid path for autoroute");
+        digsim.addMessage(digsim.WARNING, "[18]Unable to find valid path for autoroute");
         return;
     }
     var S = [];
@@ -1973,7 +2070,6 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
                     // DO NOT PLACE WIRE, there's something in the way.
                     wire.path.pop();
                     digsim.dragging = true;
-                    console.log("adsfouhasd;foiuahspr98wyrw-ywiegrv3hqregit0ire3hreg0ot-h");
                 }
             }
             currStart.r += currBranch.r;
@@ -2044,7 +2140,6 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
             // DO NOT PLACE WIRE, there's something in the way.
             wire.path.pop();
             digsim.dragging = true;
-            console.log("77777777777787777777778545487777485477");
         }
 
         if (digsim.endRoute) {
@@ -2057,8 +2152,63 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
             digsim.wireStart.col = target.c + 0.5;
             digsim.wireStart.row = target.r + 0.5;
             digsim.dragging = true;
-            console.log("ΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩ");
         }
+    }
+};
+
+/*****************************************************************************
+ * CHECK ADJACENT
+ *  Used for autorouting to see if adjacent cells containing wires are valid
+ *  paths.
+ * @param {Node}   curr   - Current node.
+ * @param {number} d      - Direction to travel.
+ * @param {Node}   target - Goal node.
+ ****************************************************************************/
+Digsim.prototype.checkAdj = function(curr, d, target) {
+    var r = curr.r;
+    var c = curr.c;
+    var t, array;
+    if (digsim.placeholders[r][c] instanceof Array &&
+        typeof digsim.placeholders[r][c][d] !== 'undefined') {
+        return false;
+    }
+    switch (d)
+    {
+        case 0: // moving up
+            array = digsim.placeholders[r-1][c];
+            t =    (typeof array[0] === 'undefined') &&
+                   (typeof array[1] !== 'undefined' && digsim.components.getComponent(array[1].ref).type === digsim.WIRE) &&
+                   (typeof array[2] === 'undefined') &&
+                   (typeof array[3] !== 'undefined' && digsim.components.getComponent(array[3].ref).type === digsim.WIRE);
+                   // console.log("("+c+","+(r-1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
+                   return ((r - 1) === target.r && c === target.c) ? true : t;
+            break;
+        case 1: // moving right
+            array = digsim.placeholders[r][c+1];
+            t =    (typeof array[0] !== 'undefined' && digsim.components.getComponent(array[0].ref).type === digsim.WIRE) &&
+                   (typeof array[1] === 'undefined') &&
+                   (typeof array[2] !== 'undefined' && digsim.components.getComponent(array[2].ref).type === digsim.WIRE) &&
+                   (typeof array[3] === 'undefined');
+                   // console.log("("+(c+1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
+                   return (r === target.r && (c + 1) === target.c) ? true : t;
+                break;
+        case 2: // moving down
+            array = digsim.placeholders[r+1][c];
+            t =    (typeof array[0] === 'undefined') &&
+                   (typeof array[1] !== 'undefined' && digsim.components.getComponent(array[1].ref).type === digsim.WIRE) &&
+                   (typeof array[2] === 'undefined') &&
+                   (typeof array[3] !== 'undefined' && digsim.components.getComponent(array[3].ref).type === digsim.WIRE);
+                   // console.log("("+c+","+(r+1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
+                   return ((r + 1) === target.r && c === target.c) ? true : t;
+            break;
+        default: // moving left
+            array = digsim.placeholders[r][c-1];
+            t =    (typeof array[0] !== 'undefined' && digsim.components.getComponent(array[0].ref).type === digsim.WIRE) &&
+                   (typeof array[1] === 'undefined') &&
+                   (typeof array[2] !== 'undefined' && digsim.components.getComponent(array[2].ref).type === digsim.WIRE) &&
+                   (typeof array[3] === 'undefined');
+                   // console.log("("+(c-1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
+                   return (r === target.r && (c - 1) === target.c) ? true : t;
     }
 };
 
@@ -2212,148 +2362,35 @@ window.requestAnimFrame = (function() {
 
 
 
-/*============================================================================
-  ============================================================================
-  ============================ UTILITY FUNCTIONS =============================
-  ============================================================================
-  ============================================================================*/
-
-Digsim.prototype.utils = {
-    /*****************************************************************************
-     * UTILITY: CHECK ADJACENT
-     *  Used for autorouting to see if adjacent cells containing wires are valid
-     *  paths
-     *
-     *  curr   - current node
-     *  d      - direction we're looking to travel in
-     *  target - the goal we're trying to get to
-     ****************************************************************************/
-    checkAdj: function(curr, d, target) {
-        var r = curr.r;
-        var c = curr.c;
-        var t, array;
-        if (digsim.placeholders[r][c] instanceof Array &&
-            typeof digsim.placeholders[r][c][d] !== 'undefined') {
-            return false;
-        }
-        switch (d)
-        {
-            case 0: // moving up
-                array = digsim.placeholders[r-1][c];
-                t =    (typeof array[0] === 'undefined') &&
-                       (typeof array[1] !== 'undefined' && digsim.components.getComponent(array[1].ref).type === digsim.WIRE) &&
-                       (typeof array[2] === 'undefined') &&
-                       (typeof array[3] !== 'undefined' && digsim.components.getComponent(array[3].ref).type === digsim.WIRE);
-                       // console.log("("+c+","+(r-1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
-                       return ((r - 1) === target.r && c === target.c) ? true : t;
-                break;
-            case 1: // moving right
-                array = digsim.placeholders[r][c+1];
-                t =    (typeof array[0] !== 'undefined' && digsim.components.getComponent(array[0].ref).type === digsim.WIRE) &&
-                       (typeof array[1] === 'undefined') &&
-                       (typeof array[2] !== 'undefined' && digsim.components.getComponent(array[2].ref).type === digsim.WIRE) &&
-                       (typeof array[3] === 'undefined');
-                       // console.log("("+(c+1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
-                       return (r === target.r && (c + 1) === target.c) ? true : t;
-                    break;
-            case 2: // moving down
-                array = digsim.placeholders[r+1][c];
-                t =    (typeof array[0] === 'undefined') &&
-                       (typeof array[1] !== 'undefined' && digsim.components.getComponent(array[1].ref).type === digsim.WIRE) &&
-                       (typeof array[2] === 'undefined') &&
-                       (typeof array[3] !== 'undefined' && digsim.components.getComponent(array[3].ref).type === digsim.WIRE);
-                       // console.log("("+c+","+(r+1)+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
-                       return ((r + 1) === target.r && c === target.c) ? true : t;
-                break;
-            default: // moving left
-                array = digsim.placeholders[r][c-1];
-                t =    (typeof array[0] !== 'undefined' && digsim.components.getComponent(array[0].ref).type === digsim.WIRE) &&
-                       (typeof array[1] === 'undefined') &&
-                       (typeof array[2] !== 'undefined' && digsim.components.getComponent(array[2].ref).type === digsim.WIRE) &&
-                       (typeof array[3] === 'undefined');
-                       // console.log("("+(c-1)+","+r+") is "+(t?"":"not ")+"valid for current ("+c+","+r+")");
-                       return (r === target.r && (c - 1) === target.c) ? true : t;
-        }
-    },
-
-    /*****************************************************************************
-     * UTILITY: ADD MESSAGE
-     *  Adds error and warning messages to the message window
-     ****************************************************************************/
-    addMessage: function(type, msg) {
-        if (type === digsim.ERROR) {
-            $('#messages').append("<span class='error'>" + msg + "</span><br>");
-            $("#messages").scrollTop($("#messages")[0].scrollHeight);
-            digsim.deactivateButtons();
-        }
-        else if (type === digsim.WARNING) {
-            $('#messages').append("<span class='warning'>" + msg + "</span><br>");
-            $("#messages").scrollTop($("#messages")[0].scrollHeight);
-        }
-    },
-
-    /*****************************************************************************
-     * UTILITY: GET WIRE INDEX
-     *  Returns the index of the where the user clicks inside a wire array
-     *  placeholder cell
-     ****************************************************************************/
-    getWireIndex: function(mouseX, mouseY) {
-        var row = Math.floor(mouseY / digsim.gridSize);
-        var col = Math.floor(mouseX / digsim.gridSize);
-
-        var relX = mouseX % digsim.gridSize;
-        var relY = mouseY % digsim.gridSize;
-        var leftVert = topHor = Math.ceil(digsim.gridSize * (1 - digsim.HIT_RADIUS) / 2);
-        var rightVert = bottomHor = digsim.gridSize - topHor;
-        var diagSep = digsim.gridSize - relX;
-        var vert = (relX >= topHor) && (relX <= bottomHor);
-        var hor = (relY >= leftVert) && (relY <= rightVert);
-        var index = -1;
-        var array = digsim.placeholders[row][col];
-
-        if (vert && hor && (array[0] || array[2]) && (array[1] || array[3])) {
-            // mid click and multiple wires
-            // Determine grid snap for wires not connecting to other wires.
-            if (relY < relX) {  // top
-                if (relY < diagSep) {  // top-left
-                    index = digsim.TL;
-                }
-                else { // top-right
-                    index = digsim.TR;
-                }
-            }
-            else { // bottom
-                if (relY < diagSep) { // bottom-left
-                    index = digsim.BL;
-                }
-                else { // bottom-right
-                    index = digsim.BR;
-                }
-            }
-        }
-        else if (hor && (array[1] || array[3]) && relY >= topHor && relY <= bottomHor) {
-            if (relX <= digsim.gridSize / 2) {
-                index = 3;
-            }
-            else {
-                index = 1;
-            }
-        }
-        else if (vert && relX >= leftVert && relX <= rightVert) {
-            if (relY <= digsim.gridSize / 2) {
-                index = 0;
-            }
-            else {
-                index = 2;
-            }
-        }
-
-        return index;
-    },
-
+/**************************************************************************************************************
+ *     /$$$$$$$            /$$
+ *    | $$__  $$          | $$
+ *    | $$  \ $$  /$$$$$$ | $$$$$$$  /$$   /$$  /$$$$$$
+ *    | $$  | $$ /$$__  $$| $$__  $$| $$  | $$ /$$__  $$
+ *    | $$  | $$| $$$$$$$$| $$  \ $$| $$  | $$| $$  \ $$
+ *    | $$  | $$| $$_____/| $$  | $$| $$  | $$| $$  | $$
+ *    | $$$$$$$/|  $$$$$$$| $$$$$$$/|  $$$$$$/|  $$$$$$$
+ *    |_______/  \_______/|_______/  \______/  \____  $$
+ *                                             /$$  \ $$
+ *                                            |  $$$$$$/
+ *                                             \______/
+ *     /$$$$$$$$                                 /$$     /$$
+ *    | $$_____/                                | $$    |__/
+ *    | $$       /$$   /$$ /$$$$$$$   /$$$$$$$ /$$$$$$   /$$  /$$$$$$  /$$$$$$$   /$$$$$$$
+ *    | $$$$$   | $$  | $$| $$__  $$ /$$_____/|_  $$_/  | $$ /$$__  $$| $$__  $$ /$$_____/
+ *    | $$__/   | $$  | $$| $$  \ $$| $$        | $$    | $$| $$  \ $$| $$  \ $$|  $$$$$$
+ *    | $$      | $$  | $$| $$  | $$| $$        | $$ /$$| $$| $$  | $$| $$  | $$ \____  $$
+ *    | $$      |  $$$$$$/| $$  | $$|  $$$$$$$  |  $$$$/| $$|  $$$$$$/| $$  | $$ /$$$$$$$/
+ *    |__/       \______/ |__/  |__/ \_______/   \___/  |__/ \______/ |__/  |__/|_______/
+ *
+ *
+ *
+ **************************************************************************************************************/
+Digsim.prototype.debug = {
     /*****************************************************************************
      * VALIDATE SCHEMATIC
-     *  Validate a schematic based on a truth table
+     *  Validate a schematic based on a truth table.
+     * @param {string} truthTable -
      ****************************************************************************/
     validateSchematic: function(truthTable) {
         var labels = {};

@@ -305,6 +305,68 @@ Component.prototype.getExtraComponentSpace = function(length) {
     return space;
 };
 
+/*****************************************************************************
+ * CHECK CONNECTIONS
+ *  Checks input and output spaces for other Components to connect to.
+ ****************************************************************************/
+Component.prototype.checkConnections = function() {
+
+    var inputSpace = this.getComponentInputSpace();
+    var outputSpace = this.getComponentOutputSpace();
+    var cons, con, spaces, space, grid, ph, comp, i, j, k;
+
+    // Check input and output space for connections
+    cons = ['inputs','outputs'];
+    for (k = 0; k < cons.length; k++) {
+        con = cons[k];
+        spaces = (con === 'inputs' ? inputSpace : outputSpace);
+
+        // Loop through each space
+        for (j = 0; j < spaces.length; j++) {
+            space = spaces[j];
+
+            // Check every index of the space for a connection
+            for (i = 0; i < 4; i++) {
+                grid = digsim.placeholders[space.row][space.col];
+                ph   = grid[i];
+
+                // There is a Component to connect to and it is not already connected
+                if (i !== space.index && ph && ph.connectable && !this[con].contains(digsim.components.getComponent(ph.ref))) {
+                    comp = digsim.components.getComponent(ph.ref);
+
+                    if (this.type === digsim.WIRE) {
+                        this.connections.add(comp, space.conIndex, true);
+                    }
+                    else {
+                        this[con].add(comp, space.conIndex, true);
+                    }
+
+                    // Save connection to namedConnections
+                    if (space.name) {
+                        this.namedConnections[space.name] = comp;
+                    }
+                    if (ph.name) {
+                        comp.namedConnections[ph.name] = this;
+                    }
+
+                    // Split a Wire
+                    if (comp.type === digsim.WIRE && grid[(i+2)%4] && comp.id === grid[(i+2)%4].ref)
+                        comp.splitWire(space.row, space.col);
+                }
+            }
+        }
+    }
+};
+
+/*****************************************************************************
+ * DELETE CONNECTIONS
+ *  Remove all connections of the Component.
+ ****************************************************************************/
+Component.prototype.deleteConnections = function() {
+    this.inputs.clear();
+    this.outputs.clear();
+};
+
 /******************************************************************************
  * DRAW LABEL
  *  Draws the label for the Component.
@@ -331,95 +393,14 @@ Component.prototype.drawLabel = function(context, color) {
     context.restore();
 };
 
-/*****************************************************************************
- * CHECK CONNECTIONS
- *  Checks input and output spaces for other Components to connect to.
- ****************************************************************************/
-Component.prototype.checkConnections = function() {
-
-    var inputSpace = this.getComponentInputSpace();
-    var outputSpace = this.getComponentOutputSpace();
-    var cons, con, spaces, space, ph, comp, i, j, k;
-
-    // Check input and output space for connections
-    cons = ['inputs','outputs'];
-    for (k = 0; k < cons.length; k++) {
-        con = cons[k];
-        spaces = (con === 'inputs' ? inputSpace : outputSpace);
-
-        // Loop through each space
-        for (j = 0; j < spaces.length; j++) {
-            space = spaces[j];
-
-            // Check every index of the space for a connection
-            for (i = 0; i < 4; i++) {
-                ph = digsim.placeholders[space.row][space.col][i];
-
-                // There is a Component to connect to and it is not already connected
-                if (i !== space.index && ph && ph.connectable && !this[con].contains(digsim.components.getComponent(ph.ref))) {
-                    comp = digsim.components.getComponent(ph.ref);
-
-                    if (this.type === digsim.WIRE) {
-                        this.connections.add(comp, space.conIndex, true);
-
-                        // Wire is connected at the start
-                        if (this.row === (space.row + 0.5) && this.col === (space.col + 0.5)) {
-                            this.startConnections.push(comp.id);
-                        }
-                        // Wire is connected at the end
-                        else if (this.row + this.path.y === (space.row + 0.5) && this.col + this.path.x === (space.col + 0.5)) {
-                            this.endConnections.push(comp.id, space.conIndex, true);
-                        }
-                    }
-                    else {
-                        this[con].add(comp, space.conIndex, true);
-                    }
-
-                    // Save connection to namedConnections
-                    if (space.name) {
-                        this.namedConnections[space.name] = comp;
-                    }
-                    if (ph.name) {
-                        comp.namedConnections[ph.name] = this;
-                    }
-
-                    // Add special connections for wires
-                    if (comp.type === digsim.WIRE) {
-                        // Wire is connected at the start
-                        if (comp.row === (space.row + 0.5) && comp.col === (space.col + 0.5)) {
-                            comp.startConnections.push(this.id);
-                        }
-                        // Wire is connected at the end
-                        else if (comp.row + comp.path.y === (space.row + 0.5) && comp.col + comp.path.x === (space.col + 0.5)) {
-                            comp.endConnections.push(this.id);
-                        }
-                        // Split the wire
-                        else {
-                            comp.splitWire(space.row, space.col);
-                        }
-                    }
-                }
-            }
-        }
-    }
-};
-
-/*****************************************************************************
- * DELETE CONNECTIONS
- *  Remove all connections of the Component.
- ****************************************************************************/
-Component.prototype.deleteConnections = function() {
-    this.inputs.clear();
-    this.outputs.clear();
-};
-
 /******************************************************************************
  * DRAW WIRES
  *  Draws Component input and output wires
- * @param {CanvasRenderingContext2D} context   - Context to draw to.
- * @param {string}                   lineColor - Color of the wire.
+ * @param {CanvasRenderingContext2D} context    - Context to draw to.
+ * @param {string}                   lineColor  - Color of the wire.
+ * @param {number}                   wireLength - Length of the wires.
  *****************************************************************************/
-Component.prototype.drawWires = function(context, lineColor) {
+Component.prototype.drawWires = function(context, lineColor, wireLength) {
     context.save();
 
     context.beginPath();
@@ -428,13 +409,14 @@ Component.prototype.drawWires = function(context, lineColor) {
     context.lineWidth   = 2;
 
     // Set rotation and dimension back to a rotation at 0 for easy drawing
-    var oldRot = this.rotation;
-    var oldDim = this.dimension;
-    this.rotation = 0;
-    this.dimension = this.zeroDimension;
+    var oldRot      = this.rotation;
+    var oldDim      = this.dimension;
+    this.rotation   = 0;
+    this.dimension  = this.zeroDimension;
 
-    var inputSpace = this.getComponentInputSpace();
+    var inputSpace  = this.getComponentInputSpace();
     var outputSpace = this.getComponentOutputSpace();
+    var wireLength  = wireLength || 1;
     var space, i, x, y;
 
     // Draw input wires
@@ -444,7 +426,7 @@ Component.prototype.drawWires = function(context, lineColor) {
         y = (space.row - this.row + 0.5) * digsim.gridSize;
 
         context.moveTo(x, y);
-        context.lineTo(x + digsim.gridSize * 2, y);
+        context.lineTo(x + digsim.gridSize * wireLength, y);
     }
 
     // Draw output wires
@@ -454,7 +436,7 @@ Component.prototype.drawWires = function(context, lineColor) {
         y = (space.row - this.row + 0.5) * digsim.gridSize;
 
         context.moveTo(x, y);
-        context.lineTo(x - digsim.gridSize * 2, y);
+        context.lineTo(x - digsim.gridSize * wireLength, y);
     }
 
     // Reset rotation and dimension
@@ -513,7 +495,7 @@ Component.prototype.passState = function(pState) {
 
         // Prevent infinite loops in schematics
         if (digsim.passCounter >= digsim.maxSchematicLoop) {
-            digsim.utils.addMessage(digsim.ERROR, "ERROR: Schematic contains an infinite loop caused by an unstable state.");
+            digsim.addMessage(digsim.ERROR, "ERROR: Schematic contains an infinite loop caused by an unstable state.");
             return;
         }
         digsim.passCounter++;
@@ -586,7 +568,7 @@ Component.prototype.traverseConnections = function() {
         }
         // Error if we traverse into a driver
         else if (comp.isADriver()) {
-            digsim.utils.addMessage(digsim.ERROR, "[16]Error: Switches '" + this.label + "' and '" + comp.label + "' are driving one wire.");
+            digsim.addMessage(digsim.ERROR, "[16]Error: Switches '" + this.label + "' and '" + comp.label + "' are driving one wire.");
             return false;
         }
         // Error if we traverse into the output of a gate
@@ -596,7 +578,7 @@ Component.prototype.traverseConnections = function() {
             for (i = 0, len = outs.length; i < len; i++) {
                 // If the output is also in the inputs we have an error
                 if (comp.inputs.contains(outs[i])) {
-                    digsim.utils.addMessage(digsim.ERROR, "[17]Error: Switch '" + this.label + "' connected to the output of Gate '" + comp.label + ".");
+                    digsim.addMessage(digsim.ERROR, "[17]Error: Switch '" + this.label + "' connected to the output of Gate '" + comp.label + ".");
                     return false;
                 }
 
