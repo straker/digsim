@@ -1560,7 +1560,7 @@ Digsim.prototype.getMouseCol = function() {
  *  placeholder cell.
  ****************************************************************************/
 Digsim.prototype.getWireIndex = function() {
-    var mousePos  = this.getMousePos;
+    var mousePos  = this.getMousePos();
     var row       = this.getMouseRow();
     var col       = this.getMouseCol();
     var relX      = mousePos.x % digsim.gridSize;

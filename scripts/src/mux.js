@@ -18,7 +18,7 @@ function MUX(numInputs) {
     this.name        = 'MUX';
 
     this.numInputs   = (numInputs != 3) ? numInputs : 2;
-    this.numOutputs  = 0;
+    this.numOutputs  = 1;
     this.dimension   = {'row': this.numInputs + 1, 'col': this.numInputs / 2};  // Height and width of component
 }
 MUX.prototype = new Component();
