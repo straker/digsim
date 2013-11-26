@@ -138,6 +138,26 @@ function ComponentList(id) {
     };
 
     /*****************************************************************************
+     * GET CONNECTION COMPONENT
+     *  Return the Component of the connection index.
+     * @param {number} index - Connection index.
+     * @return {Component}
+     ****************************************************************************/
+    this.getConnectionComponent = function(index) {
+        if (typeof index === 'number') {
+            var compIndex;
+            for (var i in components) {
+                if (components.hasOwnProperty(i)) {
+                    if (components[i] === index)
+                        return components[ i.substr(i.indexOf("_") + 1) ];
+                }
+            }
+        }
+
+        return undefined;
+    };
+
+    /*****************************************************************************
      * CONTAINS
      *  Returns True if the Component is in the components dictionary.
      * @param {Component} comp - Component to look for.

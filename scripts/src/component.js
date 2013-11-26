@@ -142,14 +142,13 @@ Component.prototype.getOutputRotation = function(outputIndex) {
             break;
         case 2:
             row = this.row + Math.floor(this.dimension.row / 2);
-            col = this.col  - 1;
+            col = this.col - 1;
             index = 1;
             break;
         case 3:
             row = this.row - 1;
             col = this.col + Math.floor(this.dimension.col / 2);
             index = 2;
-
     }
 
     return {row: row, col: col, index: index};
@@ -482,7 +481,7 @@ Component.prototype.passState = function(pState) {
             input = comp.inputs.get()[0];  // Component can only have 1 input
 
             // Special output for DFF
-            if (input.namedConnections) {
+            if (input.type === digsim.DFF) {
                 if (comp === input.namedConnections.Q)
                     comp.state = input.state.Q;
                 else if (comp === input.namedConnections.Qnot)
@@ -509,7 +508,7 @@ Component.prototype.passState = function(pState) {
                 compQueue.push(output);
             }
             // Special output for DFF
-            else if (comp.namedConnections) {
+            else if (comp.type === digsim.DFF) {
                 if (output === comp.namedConnections.Q && output.state !== comp.state.Q)
                     compQueue.push(output);
                 else if (output === comp.namedConnections.Qnot && output.state !== comp.state.Qnot)
