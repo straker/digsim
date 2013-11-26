@@ -1261,6 +1261,20 @@ Digsim.prototype.saveFile = function() {
 
         // Stringify the array
         digsim.saveJson = JSON.stringify(components);
+
+        // JavaScript does not allow files to be downloaded to the users machine (FileReader API is not supported enough to use)
+        // PHP can download files to the users machine, but the user HAS to navigate to the page (can't just use an AJAX request)
+        // To get around this problem, we can create an iFrame with the src set to the php script
+
+        // Create an iFrame to allow the user to download the schematic via PHP
+        ifrm = document.createElement("IFRAME");
+        ifrm.setAttribute("src", "scripts/src/save2.php?schematic="+digsim.saveJson);
+        ifrm.style.width = "0";
+        ifrm.style.height = "0";
+        document.body.appendChild(ifrm);
+
+        // Give enough time for the iFrame to load, then clean it up
+        setTimeout(function() {document.body.removeChild(ifrm)}, 2000);
     }
  };
 
