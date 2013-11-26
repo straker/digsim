@@ -205,7 +205,8 @@ Digsim.prototype.run = function() {
         $("canvas"      ).on(  "touchend",               this.onMouseUp);
         $("#New"        ).on(  "click",                  this.newFile);
         $('#Save'       ).on(  "click",                  this.saveFile);
-        $('#Open'       ).on(  "click",                  this.openFile);
+        $('#Open'       ).on(  "click",                  function() { $('#uploadFile').click(); });
+        $('#uploadFile' ).on(  "change",                 digsim.openFile);
         $("#Toggle_Grid").on(  "click",                  this.toggleGrid);
         $("#Zoom_In"    ).on(  "click", {dir:  1},       this.zoom);
         $("#Zoom_Out"   ).on(  "click", {dir: -1},       this.zoom);
@@ -1141,142 +1142,172 @@ Digsim.prototype.newFile = function() {
 
 /*****************************************************************************
  * OPEN FILE
- *  open a schematic into the program
- * TODO: Open a file from the computer using <input type="file"/>
- * http://stackoverflow.com/questions/2048026/open-file-dialog-box-in-javascript
+ *  Open a schematic into the program
+ * @param {Event} event - Button click event.
  ****************************************************************************/
-Digsim.prototype.openFile = function() {
-    if (!$('#Open').hasClass('disabled')) {
-        // Parse the JSON object
-        var components = $.parseJSON(digsim.saveJson);
-        var newComponents = [], comp, i, j;
-        digsim.loadComponents = components;
-        console.log(components);
-
-        // Use reflection to dynamically create gate based on id
-        digsim.loadTest = [];
-        for (i in components) {
-            if (components[i] !== null) {
-                var id = components[i].name;
-                var Class = window[id];
-                comp = new Class(components[i].numInputs);
-
-                // Copy properties from components into new components
-                for (j in digsim.loadComponents[i]) {
-                  if (digsim.loadComponents.hasOwnProperty(j))
-                    comp[j] = components[i][j];
-                }
-
-                newComponents[i] = comp;
-            }
-        }
-
-        // Fix connection arrays
-        for (i in newComponents) {
-          if (newComponents.hasOwnProperty(i)) {
-            comp = newComponents[i];
-
-            // Change all connections into the object
-            for (j in comp.connections) {
-              if (comp.connections.hasOwnProperty(j))
-                comp.connections[j] = newComponents[ comp.connections[j] ];
-            }
-          }
-        }
-
-        digsim.newFile();
-
-        // Set up schematic
-        for (i in newComponents) {
-          if (newComponents.hasOwnProperty(i)) {
-            digsim.components[i] = newComponents[i];
-            comp = digsim.components[i];
-
-            if (comp.type === digsim.WIRE) {
-                digsim.setPlaceholders(comp, true);
-            }
-            else {
-                digsim.setPlaceholders(comp);
-            }
-
-            if (comp.type === digsim.SWITCH || comp.type === digsim.CLOCK) {
-                digsim.drivers.push(comp.id);
-            }
-          }
-        }
-        digsim.iComp = digsim.components.length;
-
-        digsim.drawAllComponents();
-
-        digsim.loadTest = newComponents;
-        console.log(digsim.loadTest);
+Digsim.prototype.openFile = function(event) {
+    // Don't do anything if the button is disabled
+    if ($('#Open').hasClass('disabled')) {
+        return;
     }
- };
+
+    var file = event.target.files[0];
+    var comps = [];
+    var components, c, comp, i, j, name, Class, connectedComp, id = 0;
+
+    // Parse the JSON string and validate contents
+    try {
+       components = $.parseJSON(digsim.saveJson);
+       digsim.validateFile(components);
+    }
+    catch (e) {
+        digsim.addMessage(digsim.ERROR, "Error parsing file: " + e);
+        return;
+    }
+
+    // Use reflection to dynamically create Component based on name
+    for (i = 0; i < components.length; i++) {
+        c = components[i];
+
+        name = c.name;
+        Class = window[name];
+        comp = new Class(c.numInputs);
+        comp.init(c.row, c.col, c.rotation, c.id);
+
+        // Set Wire path and direction
+        if (comp.type === digsim.WIRE) {
+            comp.path = c.path;
+            comp.dx = (comp.path.x ? 1 : 0);
+            comp.dy = (comp.path.y ? 1 : 0);
+        }
+
+        // Find the highest id so we can start iComp there
+        if (comp.id > id)
+            id = comp.id;
+
+        comps[i] = comp;
+    }
+
+    // Reset current file
+    digsim.newFile();
+
+    // Set up schematic
+    for (i = 0; i < comps.length; i++) {
+        comp = comps[i];
+        digsim.components.add(comp);
+
+        digsim.setPlaceholders(comp);
+
+        if (comp.type === digsim.SWITCH || comp.type === digsim.CLOCK) {
+            digsim.drivers.push(comp.id);
+        }
+
+        comp.checkConnections();
+    }
+
+    digsim.iComp = id + 1;
+    digsim.drawAllComponents();
+};
+
+/*****************************************************************************
+ * VALIDATE FILE
+ *  Validate that the contents of a file are correct.
+ * @param {Array} components - Array of parsed JSON objects.
+ ****************************************************************************/
+Digsim.prototype.validateFile = function(components) {
+    var comp;
+
+    // Ensure the object is an array
+    if (!$.isArray(components)) {
+        throw "array";
+    }
+
+    // Check that the component has the proper data
+    for (var i = 0; i < components.length; i++) {
+        comp = components[i];
+
+        if (typeof comp.type === 'undefined')
+            throw "type";
+        if (typeof comp.id === 'undefined')
+            throw "id";
+        if (typeof comp.name === 'undefined')
+            throw "name";
+        if (typeof comp.numInputs === 'undefined')
+            throw "numInputs";
+        if (typeof comp.row === 'undefined')
+            throw "row";
+        if (typeof comp.col === 'undefined')
+            throw "col";
+        if (typeof comp.rotation === 'undefined')
+            throw "rotation";
+
+        // Wire
+        if (comp.type === digsim.WIRE) {
+            if (typeof comp.path === 'undefined')
+                throw "path";
+            if (typeof comp.path.x === 'undefined' || typeof comp.path.y === 'undefined')
+                throw "path2";
+        }
+    }
+};
+
 /*****************************************************************************
  * SAVE FILE
  *  Save the schematic to a JSON object then call a PHP script to let the user
  *  download it to their computer.
- * TODO: Call PHP script http://stackoverflow.com/questions/8791350/php-save-file-to-users-computer
  ****************************************************************************/
 Digsim.prototype.saveFile = function() {
-    if (!$('#Save').hasClass('disabled')) {
-        var components = [];
-        var comps, comp, i, j, inputs, outputs, cons;
-
-        // Create a new array that will be turned into the JSON object
-        // Copy so we don't modify any of the existing Components
-        comps = digsim.components.get();
-        for (i = 0; i < comps.length; i++)  {
-            components[i] = $.extend(true, {}, comps[i]);
-        }
-
-        // Loop through the components array
-        for (i = 0; i < components.length; i++) {
-            comp = components[i];
-
-            // Change all connection objects into arrays
-            inputs = comp.inputs.get();
-            outputs = comp.outputs.get();
-            comp.inputs = [];
-            comp.outputs = [];
-
-            // Add connections by id
-            for (j = 0; j < inputs.length; j++) {
-                comp.inputs.push(inputs[j].id);
-            }
-            for (j = 0; j < outputs.length; j++) {
-                comp.outputs.push(outputs[j].id);
-            }
-
-            // Wire
-            if (comp.connections) {
-                cons = comp.connections.get();
-                comp.connections = [];
-
-                for (j = 0; j < cons.length; j++) {
-                    comp.connections.push(cons[j].id);
-                }
-            }
-        }
-
-        // Stringify the array
-        digsim.saveJson = JSON.stringify(components);
-
-        // JavaScript does not allow files to be downloaded to the users machine (FileReader API is not supported enough to use)
-        // PHP can download files to the users machine, but the user HAS to navigate to the page (can't just use an AJAX request)
-        // To get around this problem, we can create an iFrame with the src set to the php script
-
-        // Create an iFrame to allow the user to download the schematic via PHP
-        ifrm = document.createElement("IFRAME");
-        ifrm.setAttribute("src", "scripts/src/save2.php?schematic="+digsim.saveJson);
-        ifrm.style.width = "0";
-        ifrm.style.height = "0";
-        document.body.appendChild(ifrm);
-
-        // Give enough time for the iFrame to load, then clean it up
-        setTimeout(function() {document.body.removeChild(ifrm)}, 2000);
+    // Don't do anything if the button is disabled
+    if ($('#Save').hasClass('disabled')) {
+        return;
     }
- };
+
+    var components = [];
+    var comps, comp, i, j, inputs, outputs, cons;
+
+    // Create a new array that will be turned into the JSON object
+    // Copy so we don't modify any of the existing Components
+    comps = digsim.components.get();
+    for (i = 0; i < comps.length; i++)  {
+        components[i] = $.extend(true, {}, comps[i]);
+    }
+
+    // Remove unneeded properties to reduce JSON string length
+    for (i = 0; i < components.length; i++) {
+        comp = components[i];
+
+        delete comp.numOutputs;
+        delete comp.dimension;
+        delete comp.drawStatic;
+        delete comp.label;
+        delete comp.inputs;
+        delete comp.outputs;
+        delete comp.zeroDimension;
+        delete comp.state;
+        if (comp.type === digsim.WIRE) {
+            delete comp.connections;
+            delete comp.dx;
+            delete comp.dy;
+        }
+    }
+
+    // Stringify the array
+    digsim.saveJson = JSON.stringify(components);
+
+    // JavaScript does not allow files to be downloaded to the users machine (FileReader API is not supported enough to use)
+    // PHP can download files to the users machine, but the user HAS to navigate to the page (can't just use an AJAX request)
+    // To get around this problem, we can create an iFrame with the src set to the php script
+
+    // Create an iFrame to allow the user to download the schematic via PHP
+    ifrm = document.createElement("IFRAME");
+    ifrm.setAttribute("src", "scripts/src/save2.php?schematic="+digsim.saveJson);
+    ifrm.style.width = "0";
+    ifrm.style.height = "0";
+    document.body.appendChild(ifrm);
+
+    // Give enough time for the iFrame to load, then clean it up
+    setTimeout(function() {document.body.removeChild(ifrm)}, 2000);
+};
 
 /*****************************************************************************
  * TOGGLE GRID

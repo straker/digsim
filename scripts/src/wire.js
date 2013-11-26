@@ -20,8 +20,6 @@ function Wire() {
     this.name             = 'Wire';
 
     this.path             = {'x': 0, 'y': 0};
-    this.startConnections = [];  // Components connected to the start of the wire
-    this.endConnections   = [];  // Components connected to the end of the wire
     this.dimension        = {'row': 0, 'col': 0};  // Height and width of component
 
     // Direction is determined by getting the sign of the end of the wire subtracted by the start of the wire

@@ -312,6 +312,10 @@ a {
     background-repeat: no-repeat;
 }
 
+#uploadFile {
+    display: none;
+}
+
 .New {
     background-image: url('data: image/gif;base64,R0lGODlhIQAZAKIAAPrgjP///+Li4gAAAP///wAAAAAAAAAAACH5BAEAAAQALAAAAAAhABkAAAN2SLrT/m/JSckIOOs8qmdbGAxC91WXqJHlSaUqxrYuGMtCTtdwPOcmV08FuQQ9A8DwxhEqmaLjC0BdMqUKB3XrgMpQ23DVO0KKx2QsQ2z1mc/t6FvJJZenygcaqnZkZQ1pPHYrg4RfQoeIJ3E3ahONbkJFlJQUCQA7');
 }
