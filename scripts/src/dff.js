@@ -22,12 +22,8 @@ function DFF() {
     this.dimension          = {'row': 3, 'col': 2};  // Height and width of component
     this.previousClockState = 0;   // Keep track of clock state to know when it is on rising edge
 
-    // Keep track of which connections are attached and how
-    this.namedConnections = {};
-    this.state = {
-        'Q': false,
-        'Qnot': false
-    };
+    // DFF state : 0 = Q, 1 = Qnot
+    this.state = {0: 0, 1: 0};
 }
 DFF.prototype = new Component();
 
@@ -76,56 +72,6 @@ DFF.prototype.getOutputRotation = function(outputIndex) {
     }
 
     return {row: row, col: col, index: index};
-};
-
-/******************************************************************************
- * GET COMPONENT INPUT SPACE
- *  Return every {row, col, con, index, name} that the component input fills.
- * @return {Array} array of objects of {row, col, con, index, name}.
- *****************************************************************************/
-DFF.prototype.getComponentInputSpace = function() {
-    var space = Component.prototype.getComponentInputSpace.call(this);
-    var name;
-
-    for (var i = 0; i < space.length; i++) {
-        switch (i) {
-            case 0:
-                name = 'D';
-                break;
-            case 1:
-                name = 'clock';
-                break;
-        }
-
-        space[i].name = name;
-    }
-
-    return space;
-};
-
-/******************************************************************************
- * GET COMPONENT OUPUT SPACE
- *  Return every {row, col, con, index, name} that the component output fills.
- * @return {Array} array of objects of {row, col, con, index, name}.
- *****************************************************************************/
-DFF.prototype.getComponentOutputSpace = function() {
-    var space = Component.prototype.getComponentOutputSpace.call(this);
-    var name;
-
-    for (var i = 0; i < space.length; i++) {
-        switch (i) {
-            case 0:
-                name = 'Q';
-                break;
-            case 1:
-                name = 'Qnot';
-                break;
-        }
-
-        space[i].name = name;
-    }
-
-    return space;
 };
 
 /*****************************************************************************
@@ -199,21 +145,24 @@ DFF.prototype.draw = function(context, lineColor) {
 DFF.prototype.computeLogic = function() {
 
     // Ensure we have the named connections to work with
-    if (this.namedConnections.D && this.namedConnections.clock) {
+    var d = this.inputs.getConnectionComponents(0)[0];
+    var clock = this.inputs.getConnectionComponents(1)[0];
+
+    if (d && clock) {
         // Clock switched to rising edge
-        if (this.previousClockState === 0 && this.namedConnections.clock.state) {
+        if (this.previousClockState === 0 && clock.state) {
             // Set
-            if (this.namedConnections.D.state) {
-                this.state.Q = 1;
-                this.state.Qnot = 0;
+            if (d.state) {
+                this.state[0] = 1;
+                this.state[1] = 0;
             }
             // Reset
             else {
-                this.state.Q = 0;
-                this.state.Qnot = 1;
+                this.state[0] = 0;
+                this.state[1] = 1;
             }
         }
 
-        this.previousClockState = this.namedConnections.clock.state;
+        this.previousClockState = clock.state;
     }
 };

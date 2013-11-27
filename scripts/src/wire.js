@@ -197,19 +197,20 @@ Wire.prototype.mergeWires = function(wire) {
     point4 = {'x': wire.col + wire.path.x, 'y': wire.row + wire.path.y};
 
     // Update wire coordinates
-    wire.row = Math.min(point1.y, point2.y);
-    wire.col = Math.min(point1.x, point2.x);
+    this.row = Math.min(point1.y, point2.y);
+    this.col = Math.min(point1.x, point2.x);
     endpoint = {'x': Math.max(point3.x, point4.x), 'y': Math.max(point3.y, point4.y)};
-    wire.path = {'x': Math.abs(endpoint.x - wire.col), 'y': Math.abs(endpoint.y - wire.row)};
+    this.path = {'x': Math.abs(endpoint.x - this.col), 'y': Math.abs(endpoint.y - this.row)};
 
     // Update wire connections
-    digsim.deletePlaceholder(wire);
+    digsim.deletePlaceholder(this);
     wire.deleteConnections();
-    digsim.setPlaceholders(wire, true);
-    wire.checkConnections();
+    this.deleteConnections();
+    digsim.setPlaceholders(this, true);
+    this.checkConnections();
 
     // Remove new wire
-    digsim.components.remove(this, false);
+    digsim.components.remove(wire, false);
 };
 
 /*****************************************************************************

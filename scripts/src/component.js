@@ -457,7 +457,7 @@ Component.prototype.passState = function(pState) {
         throw new Error("Cannot call function 'passState' on non-driver Component.");
 
     var compQueue = [];  // List of non-traversed Components
-    var i, len, comp, outs, input, output;
+    var i, len, comp, outs, input, output, index;
 
     // Ensure that pState is an number and not anything else
     pState = pState ? 1 : 0;
@@ -480,12 +480,10 @@ Component.prototype.passState = function(pState) {
         else {
             input = comp.inputs.get()[0];  // Component can only have 1 input
 
-            // Special output for DFF
-            if (input.type === digsim.DFF) {
-                if (comp === input.namedConnections.Q)
-                    comp.state = input.state.Q;
-                else if (comp === input.namedConnections.Qnot)
-                    comp.state = input.state.Qnot;
+            // Special output
+            if (typeof input.state === 'object') {
+                index = input.outputs.getConnectionIndex(comp);
+                comp.state = input.state[index];
             }
             else {
                 comp.state = input.state;
@@ -508,10 +506,10 @@ Component.prototype.passState = function(pState) {
                 compQueue.push(output);
             }
             // Special output for DFF
-            else if (comp.type === digsim.DFF) {
-                if (output === comp.namedConnections.Q && output.state !== comp.state.Q)
-                    compQueue.push(output);
-                else if (output === comp.namedConnections.Qnot && output.state !== comp.state.Qnot)
+            else if (typeof comp.state === 'object') {
+                index = comp.outputs.getConnectionIndex(output);
+
+                if (output.state !== comp.state[index])
                     compQueue.push(output);
             }
             else if (output.state !== comp.state)

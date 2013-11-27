@@ -139,20 +139,25 @@ function ComponentList(id) {
 
     /*****************************************************************************
      * GET CONNECTION COMPONENT
-     *  Return the Component of the connection index.
+     *  Return the Components of the connection index.
      * @param {number} index - Connection index.
-     * @return {Component}
+     * @return {Array} Array of Components that match the connection index.
      ****************************************************************************/
-    this.getConnectionComponent = function(index) {
+    this.getConnectionComponents = function(index) {
+        var comps = [];
+
         if (typeof index === 'number') {
             var compIndex;
             for (var i in components) {
                 if (components.hasOwnProperty(i)) {
                     if (components[i] === index)
-                        return components[ i.substr(i.indexOf("_") + 1) ];
+                        comps.push(components[ i.substr(i.indexOf("_") + 1) ]);
                 }
             }
         }
+
+        if (comps.length > 0)
+            return comps;
 
         return undefined;
     };

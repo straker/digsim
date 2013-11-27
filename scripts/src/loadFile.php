@@ -10,7 +10,7 @@ $extension = $extensions[sizeof($extensions)-1];
 if ($_FILES["file"]["error"] > 0) {
   echo "Error: " . $_FILES["file"]["error"];
 }
-// Check that the file is of type digsim
+// Check that the file is of type json
 else if ($extension != "json") {
 	echo "file";
 }

@@ -241,21 +241,31 @@ Digsim.prototype.run = function() {
         this.disableControlButtons();
 
         this.drawGrid(this.gridContext);
-        $('.messages').css('height', this.gridHeight - 38);
+        $('.messages').css('height', this.gridHeight - 37);
     }
 };
 
 /*****************************************************************************
  * CLEAR CANVAS
  *  Clears the given canvas.
- * @param {CanvasRenderingContext2D} context - Context to clear.
+ * @param {CanvasRenderingContext2D} context    - Context to clear.
+ * @param {boolean}                  clearDirty - Clear only the parts that have changed.
  ****************************************************************************/
-Digsim.prototype.clearCanvas = function(context) {
+Digsim.prototype.clearCanvas = function(context, clearDirty) {
     context.save();
 
     // Use the identity matrix while clearing the canvas
     context.setTransform(1, 0, 0, 1, 0, 0);
-    context.clearRect(0, 0, this.gridWidth, this.gridHeight);
+    if (clearDirty) {
+        var mousePos = digsim.getMousePos();
+        var halfWidth = this.gridWidth / 2;
+        var halfHeight = this.gridHeight / 2;
+
+        context.clearRect(mousePos.x - halfWidth, mousePos.y - halfHeight, this.gridWidth, this.gridHeight);
+    }
+    else {
+        context.clearRect(0, 0, context.canvas.width, context.canvas.width);
+    }
 
     context.restore();
 };
@@ -555,7 +565,7 @@ $(window).resize(function() {
 
     // Resize GUI elements
     $('.canvases').width(digsim.gridWidth-2).height(digsim.gridHeight-2);
-    $('.messages').css('height', digsim.gridHeight - 38);
+    $('.messages').css('height', digsim.gridHeight - 37);
 });
 
 /**************************************************************************************************************
@@ -818,12 +828,18 @@ Digsim.prototype.onMouseUp = function(event) {
             target = {'r': comp.row + target.r, 'c': comp.col + target.c};
 
             // Update an existing Wire
-            if (start.r >= 0 && target.r >= 0 && connectedComp.type === digsim.WIRE) {
+            if (start.r >= 0 && target.r >= 0 && connectedComp && connectedComp.type === digsim.WIRE) {
                 digsim.route(start, target, false, connectedComp);
 
-                connectedComp.drawStatic = true;
-                connectedComp.deleteConnections();
-                connectedComp.checkConnections();
+                // Wire was merged out
+                if (connectedComp.path.x === 0 && connectedComp.path.y === 0) {
+                    digsim.components.remove(connectedComp);
+                }
+                else {
+                    connectedComp.drawStatic = true;
+                    connectedComp.deleteConnections();
+                    connectedComp.checkConnections();
+                }
             }
             // Create a new Wire
             else if (start.r >= 0 && target.r >= 0) {
@@ -1967,6 +1983,11 @@ Digsim.prototype.route = function(startRef, targetRef, returnPath, obj) {
     if (start.r === target.r && start.c === target.c) {
         if (!returnPath) {
             digsim.dragging = false;
+            // Update existing wire
+            if (obj && obj.type === digsim.WIRE) {
+                obj.path.x = 0;
+                obj.path.y = 0;
+            }
         }
         return;
     }
@@ -2323,7 +2344,7 @@ function animate() {
     requestAnimFrame(animate);
 
     var context = digsim.movingContext;
-    digsim.clearCanvas(context);
+    digsim.clearCanvas(context, true);
 
     // Keep the Component where the user clicked on it
     var row = digsim.getMouseRow();

@@ -208,7 +208,7 @@ MUX.prototype.computeLogic = function() {
         select += s + "";
     }
     var input = parseInt(select, 2);
-    comp = this.inputs.getConnectionComponent(input);
+    comp = this.inputs.getConnectionComponents(input)[0];
     if (comp)
         this.state = comp.state;
     else
