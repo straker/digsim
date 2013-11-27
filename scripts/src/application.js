@@ -194,28 +194,28 @@ Digsim.prototype.init = function() {
 Digsim.prototype.run = function() {
     if(this.init()) {
         // Assign functions to events
-        $("canvas"      ).on(  "mousedown",              this.onMouseDown);
-        $("canvas"      ).on(  "mouseup",                this.onMouseUp);
-        $("canvas"      ).on(  "click",                  this.onClick);
-        $("canvas"      ).on(  "dblclick",               this.onDoubleClick);
-        $("canvas"      ).on(  "mousemove",              this.onMouseMove);
-        $("canvas"      ).on(  "mouseout",               function() { digsim.mouseDown = false; });
-        $("canvas"      ).on(  "touchstart",             this.onMouseDown);
-        $("canvas"      ).on(  "touchmove",              this.onMouseMove);
-        $("canvas"      ).on(  "touchend",               this.onMouseUp);
-        $("#New"        ).on(  "click",                  this.newFile);
-        $('#Save'       ).on(  "click",                  this.saveFile);
-        $('#Open'       ).on(  "click",                  function() { $('#uploadFile').click(); });
-        $('#uploadFile' ).on(  "change",                 digsim.openFile);
-        $("#Toggle_Grid").on(  "click",                  this.toggleGrid);
-        $("#Zoom_In"    ).on(  "click", {dir:  1},       this.zoom);
-        $("#Zoom_Out"   ).on(  "click", {dir: -1},       this.zoom);
-        $('#Delete'     ).on(  "click",                  this.delete);
-        $('#Rotate_CCW' ).on(  "click", {dir: 270},      this.rotate);
-        $('#Rotate_CW'  ).on(  "click", {dir: 90},       this.rotate);
-        $('#Cut'        ).on(  "click",                  this.cut);
-        $('#Copy'       ).on(  "click",                  this.copy);
-        $('#Paste'      ).on(  "click",                  this.paste);
+        $("canvas"       ).on( "mousedown",              this.onMouseDown);
+        $("canvas"       ).on( "mouseup",                this.onMouseUp);
+        $("canvas"       ).on( "click",                  this.onClick);
+        $("canvas"       ).on( "dblclick",               this.onDoubleClick);
+        $("canvas"       ).on( "mousemove",              this.onMouseMove);
+        $("canvas"       ).on( "mouseout",               function() { digsim.mouseDown = false; });
+        $("canvas"       ).on( "touchstart",             this.onMouseDown);
+        $("canvas"       ).on( "touchmove",              this.onMouseMove);
+        $("canvas"       ).on( "touchend",               this.onMouseUp);
+        $("#New"         ).on( "click",                  this.newFile);
+        $('#Save'        ).on( "click",                  this.saveFile);
+        $('#uploadFile'  ).on( "change",                 this.submitFile);
+        $('#fileContents').on( "load",                   this.readFileContents);
+        $("#Toggle_Grid" ).on( "click",                  this.toggleGrid);
+        $("#Zoom_In"     ).on( "click", {dir:  1},       this.zoom);
+        $("#Zoom_Out"    ).on( "click", {dir: -1},       this.zoom);
+        $('#Delete'      ).on( "click",                  this.delete);
+        $('#Rotate_CCW'  ).on( "click", {dir: 270},      this.rotate);
+        $('#Rotate_CW'   ).on( "click", {dir: 90},       this.rotate);
+        $('#Cut'         ).on( "click",                  this.cut);
+        $('#Copy'        ).on( "click",                  this.copy);
+        $('#Paste'       ).on( "click",                  this.paste);
         $(".gates > ul a, .io a, .modes a").on("click",  this.onButtonClicked);
         $('#2-input, #3-input, #4-input').on("click",    this.changeNumInputs);
 
@@ -683,8 +683,9 @@ document.onkeydown = function(event) {
  * @param {Event} event - Mouse move event.
  ****************************************************************************/
 Digsim.prototype.onMouseMove = function(event) {
-    var mousePos = digsim.getMousePos();
-    digsim.mousePos = { x: mousePos.x, y: mousePos.y };
+    var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
+    var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;
+    digsim.mousePos = { x: mouseX, y: mouseY };
 
     var comp = digsim.getComponent();
 
@@ -1141,23 +1142,56 @@ Digsim.prototype.newFile = function() {
 };
 
 /*****************************************************************************
- * OPEN FILE
- *  Open a schematic into the program
- * @param {Event} event - Button click event.
+ * SUBMIT FILE
+ *  Submits the hidden file upload form to the server.
  ****************************************************************************/
-Digsim.prototype.openFile = function(event) {
+Digsim.prototype.submitFile = function() {
+    $('#uploadForm').submit();
+};
+
+/*****************************************************************************
+ * READ FILE CONTENTS
+ *  Reads the contents of the hidden iframe after the file has been submitted.
+ ****************************************************************************/
+Digsim.prototype.readFileContents = function() {
+    var contents = $('#fileContents').contents().find('body').text();
+
+    // Clear the form when finished
+    // Prevents pop up in IE because of the method="post" of the form when refreshing the page.
+    if (contents !== "") {
+        document.getElementById("uploadForm").reset();
+        document.getElementById('fileContents').src = "about:blank";
+    }
+
+    // Display error messages
+    if (contents === "file") {
+        digsim.addMessage(digsim.ERROR, "Error parsing file: Incorrect file type. File must be of type '.digsim'.");
+    }
+    else if (contents === "size") {
+        digsim.addMessage(digsim.ERROR, "Error parsing file: File is too large.");
+    }
+    else if (contents !== "") {
+        digsim.openFile(contents);
+    }
+};
+
+/*****************************************************************************
+ * OPEN FILE
+ *  Open a schematic into the program.
+ * @param {string} contents - JSON string of the file contents.
+ ****************************************************************************/
+Digsim.prototype.openFile = function(contents) {
     // Don't do anything if the button is disabled
     if ($('#Open').hasClass('disabled')) {
         return;
     }
 
-    var file = event.target.files[0];
     var comps = [];
     var components, c, comp, i, j, name, Class, connectedComp, id = 0;
 
     // Parse the JSON string and validate contents
     try {
-       components = $.parseJSON(digsim.saveJson);
+       components = $.parseJSON(contents);
        digsim.validateFile(components);
     }
     catch (e) {
@@ -1298,15 +1332,9 @@ Digsim.prototype.saveFile = function() {
     // PHP can download files to the users machine, but the user HAS to navigate to the page (can't just use an AJAX request)
     // To get around this problem, we can create an iFrame with the src set to the php script
 
-    // Create an iFrame to allow the user to download the schematic via PHP
-    ifrm = document.createElement("IFRAME");
-    ifrm.setAttribute("src", "scripts/src/save2.php?schematic="+digsim.saveJson);
-    ifrm.style.width = "0";
-    ifrm.style.height = "0";
-    document.body.appendChild(ifrm);
-
-    // Give enough time for the iFrame to load, then clean it up
-    setTimeout(function() {document.body.removeChild(ifrm)}, 2000);
+    // Set the iFrame src to allow the user to download the schematic via PHP
+    var ifrm = document.getElementById('fileContents');
+    ifrm.setAttribute("src", "scripts/src/saveFile.php?schematic="+digsim.saveJson);
 };
 
 /*****************************************************************************
@@ -1556,9 +1584,7 @@ Digsim.prototype.paste = function() {
  * @return {Object} - {x, y}.
  ****************************************************************************/
 Digsim.prototype.getMousePos = function() {
-    var mouseX = event.offsetX || event.layerX || event.clientX - $(".canvases").position().left;
-    var mouseY = event.offsetY || event.layerY || event.clientY - $(".canvases").position().top;
-    return {x: mouseX, y: mouseY};
+    return {x: digsim.mousePos.x, y: digsim.mousePos.y};
 };
 
 /*****************************************************************************

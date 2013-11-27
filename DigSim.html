@@ -29,8 +29,15 @@
 					<a href="#" id="New" title="New File" tabindex="-1"><div class="button New"></div>New</a>
 				</li>
 				<li>
-					<a href="#" id="Open" title="Open" tabindex="-1"><div class="button Open"></div>Open</a>
-					<input type="file" id="uploadFile">
+					<!--
+						IE9 Workaround to submit a file programmatically. Use a label to a <input type="file"> instead of a <a> tag.
+						http://jsfiddle.net/djibouti33/uP7A9/
+					-->
+					<label id="Open" title="Open" tabindex="-1" for="uploadFile"><div class="button Open"></div>Open</label>
+					<form id="uploadForm" action="scripts/src/loadFile.php" method="post" enctype="multipart/form-data" runat="server" target="fileContents" tabindex="-1">
+						<iframe id="fileContents" name="fileContents" tabindex="-1"></iframe>
+						<input type="file" name="file" id="uploadFile" tabindex="-1">
+					</form>
 				</li>
 				<li>
 					<a href="#" id="Save" title="Save" tabindex="-1"><div class="button Save"></div>Save</a>
