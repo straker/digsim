@@ -1165,7 +1165,7 @@ Digsim.prototype.readFileContents = function() {
 
     // Display error messages
     if (contents === "file") {
-        digsim.addMessage(digsim.ERROR, "Error parsing file: Incorrect file type. File must be of type '.digsim'.");
+        digsim.addMessage(digsim.ERROR, "Error parsing file: Incorrect file type. File must be of type '.json'.");
     }
     else if (contents === "size") {
         digsim.addMessage(digsim.ERROR, "Error parsing file: File is too large.");

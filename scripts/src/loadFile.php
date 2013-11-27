@@ -11,7 +11,7 @@ if ($_FILES["file"]["error"] > 0) {
   echo "Error: " . $_FILES["file"]["error"];
 }
 // Check that the file is of type digsim
-else if ($extension != "digsim") {
+else if ($extension != "json") {
 	echo "file";
 }
 // Ensure that the file size is not too large
