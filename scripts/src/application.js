@@ -34,10 +34,12 @@ function Digsim() {
     this.DFF               = 7;
     this.JKFF              = 8;
     this.MUX               = 9;
-    this.CLOCK             = 10;
-    this.WIRE              = 11;
-    this.SWITCH            = 12;
-    this.LED               = 13;
+    this.PROM              = 10;
+    this.CLOCK             = 11;
+    this.WIRE              = 12;
+    this.SWITCH            = 13;
+    this.LED               = 14;
+    this.ASCIIDISPLAY      = 15;
 
     this.DEFAULT_MODE      = 0;                     // Default application mode
     this.WIRE_MODE         = 1;                     // Placing wires
@@ -258,10 +260,10 @@ Digsim.prototype.clearCanvas = function(context, clearDirty) {
     context.setTransform(1, 0, 0, 1, 0, 0);
     if (clearDirty) {
         var mousePos = digsim.getMousePos();
-        var halfWidth = this.gridWidth / 2;
-        var halfHeight = this.gridHeight / 2;
+        var max = Math.max(this.gridWidth, this.gridHeight);
+        var half = max / 2 | 0;
 
-        context.clearRect(mousePos.x - halfWidth, mousePos.y - halfHeight, this.gridWidth, this.gridHeight);
+        context.clearRect(mousePos.x - half, mousePos.y - half, max, max);
     }
     else {
         context.clearRect(0, 0, context.canvas.width, context.canvas.width);
@@ -877,7 +879,7 @@ Digsim.prototype.onMouseUp = function(event) {
             // JavaScript Reflection
             Class = window[comp.name];
             comp = new Class(digsim.numGateInputs);
-            comp.init(comp.row, comp.col, digsim.rotation, digsim.iComp);
+            comp.init(digsim.selectedComponent.row, digsim.selectedComponent.col, digsim.rotation, digsim.iComp);
 
             digsim.dragging = true;
             digsim.selectedComponent = comp;
@@ -1035,7 +1037,7 @@ Digsim.prototype.onButtonClicked = function(event) {
             digsim.mode = digsim.SIM_MODE;
 
             // Clear messages every new Run
-            $('#messages').html('');
+            digsim.clearMessages();
 
             // Count the number of connections, inputs, and outputs of the schematic
             digsim.maxSchematicLoop = 0;
@@ -1211,7 +1213,7 @@ Digsim.prototype.openFile = function(contents) {
        digsim.validateFile(components);
     }
     catch (e) {
-        digsim.addMessage(digsim.ERROR, "Error parsing file: " + e);
+        digsim.addMessage(digsim.ERROR, "Error parsing file: Data missing or incomplete.");
         return;
     }
 
@@ -1223,6 +1225,7 @@ Digsim.prototype.openFile = function(contents) {
         Class = window[name];
         comp = new Class(c.numInputs);
         comp.init(c.row, c.col, c.rotation, c.id);
+        comp.label = c.label;
 
         // Set Wire path and direction
         if (comp.type === digsim.WIRE) {
@@ -1230,6 +1233,14 @@ Digsim.prototype.openFile = function(contents) {
             comp.dx = (comp.path.x ? 1 : 0);
             comp.dy = (comp.path.y ? 1 : 0);
         }
+
+        // Set Clock frequency
+        if (comp.type === digsim.CLOCK)
+            comp.frequency = c.frequency;
+
+        // Set PROM addresses
+        if (comp.type === digsim.PROM)
+            comp.addresses = c.addresses;
 
         // Find the highest id so we can start iComp there
         if (comp.id > id)
@@ -1272,34 +1283,63 @@ Digsim.prototype.validateFile = function(components) {
         throw "array";
     }
 
-    // Check that the component has the proper data
+    // Check that each component has the proper data
     for (var i = 0; i < components.length; i++) {
         comp = components[i];
 
-        if (typeof comp.type === 'undefined')
-            throw "type";
-        if (typeof comp.id === 'undefined')
-            throw "id";
-        if (typeof comp.name === 'undefined')
-            throw "name";
-        if (typeof comp.numInputs === 'undefined')
-            throw "numInputs";
-        if (typeof comp.row === 'undefined')
-            throw "row";
-        if (typeof comp.col === 'undefined')
-            throw "col";
-        if (typeof comp.rotation === 'undefined')
-            throw "rotation";
-
-        // Wire
-        if (comp.type === digsim.WIRE) {
-            if (typeof comp.path === 'undefined')
-                throw "path";
-            if (typeof comp.path.x === 'undefined' || typeof comp.path.y === 'undefined')
-                throw "path2";
+        try {
+            digsim.validateComponent(comp);
+        }
+        catch (e) {
+            throw e;
         }
     }
 };
+
+/*****************************************************************************
+ * VALIDATE COMPONENT
+ *  Validate that the a Component has all needed properties for a save or load.
+ * @param {Components} comp - Component whose properties to validate.
+ * @throws An error if a property is missing.
+ ****************************************************************************/
+Digsim.prototype.validateComponent = function(comp) {
+    if (typeof comp.type === 'undefined')
+        throw "type";
+    if (typeof comp.id === 'undefined')
+        throw "id";
+    if (typeof comp.name === 'undefined')
+        throw "name";
+    if (typeof comp.numInputs === 'undefined')
+        throw "numInputs";
+    if (typeof comp.row === 'undefined')
+        throw "row";
+    if (typeof comp.col === 'undefined')
+        throw "col";
+    if (typeof comp.rotation === 'undefined')
+        throw "rotation";
+    if (typeof comp.label === 'undefined')
+        throw "label";
+
+    // Wire
+    if (comp.type === digsim.WIRE) {
+        if (typeof comp.path === 'undefined')
+            throw "path";
+        if (typeof comp.path.x === 'undefined' || typeof comp.path.y === 'undefined')
+            throw "path.x || path.y";
+    }
+
+    // Clock
+    if (comp.type === digsim.CLOCK) {
+        if (typeof comp.frequency === 'undefined')
+            throw "frequency";
+    }
+
+    // PROM
+    if (comp.type === digsim.PROM) {
+        if (typeof comp.addresses === 'undefined')
+            throw "addresses";
+    }
+}
 
 /*****************************************************************************
  * SAVE FILE
@@ -1329,7 +1369,6 @@ Digsim.prototype.saveFile = function() {
         delete comp.numOutputs;
         delete comp.dimension;
         delete comp.drawStatic;
-        delete comp.label;
         delete comp.inputs;
         delete comp.outputs;
         delete comp.zeroDimension;
@@ -1338,6 +1377,15 @@ Digsim.prototype.saveFile = function() {
             delete comp.connections;
             delete comp.dx;
             delete comp.dy;
+        }
+
+        // Ensure we have all needed information being saved to the file
+        try {
+            digsim.validateComponent(comp);
+        }
+        catch (e) {
+            digsim.addMessage(digsim.ERROR, "Error saving file: Schematic data corrupted.");
+            return;
         }
     }
 
@@ -1593,6 +1641,49 @@ Digsim.prototype.paste = function() {
  *
  *
  ***************************************************************************************************************/
+
+/*****************************************************************************
+ * DECIMAL TO HEX
+ *  Converts a decimal value to a hex value.
+ * @param {number} dec - Decimal to convert.
+ * @return {string} Hex value.
+ ****************************************************************************/
+Digsim.prototype.dec2hex = function(dec) {
+    return Number(dec).toString(16).toUpperCase();
+};
+
+/*****************************************************************************
+ * DECIMAL TO BINARY
+ *  Converts a decimal value to a binary value.
+ * @param {number} dec - Decimal to convert.
+ * @param {string} Binary value.
+ ****************************************************************************/
+Digsim.prototype.dec2bin = function(dec) {
+    return Number(dec).toString(2);
+};
+
+/*****************************************************************************
+ * PAD
+ *  Pad a value with leading values.
+ * @param {number}        value   - Value to pad.
+ * @param {number}        length  - Length of the
+ * @param {number/string} padding - Value to pad with @default '0'. If the length
+ *                                  is greater than 1, will just use the first character.
+ ****************************************************************************/
+Digsim.prototype.pad = function(value, length, padding) {
+    if (typeof padding === 'undefined')
+        padding = '0';
+    else
+        padding + '';
+
+    // Can only pad with single characters
+    if (padding.length > 1)
+        padding = padding[0];
+
+    value = value + '';
+
+    return new Array(length - value.length + 1).join(padding) + value
+};
 
 /*****************************************************************************
  * GET MOUSE POS
@@ -1871,26 +1962,91 @@ Digsim.prototype.disableControlButtons = function() {
  ****************************************************************************/
 Digsim.prototype.showComponentMenu = function() {
     this.mode = this.EDIT_MODE;
-    var component = digsim.selectedComponent;
+    var comp = digsim.selectedComponent;
 
     // Name the Edit screen with the number of inputs of a gate
-    var name = component.name;
-    if (component.isAGate() && component.numInputs >= 2) {
-        name = component.numInputs + "-input " + name;
+    var name = comp.name;
+    if (comp.isAGate() && comp.numInputs >= 2) {
+        name = comp.numInputs + "-input " + name;
     }
 
     // Show clock frequency
-    if (component.type === digsim.CLOCK) {
-        $('#clock-freq').val(component.frequency);
+    if (comp.type === digsim.CLOCK) {
+        $('#clock-freq').val(comp.frequency);
         $('.clock-freq').show();
     }
     else {
         $('.clock-freq').hide();
     }
 
+    // Show prom addresses
+    if (comp.type === digsim.PROM) {
+        var table = document.getElementById('prom-addresses');
+        table.innerHTML = '';
+
+        var docfrag = document.createDocumentFragment();
+        var tr, td, label, input, num;
+
+        tr = document.createElement("tr");
+
+        // Headers
+        th = document.createElement("th");
+        th.textContent = "Address";
+        tr.appendChild(th);
+
+        th = document.createElement("th");
+        th.textContent = "Hex";
+        tr.appendChild(th);
+
+        docfrag.appendChild(tr);
+
+        for (var address in comp.addresses) {
+            tr = document.createElement("tr");
+            tr.id = "row-" + address;
+
+            // Address
+            num = digsim.pad(digsim.dec2bin(address), comp.numInputs - 1);
+
+            td = document.createElement("td");
+            label = document.createElement("label");
+
+            label.setAttribute("for","hex-" + address);
+            label.id = "address-" + address;
+            label.className = "address-value";
+            label.innerHTML = num;
+
+            td.appendChild(label);
+            tr.appendChild(td);
+
+            // Hex
+            num = digsim.pad(digsim.dec2hex(comp.addresses[address]), 2);
+
+            td = document.createElement("td");
+            input = document.createElement("input");
+
+            input.type = "text";
+            input.setAttribute('maxlength', 2);
+            input.id = "hex-" + address;
+            input.className = "hex-value";
+            input.value = num;
+
+            td.appendChild(input);
+            tr.appendChild(td);
+
+            docfrag.appendChild(tr);
+        }
+        table.appendChild(docfrag);
+
+        $('.prom-addresses').scrollTop(0)
+        $('.prom-addresses').show();
+    }
+    else {
+        $('.prom-addresses').hide();
+    }
+
     // Set the edit menu information
     $('#component-name').html(name);
-    $('#component-label').val(component.label);
+    $('#component-label').val(comp.label);
     $('.component-menu').show();
     $('#component-label').blur();
 };
@@ -1910,36 +2066,75 @@ Digsim.prototype.hideComponentMenu = function() {
  *  Save changes to the component from the edit menu.
  ****************************************************************************/
 Digsim.prototype.onSaveComponentEdit = function() {
-    var component = digsim.selectedComponent;
-    component.label = $('#component-label').val();
+    var comp = digsim.selectedComponent;
+    var error = false;
+
+    comp.label = $('#component-label').val();
 
     // Save the clock frequency. Default frequency is 2
-    if (component.type === digsim.CLOCK) {
-        component.frequency = parseInt($('#clock-freq').val(), 10) || 2;
+    if (comp.type === digsim.CLOCK) {
+        comp.frequency = parseInt($('#clock-freq').val(), 10) || 2;
     }
+
+    // Save the prom addresses
+    if (comp.type === digsim.PROM) {
+        digsim.clearMessages();
+
+        for (var address in comp.addresses) {
+            var hex = $('#hex-' + address).val();
+
+            // Validate hex
+            if (/^[0-9A-F]+$/i.test(hex)) {
+                hex = parseInt(hex, 16);
+                comp.addresses[address] = hex;
+                $('#row-' + address).removeClass('hex-error');
+            }
+            else {
+                $('#row-' + address).addClass('hex-error');
+                var num = Number(address).toString(2);                             // Convert address to binary
+                num = new Array(comp.numInputs - num.length).join('0') + num;      // Pad the number with leading zeros
+                digsim.addMessage(digsim.ERROR, 'Invalid hex value for address ' + num, false);
+                error = true;
+            }
+        }
+    }
+
+    if (error)
+        return;
 
     digsim.hideComponentMenu();
     digsim.drawAllComponents();
-    digsim.drawComponent(component, digsim.staticContext, 'red');
+    digsim.drawComponent(comp, digsim.staticContext, 'red');
 };
 
 /*****************************************************************************
  * ADD MESSAGE
  *  Adds error and warning messages to the message window.
- * @param {number} type - Type of message.
- * @param {string} msg  - Message to display.
+ * @param {number}  type       - Type of message.
+ * @param {string}  msg        - Message to display.
+ * @param {boolean} deactivate - Deactivate buttons @default true.
  ****************************************************************************/
-Digsim.prototype.addMessage = function(type, msg) {
+Digsim.prototype.addMessage = function(type, msg, deactivate) {
     if (type === digsim.ERROR) {
         $('#messages').append("<span class='error'>" + msg + "</span><br>");
         $("#messages").scrollTop($("#messages")[0].scrollHeight);
-        digsim.deactivateButtons();
+
+        if (typeof deactivate === 'undefined' || deactivate)
+            digsim.deactivateButtons();
     }
     else if (type === digsim.WARNING) {
         $('#messages').append("<span class='warning'>" + msg + "</span><br>");
         $("#messages").scrollTop($("#messages")[0].scrollHeight);
     }
 };
+
+/*****************************************************************************
+ * CLEAR MESSAGES
+ *  Clears the message window.
+ ****************************************************************************/
+Digsim.prototype.clearMessages = function() {
+    $('#messages').html('');
+}
 
 /**************************************************************************************************************
  *     /$$      /$$ /$$

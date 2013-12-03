@@ -23,7 +23,7 @@ function DFF() {
     this.previousClockState = 0;   // Keep track of clock state to know when it is on rising edge
 
     // DFF state : 0 = Q, 1 = Qnot
-    this.state = {0: 0, 1: 0};
+    this.state = [0, 0]
 }
 DFF.prototype = new Component();
 
@@ -88,6 +88,8 @@ DFF.prototype.draw = function(context, lineColor) {
     context.fillStyle   = '#FFFFFF';
     context.strokeStyle = lineColor || 'black';
     context.lineWidth   = 2;
+    context.font        =  (digsim.gridSize / 2) + "px Arial";
+    context.fontWidth   = digsim.gridSize / 4;
 
     // Rotation
     var offsetH = 0, offsetV = 0;
@@ -112,8 +114,6 @@ DFF.prototype.draw = function(context, lineColor) {
     context.strokeRect(0, 0, 2 * digsim.gridSize, 3 * digsim.gridSize);
 
     // Font properties
-    context.font =  (digsim.gridSize / 2) + "px Arial";
-    context.fontWidth = digsim.gridSize / 4;
     context.fillStyle = lineColor || 'black';
 
     // Font position based on bottom left of letter
@@ -131,6 +131,9 @@ DFF.prototype.draw = function(context, lineColor) {
     context.lineTo(digsim.gridSize / 4, digsim.gridSize * 2.5);
     context.lineTo(0, digsim.gridSize * 2.75);
     context.stroke();
+
+    this.drawLabel(context, lineColor);
+
     context.restore();
 };
 

@@ -32,6 +32,66 @@ NOT.prototype.isAGate = function() {
 };
 
 /******************************************************************************
+ * GET EXTRA COMPONENT SPACE
+ *  Return the space {row, col, con, index} above and below the Component.
+ * @param {number} length - How many spaces to return (top & bottom or left & right count as 1).
+ * @return {Array} array of objects of {row, col, con, index}.
+ *****************************************************************************/
+NOT.prototype.getExtraComponentSpace = function(length) {
+    var space = [];
+    var col = this.col, row = this.row;
+    var index;
+
+    for (var i = 0; i < length; i++) {
+        // Get space based on rotations
+        for (var y = 0; y < 2; ++y) {
+            // Component is rotated on it's side (90 or 270)
+            if (((this.rotation) / 90) % 2) {
+                // Right
+                if (y) {
+                    col = this.col + this.dimension.col;
+                    index = 3;
+                }
+                // Left
+                else {
+                    index = 1;
+                    col = this.col - 1;
+                }
+            }
+            // Component is rotated normally (0 or 180)
+            else {
+                // Below
+                if (y) {
+                    row = this.row + this.dimension.row;
+                    index = 0;
+                }
+                // Above
+                else {
+                    index = 2;
+                    row = this.row - 1;
+                }
+            }
+
+            space.push({
+                'row'  : row,
+                'col'  : col,
+                'con'  : false,
+                'index': index
+            });
+        }
+
+        if (this.rotation === 90 || this.rotation === 270) {
+            ++row;
+        }
+        else {
+            ++col;
+        }
+    }
+
+    return space;
+};
+
+/******************************************************************************
  * GET COMPONENT SPACE
  *  Return every {row, col, index} that the component fills. Helpful for setting
  *  and deleting placeholders.
@@ -44,7 +104,7 @@ NOT.prototype.getComponentSpace = function() {
     var space = Component.prototype.getComponentSpace.call(this);
 
     // Combine the arrays
-    space = space.concat(Component.prototype.getExtraComponentSpace.call(this, 1));
+    space = space.concat(this.getExtraComponentSpace(1));
 
     return space;
 };

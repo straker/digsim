@@ -76,6 +76,9 @@
 				<li>
 					<a href="#" id="DFF" title="DFF" tabindex="-1"><div class="button DFF"></div>DFF</a>
 				</li>
+				<li>
+					<a href="#" id="PROM" title="PROM" tabindex="-1"><div class="button PROM"></div>PROM</a>
+				</li>
                 <li class="num-inputs">
                     <a href="#" class="disabled" tabindex="-1"><div class="button"></div></a>
                 </li>
@@ -123,6 +126,9 @@
 				<li>
 					<a href="#" id="LED" title="LED" tabindex="-1"><div class="button LED"></div>LED</a>
 				</li>
+				<!-- <li>
+					<a href="#" id="ASCIIDisplay" title="ASCIIDisplay" tabindex="-1"><div class="button ASCIIDisplay"></div>Display</a>
+				</li> -->
 			</ul>
 		</div>
 		<div class="col modes">
@@ -183,17 +189,21 @@
 		<canvas id="moving"></canvas>
 	</div>
 	<div class="component-menu">
-		<div id="component-name">2-input AND</div>
+		<div id="component-name"></div>
 		<div class="component-inputs">
 			<p>
-				<label for="label">Label:</label>
+				<label for="component-label">Label:</label>
 				<input type="text" name="label" id="component-label" autocomplete="off"/>
 			</p>
 			<div class="clock-freq">
 				<p>
-					<label for="clock">Frequency:</label>
+					<label for="clock-freq">Frequency:</label>
 					<input type="text" name="clock" id="clock-freq" maxlength="3" size="3" autocomplete="off"/>&nbsp;Hz.
 				</p>
+			</div>
+			<div class="prom-addresses">
+				<table id="prom-addresses">
+				</table>
 			</div>
 		</div>
 		<div class="component-options">
@@ -216,5 +226,7 @@
 	<script type="text/javascript" src="scripts/src/clock.js"></script>
 	<script type="text/javascript" src="scripts/src/dff.js"></script>
 	<script type="text/javascript" src="scripts/src/mux.js"></script>
+	<script type="text/javascript" src="scripts/src/prom.js"></script>
+	<script type="text/javascript" src="scripts/src/ascii-display.js"></script>
 </body>
 </html>

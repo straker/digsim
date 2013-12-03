@@ -181,6 +181,7 @@ Wire.prototype.checkConnections = function() {
  ****************************************************************************/
 Wire.prototype.deleteConnections = function() {
     this.connections.clear();
+    Component.prototype.deleteConnections.call(this);
 };
 
 /*****************************************************************************

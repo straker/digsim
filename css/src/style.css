@@ -301,6 +301,41 @@ a {
         padding: 4px;
     }
 
+    .prom-addresses {
+        height: 150px;
+        overflow: scroll;
+        border: 1px solid;
+    }
+    #prom-addresses {
+        width: 100%;
+    }
+    #prom-addresses > tr:nth-child(even) {
+        background: #CCC;
+    }
+    #prom-addresses th, #prom-addresses td {
+        padding: 2px;
+    }
+    #prom-addresses td:nth-child(even), #prom-addresses th:nth-child(even) {
+        text-align: center;
+    }
+    #prom-addresses th {
+        font-weight: 600;
+        border-bottom: 1px solid;
+    }
+    #prom-addresses td {
+        font-size: 14px
+    }
+    .hex-value {
+        width: 20px;
+    }
+    .address-value {
+        display: block;
+        width: 100%;
+    }
+    #prom-addresses > tr.hex-error {
+        background-color: #FF0000;
+    }
+
 /**
  * BUTTONS
  */

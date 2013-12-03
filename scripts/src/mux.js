@@ -21,7 +21,7 @@ function MUX(numInputs) {
     this.numOutputs  = 1;
     this.dimension   = {'row': this.numInputs + 1, 'col': this.numInputs / 2};  // Height and width of component
 
-    // Keep track of which connections are attached and how
+    // Keep track of component select connections
     this.namedConnections = {};
 }
 MUX.prototype = new Component();
@@ -190,14 +190,16 @@ MUX.prototype.draw = function(context, lineColor) {
     if (this.numInputs == 4) {
         context.fillText("S1", textX - digsim.gridSize, textY);
     }
-
     context.stroke();
+
+    this.drawLabel(context, lineColor);
+
     context.restore();
 };
 
 /*****************************************************************************
  * COMPUTE LOGIC
- *  MUXs all the input wires together to set the current state of the gate.
+ *  Set state based on select inputs address.
  ****************************************************************************/
 MUX.prototype.computeLogic = function() {
     var select = ""
