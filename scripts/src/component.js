@@ -497,7 +497,7 @@ Component.prototype.traverseConnections = function() {
                 con = cons[i];
 
                 // Only add to output if the connection isn't the input Component or any output of the input Component
-                if (con !== input && !input.outputs.contains(con)) {
+                if (con !== input && (!input.outputs.contains(con) || con.inputs.contains(comp))) {
                     comp.outputs.add(con);
                     con.inputs.add(comp);
                 }

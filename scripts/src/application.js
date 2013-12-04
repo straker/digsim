@@ -438,7 +438,7 @@ Digsim.prototype.deleteComponent = function(comp) {
  ****************************************************************************/
 Digsim.prototype.setPlaceholders = function(comp, nocheck) {
     var space = comp.getComponentSpace();
-        var i, ph;
+    var i, ph;
 
     // Check the component space for collision
     if (!nocheck) {
@@ -1225,22 +1225,15 @@ Digsim.prototype.openFile = function(contents) {
         Class = window[name];
         comp = new Class(c.numInputs);
         comp.init(c.row, c.col, c.rotation, c.id);
-        comp.label = c.label;
 
-        // Set Wire path and direction
+        // Copy all properties of the Component
+        $.extend(comp, c);
+
+        // Set Wire direction
         if (comp.type === digsim.WIRE) {
-            comp.path = c.path;
             comp.dx = (comp.path.x ? 1 : 0);
             comp.dy = (comp.path.y ? 1 : 0);
         }
-
-        // Set Clock frequency
-        if (comp.type === digsim.CLOCK)
-            comp.frequency = c.frequency;
-
-        // Set PROM addresses
-        if (comp.type === digsim.PROM)
-            comp.addresses = c.addresses;
 
         // Find the highest id so we can start iComp there
         if (comp.id > id)
@@ -1605,10 +1598,12 @@ Digsim.prototype.paste = function() {
     var Class = window[name];
     var comp  = new Class(digsim.clipboard.numInputs);
 
+    // Copy all properties of the Component but keep the new id
+    $.extend(true, comp, digsim.clipboard, {id: digsim.iComp});
+
     // Initialize the new Component at the mouse position
-    var row = digsim.getMouseRow();
-    var col = digsim.getMouseCol();
-    comp.init(row, col, digsim.rotation, digsim.iComp);
+    comp.row = digsim.getMouseRow();
+    comp.col = digsim.getMouseCol();
 
     digsim.dragging = true;
     digsim.dragOffset = {'row': 0, 'col': 0};
