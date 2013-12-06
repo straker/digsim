@@ -383,6 +383,66 @@ Component.prototype.drawWires = function(context, lineColor, wireLength) {
     this.dimension = oldDim;
 
     context.stroke();
+
+    context.restore();
+};
+
+/******************************************************************************
+ * DRAW CONNECTION DOTS
+ *  Draws connection dots
+ * @param {CanvasRenderingContext2D} context    - Context to draw to.
+ *****************************************************************************/
+Component.prototype.drawConnectionDots = function(context) {
+    context.save();
+
+    // Set rotation and dimension back to a rotation at 0 for easy drawing
+    var oldRot      = this.rotation;
+    var oldDim      = this.dimension;
+    this.rotation   = 0;
+    this.dimension  = this.zeroDimension;
+
+    // Draw connection dots
+    var connectionTypes = ['inputs', 'outputs', 'connections'];
+    var cons = [];
+    var i, j, conType, comp, index, space, x, y;
+
+    // Input and output connection dots
+    context.beginPath();
+    context.strokeStyle = '#000000';
+    context.fillStyle   = '#000000';
+
+    for (j = 0; j < connectionTypes.length; j++) {
+        conType = connectionTypes[j];
+
+        if (conType === 'inputs')
+            cons = this.inputs.get();
+        else if (conType === 'outputs')
+            cons = this.outputs.get();
+        else
+            cons = [];
+
+        for (i = 0; i < cons.length; i++) {
+            comp = cons[i];
+            index = this[conType].getConnectionIndex(comp);
+
+            if (conType === 'inputs')
+                space = this.getInputRotation(index);
+            else if (conType === 'outputs')
+                space = this.getOutputRotation(index);
+
+            x = (space.col - this.col + 0.5) * digsim.gridSize;
+            y = (space.row - this.row + 0.5) * digsim.gridSize;
+            context.moveTo(x, y)
+            context.arc(x, y, digsim.gridSize / 10, 0, 2 * Math.PI);
+        }
+    }
+    context.fill();
+    context.stroke();
+
+    // Reset rotation and dimension
+    this.rotation = oldRot;
+    this.dimension = oldDim;
+
     context.restore();
 };
 

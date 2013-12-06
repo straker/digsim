@@ -248,6 +248,7 @@ ASCIIDisplay.prototype.draw = function(context, lineColor) {
     context.stroke();
 
     this.drawLabel(context, lineColor);
+    this.drawConnectionDots(context);
 
     // Draw display text to screen
     // Canvas does not support newline characters, so we must implement them manually

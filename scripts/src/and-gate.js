@@ -95,6 +95,7 @@ AND.prototype.draw = function(context, lineColor) {
     context.fill();
 
     this.drawLabel(context, lineColor);
+    this.drawConnectionDots(context);
 
     context.restore();
 };

@@ -245,6 +245,54 @@ Wire.prototype.splitWire = function(row, col) {
     wire.checkConnections();
 };
 
+/******************************************************************************
+ * DRAW CONNECTION DOTS
+ *  Draws connection dots
+ * @param {CanvasRenderingContext2D} context    - Context to draw to.
+ *****************************************************************************/
+Wire.prototype.drawConnectionDots = function(context) {
+    // Connections connection dots
+    context.beginPath();
+    context.strokeStyle = '#000000';
+    context.fillStyle   = '#000000';
+
+    var cons = this.connections.get();
+    var i, comp, index, space, count, draw, ph, x, y;
+
+    for (i = 0; i < cons.length; i++) {
+        comp = cons[i];
+        index = this.connections.getConnectionIndex(comp);
+
+        if (index === 'input')
+            space = this.getComponentInputSpace(index)[0];
+        else
+            space = this.getComponentOutputSpace(index)[0];
+
+        // Only draw connection dots for wires if they are connected to a component or they have 3 wires in the space
+        count = 0;
+        draw = false;
+        for (var k = 0; k < 4; k++) {
+            ph = digsim.placeholders[Math.floor(space.row)][Math.floor(space.col)][k];
+            if (ph)
+                count++;
+
+            if (ph && digsim.components.getComponent(ph.ref).type !== digsim.WIRE)
+                draw = true;
+        }
+
+        if (count > 2 || draw) {
+            x = (space.col - this.col + 0.5) * digsim.gridSize;
+            y = (space.row - this.row + 0.5) * digsim.gridSize;
+            context.moveTo(x, y)
+            context.arc(x, y, digsim.gridSize / 10, 0, 2 * Math.PI);
+        }
+    }
+    context.fill();
+    context.stroke();
+
+    context.restore();
+};
+
 /*****************************************************************************
  * DRAW
  *  Draw the Wire to the context.
@@ -274,5 +322,8 @@ Wire.prototype.draw = function(context, lineColor) {
     context.moveTo(0, 0);
     context.lineTo(this.path.x * digsim.gridSize, this.path.y * digsim.gridSize);
     context.stroke();
+
+    this.drawConnectionDots(context);
+
     context.restore();
 };

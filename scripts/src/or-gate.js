@@ -123,12 +123,12 @@ OR.prototype.draw = function(context, lineColor) {
     context.lineTo(0, y1);
 
     // Base curve
-    context.quadraticCurveTo(digsim.gridSize * baseCurveature, y1 / 2,
-                             0, 0);
+    context.quadraticCurveTo(digsim.gridSize * baseCurveature, y1 / 2, 0, 0);
     context.stroke();
     context.fill();
 
     this.drawLabel(context, lineColor);
+    this.drawConnectionDots(context);
 
     context.restore();
 };

@@ -173,6 +173,7 @@ Clock.prototype.draw = function(context, lineColor) {
     context.stroke();
 
     this.drawLabel(context, lineColor);
+    this.drawConnectionDots(context);
 
     context.restore();
 };
