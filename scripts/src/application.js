@@ -1209,7 +1209,7 @@ Digsim.prototype.readFileContents = function() {
 /*****************************************************************************
  * OPEN FILE
  *  Open a schematic into the program.
- * @param {string} contents - JSONH string of the file contents.
+ * @param {string} contents - JSON string of the file contents.
  ****************************************************************************/
 Digsim.prototype.openFile = function(contents) {
     // Don't do anything if the button is disabled
@@ -1220,7 +1220,7 @@ Digsim.prototype.openFile = function(contents) {
     var comps = [];
     var components, c, comp, i, j, name, Class, connectedComp, id = 0;
 
-    // Parse the JSONH string and validate contents
+    // Parse the JSON string and validate contents
     try {
        components = $.parseJSON(contents);
        digsim.validateFile(components);
