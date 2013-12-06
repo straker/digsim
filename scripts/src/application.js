@@ -1934,10 +1934,21 @@ Digsim.prototype.enableButton = function(id) {
     this.disableControlButtons();
 
     // Reset all states and redraw canvas if application was in RUN_MODE
+    var comps, comp;
     if (id === "Run" || this.mode === this.SIM_MODE) {
-        var comps = this.components.get();
+        comps = this.components.get();
         for (var i = 0, len = comps.length; i < len; i++) {
-            comps[i].state = 0;
+            // Reset the state of all Components
+            comp = comps[i];
+            if (comp.type === digsim.DFF) {
+                comp.state = {'Q': false, 'Qnot': false};
+            }
+            else if (comp.type === digsim.ASCIIDISPLAY) {
+                comp.text = "";
+            }
+            else {
+                comp.state = 0;
+            }
         }
     }
 
