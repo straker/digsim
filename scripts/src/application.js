@@ -83,6 +83,7 @@ function Digsim() {
     this.passCounter       = 0;                     // Counter used to prevent infinite loops
     this.endRoute          = false;                 // Know when to stop wire routing
     this.mouseDown         = false;                 // Know if the mouse is currently held down for dragging
+    this.readFile          = false;                 // Know when a file was opened to read it's contents from the iframe
 
     // Data arrays
     this.components        = new ComponentList();   // Holds all placed Components
@@ -1050,6 +1051,9 @@ Digsim.prototype.onButtonClicked = function(event) {
                     if (comp.type === digsim.DFF) {
                         comp.state = {'Q': false, 'Qnot': false};
                     }
+                    else if (comp.type === digsim.ASCIIDISPLAY) {
+                        comp.text = "";
+                    }
                     else {
                         comp.state = -1;
                     }
@@ -1164,6 +1168,8 @@ Digsim.prototype.newFile = function() {
  *  Submits the hidden file upload form to the server.
  ****************************************************************************/
 Digsim.prototype.submitFile = function() {
+    digsim.readFile = true;
+
     $('#uploadForm').submit();
 };
 
@@ -1172,6 +1178,13 @@ Digsim.prototype.submitFile = function() {
  *  Reads the contents of the hidden iframe after the file has been submitted.
  ****************************************************************************/
 Digsim.prototype.readFileContents = function() {
+    // Only read file contents after a file has been submitted. Prevents error messages from the server
+    // firing the onchance event of the iframe and then reading the iframe contents.
+    if (!digsim.readFile)
+        return;
+
+    digsim.readFile = false;
+
     var contents = $('#fileContents').contents().find('body').text();
 
     // Clear the form when finished
@@ -1196,7 +1209,7 @@ Digsim.prototype.readFileContents = function() {
 /*****************************************************************************
  * OPEN FILE
  *  Open a schematic into the program.
- * @param {string} contents - JSON string of the file contents.
+ * @param {string} contents - JSONH string of the file contents.
  ****************************************************************************/
 Digsim.prototype.openFile = function(contents) {
     // Don't do anything if the button is disabled
@@ -1207,7 +1220,7 @@ Digsim.prototype.openFile = function(contents) {
     var comps = [];
     var components, c, comp, i, j, name, Class, connectedComp, id = 0;
 
-    // Parse the JSON string and validate contents
+    // Parse the JSONH string and validate contents
     try {
        components = $.parseJSON(contents);
        digsim.validateFile(components);
@@ -1346,7 +1359,7 @@ Digsim.prototype.saveFile = function() {
     }
 
     var components = [];
-    var comps, comp, i, j, inputs, outputs, cons;
+    var comps, comp, i, j, inputs, outputs, cons, prop;
 
     // Create a new array that will be turned into the JSON object
     // Copy so we don't modify any of the existing Components
@@ -1389,9 +1402,17 @@ Digsim.prototype.saveFile = function() {
     // PHP can download files to the users machine, but the user HAS to navigate to the page (can't just use an AJAX request)
     // To get around this problem, we can create an iFrame with the src set to the php script
 
-    // Set the iFrame src to allow the user to download the schematic via PHP
-    var ifrm = document.getElementById('fileContents');
-    ifrm.setAttribute("src", "scripts/src/saveFile.php?schematic="+digsim.saveJson);
+    // POST the data to the script to be able to send large strings to the server (GET sends the data as part of the URL string)
+    $.ajax({
+        url: 'scripts/src/saveFile.php',
+        type: 'POST',
+        data: { data: digsim.saveJson },
+        success: function(result) {
+            // Set the iFrame src to allow the user to download the schematic via PHP
+            var ifrm = document.getElementById('fileContents');
+            ifrm.setAttribute("src", "scripts/src/saveFile.php");
+        }
+    });
 };
 
 /*****************************************************************************

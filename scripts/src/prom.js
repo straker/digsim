@@ -150,8 +150,8 @@ PROM.prototype.draw = function(context, lineColor) {
 
     // Draw gate
     context.beginPath();
-    context.fillRect(0, 0, 4 * digsim.gridSize, 8 * digsim.gridSize);
-    context.strokeRect(0, 0, 4 * digsim.gridSize, 8 * digsim.gridSize);
+    context.fillRect(0, 0, this.zeroDimension.col * digsim.gridSize, this.zeroDimension.row * digsim.gridSize);
+    context.strokeRect(0, 0, this.zeroDimension.col * digsim.gridSize, this.zeroDimension.row * digsim.gridSize);
 
     // Font properties
     context.fillStyle = lineColor || 'black';
