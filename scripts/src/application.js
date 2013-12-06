@@ -1359,7 +1359,7 @@ Digsim.prototype.saveFile = function() {
     }
 
     var components = [];
-    var comps, comp, i, j, inputs, outputs, cons, prop;
+    var comps, comp, i, j, inputs, outputs, cons;
 
     // Create a new array that will be turned into the JSON object
     // Copy so we don't modify any of the existing Components
