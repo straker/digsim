@@ -1257,6 +1257,7 @@ Digsim.prototype.openFile = function(contents) {
 
     // Reset current file
     digsim.newFile();
+    digsim.iComp = id + 1;
 
     // Set up schematic
     for (i = 0; i < comps.length; i++) {
@@ -1272,7 +1273,6 @@ Digsim.prototype.openFile = function(contents) {
         comp.checkConnections();
     }
 
-    digsim.iComp = id + 1;
     digsim.drawAllComponents();
 };
 
