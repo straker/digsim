@@ -30,7 +30,6 @@ LED.prototype = new Component();
 LED.prototype.getInputRotation = function() {
     var row, col, index;
 
-    // Get the row and col of the first wire (0), then modify by inputIndex
     switch(this.rotation / 90) {
         case 0:
             row = this.row + this.dimension.row;

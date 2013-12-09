@@ -5,16 +5,19 @@
  */
 session_start();
 
-// Use POST to be able to send longer string lengths as a payload instead of GET part of the URL
+// Use POST to be able to send large strings (GET sends the data as part of the URL string)
 $schematic = $_POST['data'];
 
-// Since we have to use post, we cannot just open the iframe directly to this script and pass the data as well.
-// Therefore we have to post the data first, then open the iframe afterwards.
-// So we need to save the data between calls using a session.
+// Since we have to use post, we cannot just open the link directly to this script and pass the data as well.
+// Therefore we have to post the data first, then open the link afterwards, using a SESSION variable to save the data.
 
 if (empty($schematic) && !empty($_SESSION['schematic'])) {
-	header("Content-type:application/json; charset=utf-8");
+	// Set download headers
+	header('Content-Description: File Transfer');
+	header('Content-Type: application/octet-stream');
 	header("Content-Disposition: attachment; filename=schematic.digsim.json");
+	header('Content-Transfer-Encoding: binary');
+
 	echo $_SESSION['schematic'];
 }
 else {

@@ -142,13 +142,13 @@ MUX.prototype.draw = function(context, lineColor) {
         if (this.numInputs === 2)
             offsetV = 1;
         else
-            offsetV = 1.5
+            offsetV = 1.5;
     }
     else if (this.rotation === 270) {
         if (this.numInputs === 2)
             offsetH = -1;
         else
-            offsetH = -1.5
+            offsetH = -1.5;
     }
 
     var center = {'row': (this.dimension.row / 2 + offsetV) * digsim.gridSize,
@@ -162,7 +162,6 @@ MUX.prototype.draw = function(context, lineColor) {
 
     // Select Wires
     var factor = Math.floor(this.numInputs / 2);
-    var gsf = digsim.gridSize * factor;
 
     context.beginPath();
     context.moveTo(0.5 * digsim.gridSize, (this.numInputs + 1.5) * digsim.gridSize);
@@ -203,7 +202,7 @@ MUX.prototype.draw = function(context, lineColor) {
  *  Set state based on select inputs address.
  ****************************************************************************/
 MUX.prototype.computeLogic = function() {
-    var select = ""
+    var select = "";
     var s, comp;
     for (var i = this.numInputs / 2 - 1; i >= 0; i--) {
         comp = this.namedConnections['s'+i];

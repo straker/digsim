@@ -283,7 +283,7 @@ Wire.prototype.drawConnectionDots = function(context) {
         if (count > 2 || draw) {
             x = (space.col - this.col + 0.5) * digsim.gridSize;
             y = (space.row - this.row + 0.5) * digsim.gridSize;
-            context.moveTo(x, y)
+            context.moveTo(x, y);
             context.arc(x, y, digsim.gridSize / 10, 0, 2 * Math.PI);
         }
     }

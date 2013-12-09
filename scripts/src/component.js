@@ -27,6 +27,7 @@ function Component() {
     this.name       = "";     // Unique name of Component; Must match the name of the class
     this.label      = "";     // Label displayed for the Component
     this.drawStatic = true;   // If the Component should be drawn on the static context
+    this.extraSpace = 0;      // If the Component has extra space above and below
 }
 
 /******************************************************************************
@@ -45,7 +46,7 @@ Component.prototype.init = function (row, col, rot, id) {
     this.id         = id;
     this.label      = this.name + id;
 
-    // Wires have no designated input/output, so we just have to keep track of their connections unit we traverse connections
+    // Wires have no designated input/output, so we just have to keep track of their connections unit we traverse it
     if (this.type === digsim.WIRE) {
         this.connections = new ComponentList(id);  // Wire connections
     }
@@ -82,14 +83,23 @@ Component.prototype.isADriver = function() {
 };
 
 /******************************************************************************
+ * RESET
+ *  Reset the state of the component.
+ *****************************************************************************/
+Component.prototype.reset = function() {
+    this.state = 0;
+};
+
+/******************************************************************************
  * GET INPUT ROTATION
  *  Return the row, col, and index of the input based on rotation and input index.
  * @param {number} inputIndex - Index of input.
+ * @param {number} skip       - Skip a specified number of row/col.
  * @return {Object} {row, col, index}.
  *****************************************************************************/
-Component.prototype.getInputRotation = function(inputIndex) {
+Component.prototype.getInputRotation = function(inputIndex, skip) {
     // Skip a row/col for even input Components
-    var skip = (this.numInputs % 2 === 0 && inputIndex >= this.numInputs / 2 ? 1 : 0);
+    skip = (typeof skip !== 'undefined' ? skip : (this.numInputs % 2 === 0 && inputIndex >= this.numInputs / 2 ? 1 : 0));
     var row, col, index;
 
     // Get the row and col of the first wire (0), then modify by inputIndex
@@ -123,32 +133,62 @@ Component.prototype.getInputRotation = function(inputIndex) {
  * GET OUTPUT ROTATION
  *  Return the row, col, and index of the output based on rotation and output index.
  * @param {number} outputIndex - Index of output.
+ * @param {number} skip        - Skip a specified number of row/col @default 0.
  * @return {Object} {row, col, index}.
  *****************************************************************************/
-Component.prototype.getOutputRotation = function(outputIndex) {
+Component.prototype.getOutputRotation = function(outputIndex, skip) {
+    // Skip a row/col for even input Components
+    skip = (typeof skip !== 'undefined' ? skip : 0);
     var row, col, index;
 
-    // Get the row and col of the wire
-    switch (this.rotation / 90) {
-        case 0:
-            row = this.row + Math.floor(this.dimension.row / 2);
-            col = this.col + this.dimension.col;
-            index = 3;
-            break;
-        case 1:
-            row = this.row + this.dimension.row;
-            col = this.col + Math.floor(this.dimension.col / 2);
-            index = 0;
-            break;
-        case 2:
-            row = this.row + Math.floor(this.dimension.row / 2);
-            col = this.col - 1;
-            index = 1;
-            break;
-        case 3:
-            row = this.row - 1;
-            col = this.col + Math.floor(this.dimension.col / 2);
-            index = 2;
+    if (this.numOutputs === 1) {
+        // Get the row and col of the wire
+        switch (this.rotation / 90) {
+            case 0:
+                row = this.row + Math.floor(this.dimension.row / 2);
+                col = this.col + this.dimension.col;
+                index = 3;
+                break;
+            case 1:
+                row = this.row + this.dimension.row;
+                col = this.col + Math.floor(this.dimension.col / 2);
+                index = 0;
+                break;
+            case 2:
+                row = this.row + Math.floor(this.dimension.row / 2);
+                col = this.col - 1;
+                index = 1;
+                break;
+            case 3:
+                row = this.row - 1;
+                col = this.col + Math.floor(this.dimension.col / 2);
+                index = 2;
+        }
+    }
+    else {
+        // Get the row and col of the first wire (0), then modify by outputIndex
+        switch(this.rotation / 90) {
+            case 0:
+                row = this.row + outputIndex + skip;
+                col = this.col + this.dimension.col;
+                index = 3;
+                break;
+            case 1:
+                row = this.row + this.dimension.row;
+                col = this.col + this.dimension.col - 1 - outputIndex - skip;
+                index = 0;
+                break;
+            case 2:
+                row = this.row + this.dimension.row - 1 - outputIndex - skip;
+                col = this.col - 1;
+                index = 1;
+                break;
+            case 3:
+                row = this.row - 1;
+                col = this.col + outputIndex + skip;
+                index = 2;
+                break;
+        }
     }
 
     return {row: row, col: col, index: index};
@@ -187,6 +227,7 @@ Component.prototype.getComponentSpace = function() {
 
     // Combine the input and output space arrays
     space = space.concat(this.getComponentInputSpace()).concat(this.getComponentOutputSpace());
+    space = space.concat(this.getExtraComponentSpace(this.extraSpace));
 
     return space;
 };
@@ -227,7 +268,6 @@ Component.prototype.getComponentOutputSpace = function() {
     var output;
 
     // Output space
-    cnt = 0;
     for (var i = 0; i < this.numOutputs; ++i) {
         // Calculate positions of connections based on rotation
         output = this.getOutputRotation(i);
@@ -239,6 +279,66 @@ Component.prototype.getComponentOutputSpace = function() {
             'con'     : true,
             'conIndex': i
         });
+    }
+
+    return space;
+};
+
+/******************************************************************************
+ * GET EXTRA COMPONENT SPACE
+ *  Return the space {row, col, con, index} above and below the Component.
+ * @param {number} length - How many spaces to return (top & bottom or left & right count as 1).
+ * @return {Array} array of objects of {row, col, con, index}.
+ *****************************************************************************/
+Component.prototype.getExtraComponentSpace = function(length) {
+    var space = [];
+    var col = this.col, row = this.row;
+    var index;
+
+    for (var i = 0; i < length; i++) {
+        // Get space based on rotations
+        for (var y = 0; y < 2; ++y) {
+            // Component is rotated on it's side (90 or 270)
+            if (((this.rotation) / 90) % 2) {
+                // Right
+                if (y) {
+                    col = this.col + this.dimension.col;
+                    index = 3;
+                }
+                // Left
+                else {
+                    index = 1;
+                    col = this.col - 1;
+                }
+            }
+            // Component is rotated normally (0 or 180)
+            else {
+                // Below
+                if (y) {
+                    row = this.row + this.dimension.row;
+                    index = 0;
+                }
+                // Above
+                else {
+                    index = 2;
+                    row = this.row - 1;
+                }
+            }
+
+            space.push({
+                'row'  : row,
+                'col'  : col,
+                'con'  : false,
+                'index': index
+            });
+        }
+
+        if (this.rotation === 90 || this.rotation === 270) {
+            ++row;
+        }
+        else {
+            ++col;
+        }
     }
 
     return space;
@@ -353,9 +453,9 @@ Component.prototype.drawWires = function(context, lineColor, wireLength) {
     this.rotation   = 0;
     this.dimension  = this.zeroDimension;
 
+    wireLength      = wireLength || 1;
     var inputSpace  = this.getComponentInputSpace();
     var outputSpace = this.getComponentOutputSpace();
-    var wireLength  = wireLength || 1;
     var space, i, x, y;
 
     // Draw input wires
@@ -432,7 +532,7 @@ Component.prototype.drawConnectionDots = function(context) {
 
             x = (space.col - this.col + 0.5) * digsim.gridSize;
             y = (space.row - this.row + 0.5) * digsim.gridSize;
-            context.moveTo(x, y)
+            context.moveTo(x, y);
             context.arc(x, y, digsim.gridSize / 10, 0, 2 * Math.PI);
         }
     }

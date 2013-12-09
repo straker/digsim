@@ -23,7 +23,7 @@ function DFF() {
     this.previousClockState = 0;   // Keep track of clock state to know when it is on rising edge
 
     // DFF state : 0 = Q, 1 = Qnot
-    this.state = [0, 0]
+    this.state = [0, 0];
 }
 DFF.prototype = new Component();
 
@@ -37,6 +37,14 @@ DFF.prototype.isAGate = function() {
 };
 
 /******************************************************************************
+ * RESET
+ *  Reset the state of the component.
+ *****************************************************************************/
+DFF.prototype.reset = function() {
+    this.state = [0, 0];
+};
+
+/******************************************************************************
  * GET OUTPUT ROTATION
  *  Return the row, col, and index of the output based on rotation and output index.
  * @param {number} outputIndex - Index of output.
@@ -45,33 +53,7 @@ DFF.prototype.isAGate = function() {
 DFF.prototype.getOutputRotation = function(outputIndex) {
     // Skip a row/col for even input Components
     var skip = (this.numInputs % 2 === 0 && outputIndex >= this.numInputs / 2 ? 1 : 0);
-    var row, col, index;
-
-    // Get the row and col of the first wire (0), then modify by outputIndex
-    switch(this.rotation / 90) {
-        case 0:
-            row = this.row + outputIndex + skip;
-            col = this.col + this.dimension.col;
-            index = 3;
-            break;
-        case 1:
-            row = this.row + this.dimension.row;
-            col = this.col + this.dimension.col - 1 - outputIndex - skip;
-            index = 0;
-            break;
-        case 2:
-            row = this.row + this.dimension.row - 1 - outputIndex - skip;
-            col = this.col - 1;
-            index = 1;
-            break;
-        case 3:
-            row = this.row - 1;
-            col = this.col + outputIndex + skip;
-            index = 2;
-            break;
-    }
-
-    return {row: row, col: col, index: index};
+    return Component.prototype.getOutputRotation.call(this, outputIndex, skip);
 };
 
 /*****************************************************************************

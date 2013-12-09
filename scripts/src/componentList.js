@@ -147,7 +147,6 @@ function ComponentList(id) {
         var comps = [];
 
         if (typeof index === 'number') {
-            var compIndex;
             for (var i in components) {
                 if (components.hasOwnProperty(i)) {
                     if (components[i] === index)

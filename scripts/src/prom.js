@@ -85,33 +85,7 @@ PROM.prototype.getInputRotation = function(inputIndex) {
  * @return {Object} {row, col, index}.
  *****************************************************************************/
 PROM.prototype.getOutputRotation = function(outputIndex) {
-    var row, col, index;
-
-    // Get the row and col of the first wire (0), then modify by outputIndex
-    switch(this.rotation / 90) {
-        case 0:
-            row = this.row + outputIndex;
-            col = this.col + this.dimension.col;
-            index = 3;
-            break;
-        case 1:
-            row = this.row + this.dimension.row;
-            col = this.col + this.dimension.col - 1 - outputIndex ;
-            index = 0;
-            break;
-        case 2:
-            row = this.row + this.dimension.row - 1 - outputIndex;
-            col = this.col - 1;
-            index = 1;
-            break;
-        case 3:
-            row = this.row - 1;
-            col = this.col + outputIndex;
-            index = 2;
-            break;
-    }
-
-    return {row: row, col: col, index: index};
+    return Component.prototype.getOutputRotation.call(this, outputIndex, 0);
 };
 
 /*****************************************************************************
@@ -214,7 +188,7 @@ PROM.prototype.computeLogic = function() {
         s = (typeof comp !== 'undefined' && comp.state >= 0 ? comp.state : 0);
         address += s + "";
     }
-    var address = parseInt(address, 2);
+    address = parseInt(address, 2);
 
     // Convert the decimal to a binary
     state = digsim.pad(digsim.dec2bin(this.addresses[address]), this.numOutputs);

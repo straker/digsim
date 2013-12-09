@@ -40,6 +40,14 @@ ASCIIDisplay.prototype.isAGate = function() {
     return true;
 };
 
+/******************************************************************************
+ * RESET
+ *  Reset the state of the component.
+ *****************************************************************************/
+ASCIIDisplay.prototype.reset = function() {
+    this.text = "";
+};
+
 /*****************************************************************************
  * BINARY TO ASCII
  *  Converts a binary value to an ascii character.
@@ -57,33 +65,7 @@ ASCIIDisplay.prototype.bin2asc = function(bin) {
  * @return {Object} {row, col, index}.
  *****************************************************************************/
 ASCIIDisplay.prototype.getInputRotation = function(inputIndex) {
-    var row, col, index;
-
-    // Get the row and col of the first wire (0), then modify by inputIndex
-    switch(this.rotation / 90) {
-        case 0:
-            row = this.row + inputIndex;
-            col = this.col - 1;
-            index = 1;
-            break;
-        case 1:
-            row = this.row - 1;
-            col = this.col + this.dimension.col - 1 - inputIndex;
-            index = 2;
-            break;
-        case 2:
-            row = this.row + this.dimension.row - 1 - inputIndex;
-            col = this.col + this.dimension.col;
-            index = 3;
-            break;
-        case 3:
-            row = this.row + this.dimension.row;
-            col = this.col + inputIndex;
-            index = 0;
-            break;
-    }
-
-    return {row: row, col: col, index: index};
+    return Component.prototype.getInputRotation.call(this, inputIndex, 0);
 };
 
 /******************************************************************************
@@ -206,7 +188,7 @@ ASCIIDisplay.prototype.draw = function(context, lineColor) {
     // CP Wire
     context.beginPath();
     context.moveTo(1.5 * digsim.gridSize, (this.zeroDimension.row + 0.5) * digsim.gridSize);
-    context.lineTo(1.5 * digsim.gridSize, (this.zeroDimension.row - 1) * digsim.gridSize)
+    context.lineTo(1.5 * digsim.gridSize, (this.zeroDimension.row - 1) * digsim.gridSize);
     context.stroke();
 
     // Draw display
@@ -266,7 +248,7 @@ ASCIIDisplay.prototype.draw = function(context, lineColor) {
     context.font      = fontSize + "px Arial";
     context.fontWidth = fontWidth;
 
-    var character, index;
+    var character, index, i;
     for (i = 0; i < this.text.length; i++) {
         character = this.text[i];
         context.fillText(character, colStart + (fontSize - fontWidth) * col++, rowStart + fontHeight * row);

@@ -16,11 +16,10 @@
  * @constructor
  ****************************************************************************/
 function Digsim() {
-    /* Constants */
+    // Constants
     this.GRID_ZOOM         = 5;                     // Added or subtracted to gridSize when zooming
     this.MAX_GRID_SIZE     = 40;                    // Max zoom level
     this.MIN_GRID_SIZE     = 10;                    // Min zoom level
-    this.HIT_RADIUS        = 0.733;                 // The size (as a percent) around a wire that will respond to a click
     this.NUM_COLS          = 200;                   // Number of columns in the application
     this.NUM_ROWS          = 200;                   // Number of rows in the application
 
@@ -55,11 +54,12 @@ function Digsim() {
     this.BR                = 2;
     this.BL                = 3;
 
-    /* Animation variables */
+    // Animation variables
     this.dragging          = false;                 // Know when a component is being dragged
     this.clkCnt            = 0;                     // Will count to digsim.CLK_FREQ before it resets and changes states
     this.rotation          = 0;                     // Rotation of the currently selected Component (in degrees)
-    /* Grid variables */
+
+    // Grid variables
     this.gridSize          = 20;                    // The size (in pixels) of a grid square
     this.gridWidth         = window.innerWidth - $('.canvases').position().left;
     this.gridHeight        = window.innerHeight - $('.canvases').position().top;
@@ -68,6 +68,7 @@ function Digsim() {
     this.dragOffset        = {'row': 0, 'col': 0};  // Keep track of how far from the top-left corner the a click is for dragging
     this.wireStart         = {'row': 0, 'col': 0};  // Keep track of where a wire starts for wire placement
     this.gridToggle        = 0;                     // Toggles the grid (tri-state)
+    this.hitRadius         = 0.733;                 // The size (as a percent) around a wire that will respond to a click
 
     // Gate identifier
     this.iComp             = 0;                     // Gives each component a unique identifier
@@ -83,7 +84,6 @@ function Digsim() {
     this.passCounter       = 0;                     // Counter used to prevent infinite loops
     this.endRoute          = false;                 // Know when to stop wire routing
     this.mouseDown         = false;                 // Know if the mouse is currently held down for dragging
-    this.readFile          = false;                 // Know when a file was opened to read it's contents from the iframe
 
     // Data arrays
     this.components        = new ComponentList();   // Holds all placed Components
@@ -238,9 +238,7 @@ Digsim.prototype.run = function() {
         });
 
         // Disable buttons on start
-        this.disableButton("Submit");
         this.disableButton("Empty");
-        this.disableButton("Paste");
         this.disableControlButtons();
 
         this.drawGrid(this.gridContext);
@@ -259,6 +257,8 @@ Digsim.prototype.clearCanvas = function(context, clearDirty) {
 
     // Use the identity matrix while clearing the canvas
     context.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Use a dirty rectangle to clear the canvas
     if (clearDirty) {
         var mousePos = digsim.getMousePos();
         var max = Math.max(this.gridWidth, this.gridHeight);
@@ -266,6 +266,7 @@ Digsim.prototype.clearCanvas = function(context, clearDirty) {
 
         context.clearRect(mousePos.x - half, mousePos.y - half, max, max);
     }
+    // Clear the entire canvas
     else {
         context.clearRect(0, 0, context.canvas.width, context.canvas.width);
     }
@@ -282,7 +283,7 @@ Digsim.prototype.drawGrid = function() {
     var context = this.gridContext;
     this.clearCanvas(context);
 
-  var row, col;
+    var row, col;
 
     // Grid grid
     if (this.gridToggle % 3 === 0) {
@@ -789,9 +790,9 @@ Digsim.prototype.onMouseDown = function(event) {
     }
     // Empty square
     else {
-        digsim.dragStart = {'row': 0, 'col': 0};
+        digsim.dragStart  = {'row': 0, 'col': 0};
         digsim.dragOffset = {'row': 0, 'col': 0};
-        digsim.dragging = false;
+        digsim.dragging   = false;
         digsim.disableControlButtons();
     }
 };
@@ -822,34 +823,36 @@ Digsim.prototype.onMouseUp = function(event) {
         digsim.clearCanvas(digsim.movingContext);
 
         // Keep Components connected by creating wires between them
-        var start, target, path, connectedComp;
+        var start, target, connectedComp;
         for (var i in digsim.connectionStarts) {
-            connectedComp = digsim.components.getComponent(i);
-            start = digsim.connectionStarts[i];
-            target = digsim.connectionTargets[i];
+            if (digsim.connectionStarts.hasOwnProperty(i)) {
+                connectedComp = digsim.components.getComponent(i);
+                start = digsim.connectionStarts[i];
+                target = digsim.connectionTargets[i];
 
-            target = {'r': comp.row + target.r, 'c': comp.col + target.c};
+                target = {'r': comp.row + target.r, 'c': comp.col + target.c};
 
-            // Update an existing Wire
-            if (start.r >= 0 && target.r >= 0 && connectedComp && connectedComp.type === digsim.WIRE) {
-                digsim.route(start, target, false, connectedComp);
+                // Update an existing Wire
+                if (start.r >= 0 && target.r >= 0 && connectedComp && connectedComp.type === digsim.WIRE) {
+                    digsim.route(start, target, false, connectedComp);
 
-                // Wire was merged out
-                if (connectedComp.path.x === 0 && connectedComp.path.y === 0) {
-                    digsim.components.remove(connectedComp);
+                    // Wire was merged out
+                    if (connectedComp.path.x === 0 && connectedComp.path.y === 0) {
+                        digsim.components.remove(connectedComp);
+                    }
+                    else {
+                        connectedComp.drawStatic = true;
+                        connectedComp.deleteConnections();
+                        connectedComp.checkConnections();
+                    }
                 }
-                else {
-                    connectedComp.drawStatic = true;
+                // Create a new Wire
+                else if (start.r >= 0 && target.r >= 0) {
+                    digsim.route(start, target);
+
                     connectedComp.deleteConnections();
                     connectedComp.checkConnections();
                 }
-            }
-            // Create a new Wire
-            else if (start.r >= 0 && target.r >= 0) {
-                digsim.route(start, target);
-
-                connectedComp.deleteConnections();
-                connectedComp.checkConnections();
             }
         }
 
@@ -1046,29 +1049,19 @@ Digsim.prototype.onButtonClicked = function(event) {
             for (j = 0, len = comps.length; j < len; ++j) {
                 comp = comps[j];
 
-                if (typeof comp !== 'undefined') {
-                    // Reset the state of all Components
-                    if (comp.type === digsim.DFF) {
-                        comp.state = {'Q': false, 'Qnot': false};
-                    }
-                    else if (comp.type === digsim.ASCIIDISPLAY) {
-                        comp.text = "";
-                    }
-                    else {
-                        comp.state = -1;
-                    }
+                // Reset the state of all Components
+                comp.reset();
 
-                    // Count the number of connections the schematic has
-                    if (comp.type === digsim.WIRE) {
-                        digsim.maxSchematicLoop += comp.connections.length();
+                // Count the number of connections the schematic has
+                if (comp.type === digsim.WIRE) {
+                    digsim.maxSchematicLoop += comp.connections.length();
 
-                        // Reset input/output connections for a Wire
-                        comp.inputs.clear(false);
-                        comp.outputs.clear(false);
-                    }
-                    else
-                        digsim.maxSchematicLoop += comp.numInputs + comp.numOutputs;
+                    // Reset input/output connections for a Wire
+                    comp.inputs.clear(false);
+                    comp.outputs.clear(false);
                 }
+                else
+                    digsim.maxSchematicLoop += comp.numInputs + comp.numOutputs;
             }
             // Define a safety buffer to pass through
             digsim.maxSchematicLoop *= 3;
@@ -1168,8 +1161,6 @@ Digsim.prototype.newFile = function() {
  *  Submits the hidden file upload form to the server.
  ****************************************************************************/
 Digsim.prototype.submitFile = function() {
-    digsim.readFile = true;
-
     $('#uploadForm').submit();
 };
 
@@ -1178,13 +1169,6 @@ Digsim.prototype.submitFile = function() {
  *  Reads the contents of the hidden iframe after the file has been submitted.
  ****************************************************************************/
 Digsim.prototype.readFileContents = function() {
-    // Only read file contents after a file has been submitted. Prevents error messages from the server
-    // firing the onchance event of the iframe and then reading the iframe contents.
-    if (!digsim.readFile)
-        return;
-
-    digsim.readFile = false;
-
     var contents = $('#fileContents').contents().find('body').text();
 
     // Clear the form when finished
@@ -1195,6 +1179,9 @@ Digsim.prototype.readFileContents = function() {
     }
 
     // Display error messages
+    if (contents.substring(0, 5) === "Error") {
+        digsim.addMessage(digsim.ERROR, "Error parsing file: " + contents.substring(7));
+    }
     if (contents === "file") {
         digsim.addMessage(digsim.ERROR, "Error parsing file: Incorrect file type. File must be of type '.json'.");
     }
@@ -1218,7 +1205,7 @@ Digsim.prototype.openFile = function(contents) {
     }
 
     var comps = [];
-    var components, c, comp, i, j, name, Class, connectedComp, id = 0;
+    var components, c, comp, i, name, Class, id = 0;
 
     // Parse the JSON string and validate contents
     try {
@@ -1345,7 +1332,7 @@ Digsim.prototype.validateComponent = function(comp) {
         if (typeof comp.addresses === 'undefined')
             throw "addresses";
     }
-}
+};
 
 /*****************************************************************************
  * SAVE FILE
@@ -1359,7 +1346,7 @@ Digsim.prototype.saveFile = function() {
     }
 
     var components = [];
-    var comps, comp, i, j, inputs, outputs, cons;
+    var comps, comp, i;
 
     // Create a new array that will be turned into the JSON object
     // Copy so we don't modify any of the existing Components
@@ -1398,19 +1385,17 @@ Digsim.prototype.saveFile = function() {
     // Stringify the array
     digsim.saveJson = JSON.stringify(components);
 
-    // JavaScript does not allow files to be downloaded to the users machine (FileReader API is not supported enough to use)
-    // PHP can download files to the users machine, but the user HAS to navigate to the page (can't just use an AJAX request)
-    // To get around this problem, we can create an iFrame with the src set to the php script
+    // JavaScript does not allow files to be downloaded to the users machine (FileReader API is not supported enough to use).
+    // PHP can download files to the users machine, but the user HAS to navigate to the page (can't just use an AJAX request).
+    // To get around this problem, we can POST the data to the PHP script and then navigate to it.
 
     // POST the data to the script to be able to send large strings to the server (GET sends the data as part of the URL string)
     $.ajax({
         url: 'scripts/src/saveFile.php',
         type: 'POST',
         data: { data: digsim.saveJson },
-        success: function(result) {
-            // Set the iFrame src to allow the user to download the schematic via PHP
-            var ifrm = document.getElementById('fileContents');
-            ifrm.setAttribute("src", "scripts/src/saveFile.php");
+        success: function() {
+            window.location = 'scripts/src/saveFile.php';
         }
     });
 };
@@ -1690,7 +1675,7 @@ Digsim.prototype.pad = function(value, length, padding) {
     if (typeof padding === 'undefined')
         padding = '0';
     else
-        padding + '';
+        padding += '';
 
     // Can only pad with single characters
     if (padding.length > 1)
@@ -1698,7 +1683,7 @@ Digsim.prototype.pad = function(value, length, padding) {
 
     value = value + '';
 
-    return new Array(length - value.length + 1).join(padding) + value
+    return new Array(length - value.length + 1).join(padding) + value;
 };
 
 /*****************************************************************************
@@ -1749,6 +1734,18 @@ Digsim.prototype.getMouseCol = function() {
 };
 
 /*****************************************************************************
+ * RESET COMPONENT STATES
+ *  Reset the state of all Components.
+ ****************************************************************************/
+Digsim.prototype.resetComponentStates = function() {
+    var comps = this.components.get();
+    for (var i = 0, len = comps.length; i < len; i++) {
+        // Reset the state of all Components
+        comps[i].reset();
+    }
+};
+
+/*****************************************************************************
  * GET WIRE INDEX
  *  Returns the index of the where the user clicks inside a wire array
  *  placeholder cell.
@@ -1760,8 +1757,10 @@ Digsim.prototype.getWireIndex = function() {
     var relX      = mousePos.x % digsim.gridSize;
     var relY      = mousePos.y % digsim.gridSize;
 
-    var leftVert  = topHor = Math.ceil(digsim.gridSize * (1 - digsim.HIT_RADIUS) / 2);
-    var rightVert = bottomHor = digsim.gridSize - topHor;
+    var leftVert  = Math.ceil(digsim.gridSize * (1 - digsim.hitRadius) / 2);
+    var rightVert = digsim.gridSize - topHor;
+    var topHor    = leftVert;
+    var bottomHor = rightVert;
     var diagSep   = digsim.gridSize - relX;
     var vert      = (relX >= topHor) && (relX <= bottomHor);
     var hor       = (relY >= leftVert) && (relY <= rightVert);
@@ -1810,11 +1809,12 @@ Digsim.prototype.getWireIndex = function() {
 
 /*****************************************************************************
  * PREP DRAGGING
- *  Prepare a Component for dragging.
+ *  Prepare a Component for dragging by saving the connection locations (so that
+ *  they can be used to quickly draw wires between).
  ****************************************************************************/
 Digsim.prototype.prepDragging = function() {
     var comp = digsim.selectedComponent;
-    var inputs, outputs, connections, cons, con, comps, connectedComp, index, space;
+    var inputs, outputs, connections, cons, con, comps, connectedComp, index, space, k, j;
 
     // Get connected Components
     if (comp.type === digsim.WIRE) {
@@ -1891,7 +1891,7 @@ Digsim.prototype.prepDragging = function() {
  *  Changes the hit radius so that wires will be easier to select.
  ****************************************************************************/
 Digsim.prototype.changeHitRadius = function() {
-    this.HIT_RADIUS = 0.80 / (digsim.MIN_GRID_SIZE - digsim.MAX_GRID_SIZE) *
+    this.hitRadius = 0.80 / (digsim.MIN_GRID_SIZE - digsim.MAX_GRID_SIZE) *
                       (digsim.gridSize - digsim.MIN_GRID_SIZE) + 1;
 };
 
@@ -1934,22 +1934,8 @@ Digsim.prototype.enableButton = function(id) {
     this.disableControlButtons();
 
     // Reset all states and redraw canvas if application was in RUN_MODE
-    var comps, comp;
     if (id === "Run" || this.mode === this.SIM_MODE) {
-        comps = this.components.get();
-        for (var i = 0, len = comps.length; i < len; i++) {
-            // Reset the state of all Components
-            comp = comps[i];
-            if (comp.type === digsim.DFF) {
-                comp.state = {'Q': false, 'Qnot': false};
-            }
-            else if (comp.type === digsim.ASCIIDISPLAY) {
-                comp.text = "";
-            }
-            else {
-                comp.state = 0;
-            }
-        }
+        this.resetComponentStates();
     }
 
     this.mode = this.DEFAULT_MODE;
@@ -2012,7 +1998,7 @@ Digsim.prototype.showComponentMenu = function() {
         table.innerHTML = '';
 
         var docfrag = document.createDocumentFragment();
-        var tr, td, label, input, num;
+        var tr, th, td, label, input, num;
 
         tr = document.createElement("tr");
 
@@ -2028,43 +2014,45 @@ Digsim.prototype.showComponentMenu = function() {
         docfrag.appendChild(tr);
 
         for (var address in comp.addresses) {
-            tr = document.createElement("tr");
-            tr.id = "row-" + address;
+            if (comp.addresses.hasOwnProperty(address)) {
+                tr = document.createElement("tr");
+                tr.id = "row-" + address;
 
-            // Address
-            num = digsim.pad(digsim.dec2bin(address), comp.numInputs - 1);
+                // Address
+                num = digsim.pad(digsim.dec2bin(address), comp.numInputs - 1);
 
-            td = document.createElement("td");
-            label = document.createElement("label");
+                td = document.createElement("td");
+                label = document.createElement("label");
 
-            label.setAttribute("for","hex-" + address);
-            label.id = "address-" + address;
-            label.className = "address-value";
-            label.innerHTML = num;
+                label.setAttribute("for","hex-" + address);
+                label.id = "address-" + address;
+                label.className = "address-value";
+                label.innerHTML = num;
 
-            td.appendChild(label);
-            tr.appendChild(td);
+                td.appendChild(label);
+                tr.appendChild(td);
 
-            // Hex
-            num = digsim.pad(digsim.dec2hex(comp.addresses[address]), 2);
+                // Hex
+                num = digsim.pad(digsim.dec2hex(comp.addresses[address]), 2);
 
-            td = document.createElement("td");
-            input = document.createElement("input");
+                td = document.createElement("td");
+                input = document.createElement("input");
 
-            input.type = "text";
-            input.setAttribute('maxlength', 2);
-            input.id = "hex-" + address;
-            input.className = "hex-value";
-            input.value = num;
+                input.type = "text";
+                input.setAttribute('maxlength', 2);
+                input.id = "hex-" + address;
+                input.className = "hex-value";
+                input.value = num;
 
-            td.appendChild(input);
-            tr.appendChild(td);
+                td.appendChild(input);
+                tr.appendChild(td);
 
-            docfrag.appendChild(tr);
+                docfrag.appendChild(tr);
+            }
         }
         table.appendChild(docfrag);
 
-        $('.prom-addresses').scrollTop(0)
+        $('.prom-addresses').scrollTop(0);
         $('.prom-addresses').show();
     }
     else {
@@ -2108,20 +2096,21 @@ Digsim.prototype.onSaveComponentEdit = function() {
         digsim.clearMessages();
 
         for (var address in comp.addresses) {
-            var hex = $('#hex-' + address).val();
+            if (comp.addresses.hasOwnProperty(address)) {
+                var hex = $('#hex-' + address).val();
 
-            // Validate hex
-            if (/^[0-9A-F]+$/i.test(hex)) {
-                hex = parseInt(hex, 16);
-                comp.addresses[address] = hex;
-                $('#row-' + address).removeClass('hex-error');
-            }
-            else {
-                $('#row-' + address).addClass('hex-error');
-                var num = Number(address).toString(2);                             // Convert address to binary
-                num = new Array(comp.numInputs - num.length).join('0') + num;      // Pad the number with leading zeros
-                digsim.addMessage(digsim.ERROR, 'Invalid hex value for address ' + num, false);
-                error = true;
+                // Validate hex
+                if (/^[0-9A-F]+$/i.test(hex)) {
+                    hex = parseInt(hex, 16);
+                    comp.addresses[address] = hex;
+                    $('#row-' + address).removeClass('hex-error');
+                }
+                else {
+                    $('#row-' + address).addClass('hex-error');
+                    var num = digsim.pad(digsim.dec2bin(address), comp.numInputs - 1);
+                    digsim.addMessage(digsim.ERROR, 'Invalid hex value for address ' + num, false);
+                    error = true;
+                }
             }
         }
     }
@@ -2161,7 +2150,7 @@ Digsim.prototype.addMessage = function(type, msg, deactivate) {
  ****************************************************************************/
 Digsim.prototype.clearMessages = function() {
     $('#messages').html('');
-}
+};
 
 /**************************************************************************************************************
  *     /$$      /$$ /$$
@@ -2586,28 +2575,30 @@ function animate() {
     comp.draw(context, 'red');
 
     // Keep Components connected by drawing Wires between them
-    var start, target, path;
-    for (var i in digsim.connectionStarts) {
-        start = digsim.connectionStarts[i];
-        target = digsim.connectionTargets[i];
+    var start, target, path, i, len2;
+    for (i in digsim.connectionStarts) {
+        if (digsim.connectionStarts.hasOwnProperty(i)) {
+            start = digsim.connectionStarts[i];
+            target = digsim.connectionTargets[i];
 
-        target = {'r': comp.row + target.r, 'c': comp.col + target.c};
+            target = {'r': comp.row + target.r, 'c': comp.col + target.c};
 
-        if (start.r >= 0 && target.r >= 0)
-            path = digsim.route(start, target, true);
+            if (start.r >= 0 && target.r >= 0)
+                path = digsim.route(start, target, true);
 
-        // Draw wire
-        if (path) {
-            context.beginPath();
-            context.moveTo((start.c + 0.5) * digsim.gridSize, (start.r + 0.5) * digsim.gridSize);
+            // Draw wire
+            if (path) {
+                context.beginPath();
+                context.moveTo((start.c + 0.5) * digsim.gridSize, (start.r + 0.5) * digsim.gridSize);
 
-            for (var i = 0, len2 = path.length; i < len2; ++i) {
-                context.lineTo((path[i].x + 0.5) * digsim.gridSize, (path[i].y + 0.5) * digsim.gridSize);
+                for (i = 0, len2 = path.length; i < len2; ++i) {
+                    context.lineTo((path[i].x + 0.5) * digsim.gridSize, (path[i].y + 0.5) * digsim.gridSize);
+                }
+                context.stroke();
             }
-            context.stroke();
         }
     }
-};
+}
 
 /*****************************************************************************
  * ANIMATE WIRE
@@ -2638,12 +2629,12 @@ function animateWire() {
     context.fill();
     context.moveTo(digsim.wireStart.col * digsim.gridSize, digsim.wireStart.row * digsim.gridSize);
 
-    x = (col + 0.5) * digsim.gridSize;
-    y = (row + 0.5) * digsim.gridSize;
+    var x = (col + 0.5) * digsim.gridSize;
+    var y = (row + 0.5) * digsim.gridSize;
 
     context.lineTo(x, y);
     context.stroke();
-};
+}
 
 /*****************************************************************************
  * CLOCK CYCLE
@@ -2661,7 +2652,7 @@ function cycleClock() {
     for (var i = 0, len = digsim.drivers.length; i < len; ++i) {
         var driver = digsim.components.getComponent(digsim.drivers[i]);
 
-        if (driver.type === digsim.CLOCK && !(digsim.clkCnt % (60 / driver.frequency))) { // FPS is approximately 60 Hz
+        if (driver.type === digsim.CLOCK && (digsim.clkCnt % (60 / driver.frequency)) === 0) { // FPS is approximately 60 Hz
             digsim.passCounter = 0;
             driver.passState(!driver.state);
             digsim.drawAllComponents();
@@ -2670,7 +2661,7 @@ function cycleClock() {
 
     // Reset counter to prevent number overflow
     digsim.clkCnt %= 60;
-};
+}
 
 /*****************************************************************************
  * REQUEST ANIMATION FRAME
@@ -2686,8 +2677,6 @@ window.requestAnimFrame = (function() {
                 window.setTimeout(callback, 1000 / 60);
             };
 })();
-
-
 
 /**************************************************************************************************************
  *     /$$$$$$$            /$$
@@ -2717,14 +2706,19 @@ Digsim.prototype.debug = {
     /*****************************************************************************
      * VALIDATE SCHEMATIC
      *  Validate a schematic based on a truth table.
-     * @param {string} truthTable -
+     * @param {string} truthTable - Truth table for the schematic. Format:
+     *                              "A B C\n
+     *                               0 0 1\n
+     *                               0 1 1\n
+     *                               1 0 1\n
+     *                               1 1 0"
      ****************************************************************************/
     validateSchematic: function(truthTable) {
         var comps = digsim.components.get();
         var labels = {};
         var array = [];
         var component = {};
-        var i, j, comp, rows, headers, cols;
+        var i, j, len, comp, rows, headers, cols;
 
         digsim.mode = digsim.SIM_MODE;
 
@@ -2732,13 +2726,7 @@ Digsim.prototype.debug = {
         digsim.maxSchematicLoop = 0;
         for (j = 0, len = comps.length; j < len; ++j) {
             comp = comps[j];
-
-            if (comp.type === digsim.DFF) {
-                comp.state = {'Q': false, 'Qnot': false};
-            }
-            else {
-                comp.state = -1;
-            }
+            comp.reset();
 
             // Count the number of possible pass through the current schematic could have
             if (comp.type === digsim.WIRE) {
@@ -2828,7 +2816,8 @@ Digsim.prototype.debug = {
         digsim.clearCanvas(digsim.gridContext);
         digsim.drawGrid(digsim.gridContext);
 
-        var row = 0; col = 0;
+        var row = 0;
+        var col = 0;
         var r, c;
 
         digsim.gridContext.fillStyle = 'black';
