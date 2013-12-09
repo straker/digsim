@@ -46,6 +46,7 @@ ASCIIDisplay.prototype.isAGate = function() {
  *****************************************************************************/
 ASCIIDisplay.prototype.reset = function() {
     this.text = "";
+    this.previousClockState = 0;
 };
 
 /*****************************************************************************

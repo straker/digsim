@@ -87,7 +87,7 @@ Component.prototype.isADriver = function() {
  *  Reset the state of the component.
  *****************************************************************************/
 Component.prototype.reset = function() {
-    this.state = 0;
+    this.state = -1;
 };
 
 /******************************************************************************

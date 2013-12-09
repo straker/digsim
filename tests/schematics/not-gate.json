@@ -1,0 +1,1 @@
+[{"type":13,"name":"Switch","numInputs":0,"row":3,"col":3,"rotation":0,"id":1,"label":"A"},{"type":14,"name":"LED","numInputs":1,"row":3,"col":8,"rotation":90,"id":3,"label":"B"},{"type":6,"name":"NOT","numInputs":1,"row":3,"col":5,"rotation":0,"id":5,"label":"NOT5"}]

@@ -1,0 +1,1 @@
+[{"type":13,"name":"Switch","numInputs":0,"row":3,"col":3,"rotation":0,"id":1,"label":"A"},{"type":13,"name":"Switch","numInputs":0,"row":5,"col":3,"rotation":0,"id":2,"label":"B"},{"type":14,"name":"LED","numInputs":1,"row":4,"col":9,"rotation":90,"id":3,"label":"C"},{"type":2,"name":"NAND","numInputs":2,"row":3,"col":5,"rotation":0,"id":4,"label":"NAND4"}]

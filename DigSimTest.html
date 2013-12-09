@@ -3,40 +3,63 @@
 <head>
   <title>Digital Circuit Simulator Test Suite</title>
   <meta charset="utf-8">
-  <link rel="stylesheet" type="text/css" href="css/src/style.css"/>
-	<link rel="stylesheet" href="css/src/QUnit.css" type="text/css" media="screen">
-	<script type="text/javascript" src="http://github.com/jquery/qunit/raw/master/qunit/qunit.js"></script>
-	<script type="text/javascript" src="tests/test.application.js"></script>
+  <link rel="stylesheet" href="css/src/QUnit.css" type="text/css" media="screen">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+  <script type="text/javascript">
+  /* Load jQuery from a local file if for some reason it failed to load from the CDN */
+  if (typeof jQuery == 'undefined') {
+    document.write(unescape("%3Cscript src='scripts/src/jquery-1.8.3.min.js' type='text/javascript'%3E%3C/script%3E"));
+  }
+  </script>
+  <script src="scripts/src/jquery-ui-1.10.3.draggable.min.js" type="text/javascript"></script>
+  <script type="text/javascript" src="http://code.jquery.com/qunit/qunit-1.12.0.js"></script>
+  <script type="text/javascript" src="tests/test.application.js"></script>
+  <script type="text/javascript" src="tests/test.and-gate.js"></script>
+  <script type="text/javascript" src="tests/test.nand-gate.js"></script>
+  <script type="text/javascript" src="tests/test.or-gate.js"></script>
+  <script type="text/javascript" src="tests/test.nor-gate.js"></script>
+  <script type="text/javascript" src="tests/test.xor-gate.js"></script>
+  <script type="text/javascript" src="tests/test.not-gate.js"></script>
+  <script type="text/javascript" src="tests/test.mux.js"></script>
+  <script type="text/javascript" src="tests/test.dff.js"></script>
+  <script type="text/javascript" src="tests/test.prom.js"></script>
 </head>
 <body onload="digsim.run()">
-	<div class="buttons">
-		<button id="ANDb" type="button">AND</button>
-		<button id="NANDb" type="button">NAND</button>
-		<button id="ORb" type="button">OR</button>
-		<button id="NORb" type="button">NOR</button>
-		<button id="XORb" type="button">XOR</button>
-		<button id="NOTb" type="button">NOT</button>
-		<button id="LEDb" type="button">LED</button>
-		<button id="WIRE" type="button">WIRE</button>
-		<button id="SWITCHb" type="button">SWITCH</button>
-	</div>
-  <div class="canvases">
-		<canvas id="grid">Your browser does not support HTML5 canvas element.
-		Please try again with a different browser.</canvas>
-		<canvas id="static"></canvas>
-		<canvas id="moving"></canvas>
-	</div>
-	<div class="test-suite">
-		<h1 id="qunit-header">QUnit Test Suite</h1>
-		<h2 id="qunit-banner"></h2>
-		<div id="qunit-testrunner-toolbar"></div>
-		<h2 id="qunit-userAgent"></h2>
-		<ol id="qunit-tests"></ol>
-	</div>
-  <script type="text/javascript" src="scripts/src/application.js"></script>  
-    <script type="text/javascript" src="scripts/src/drawable.js"></script>  
-    <script type="text/javascript" src="scripts/src/and-gate.js"></script>  
-	<script type="text/javascript" src="scripts/src/wire.js"></script>  
-	<script type="text/javascript" src="scripts/src/placeholder.js"></script>  
+  <div class="messages">
+    <ul class="col header">
+      <li class="row">Messages</li>
+    </ul>
+    <div id="messages"></div>
+  </div>
+  <div class="canvases" style="display: none">
+    <canvas id="grid">Your browser does not support HTML5 canvas element.
+    Please try again with a different browser.</canvas>
+    <canvas id="static"></canvas>
+    <canvas id="moving"></canvas>
+  </div>
+  <div class="test-suite"  style="top: 0; left: 0">
+    <h1 id="qunit-header">QUnit Test Suite</h1>
+    <h2 id="qunit-banner"></h2>
+    <div id="qunit-testrunner-toolbar"></div>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+  </div>
+  <script type="text/javascript" src="scripts/src/componentList.js"></script>
+  <script type="text/javascript" src="scripts/src/application.js"></script>
+  <script type="text/javascript" src="scripts/src/component.js"></script>
+  <script type="text/javascript" src="scripts/src/and-gate.js"></script>
+  <script type="text/javascript" src="scripts/src/wire.js"></script>
+  <script type="text/javascript" src="scripts/src/switch.js"></script>
+  <script type="text/javascript" src="scripts/src/led.js"></script>
+  <script type="text/javascript" src="scripts/src/nand-gate.js"></script>
+  <script type="text/javascript" src="scripts/src/nor-gate.js"></script>
+  <script type="text/javascript" src="scripts/src/not-gate.js"></script>
+  <script type="text/javascript" src="scripts/src/or-gate.js"></script>
+  <script type="text/javascript" src="scripts/src/xor-gate.js"></script>
+  <script type="text/javascript" src="scripts/src/clock.js"></script>
+  <script type="text/javascript" src="scripts/src/dff.js"></script>
+  <script type="text/javascript" src="scripts/src/mux.js"></script>
+  <script type="text/javascript" src="scripts/src/prom.js"></script>
+  <script type="text/javascript" src="scripts/src/ascii-display.js"></script>
 </body>
 </html>
