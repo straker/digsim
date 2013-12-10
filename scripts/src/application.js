@@ -1759,8 +1759,8 @@ Digsim.prototype.getWireIndex = function() {
     var relY      = mousePos.y % digsim.gridSize;
 
     var leftVert  = Math.ceil(digsim.gridSize * (1 - digsim.hitRadius) / 2);
-    var rightVert = digsim.gridSize - topHor;
     var topHor    = leftVert;
+    var rightVert = digsim.gridSize - topHor;
     var bottomHor = rightVert;
     var diagSep   = digsim.gridSize - relX;
     var vert      = (relX >= topHor) && (relX <= bottomHor);

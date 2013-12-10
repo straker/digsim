@@ -146,7 +146,7 @@ function ComponentList(id) {
     this.getConnectionComponents = function(index) {
         var comps = [];
 
-        if (typeof index === 'number') {
+        if (typeof index === 'number' || typeof index === 'string') {
             for (var i in components) {
                 if (components.hasOwnProperty(i)) {
                     if (components[i] === index)
@@ -155,10 +155,7 @@ function ComponentList(id) {
             }
         }
 
-        if (comps.length > 0)
-            return comps;
-
-        return undefined;
+        return comps;
     };
 
     /*****************************************************************************
